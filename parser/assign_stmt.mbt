@@ -5,9 +5,10 @@ pub(all) struct AssignStmt {
 } derive(Show, Eq)
 
 pub(all) enum AssignOp {
-  Assign
-  AddAssign
-  SubAssign
-  MulAssign
-  DivAssign
+  Assign // =
+  PlusAssign // +=
+  MinusAssign // -=
+  MultAssign // *=
+  DivAssign // /=
+  ModAssign // %=
 } derive(Show, Eq)

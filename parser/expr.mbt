@@ -15,17 +15,19 @@ pub(all) enum ExprKind {
 } derive(Show, Eq)
 
 pub(all) enum BinaryOp {
-  Add
-  Sub
-  Mul
-  Div
-  Mod
-  Eq
-  Ne
-  Lt
-  Gt
-  Le
-  Ge
-  And
-  Or
+  Add // +
+  Sub // -
+  Mul // *
+  Div // /
+  Mod // %
+  ShiftLeft // <<
+  ShiftRight // >>
+  Eq // ==
+  NE // !=
+  LT // <
+  GT // >
+  LE // <=
+  GE // >=
+  And // &&
+  Or // ||
 } derive(Show, Eq)
