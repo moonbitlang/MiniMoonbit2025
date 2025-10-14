@@ -1,7 +1,7 @@
+///|
 test "Tokenize Identifiers - 1" {
-  let code = 
+  let code =
     #|MyStruct my_var anotherVar _privateVar
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 5)
   assert_true(tokens[0].kind is Upper("MyStruct"))
@@ -11,10 +11,10 @@ test "Tokenize Identifiers - 1" {
   assert_true(tokens[4].kind is EOF)
 }
 
+///|
 test "Tokenize Identifiers - 2" {
-  let code = 
+  let code =
     #|fnx let_var mutp iffy else_ match1 structc enum2
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 9)
   assert_true(tokens[0].kind is Lower("fnx"))
@@ -28,10 +28,10 @@ test "Tokenize Identifiers - 2" {
   assert_true(tokens[8].kind is EOF)
 }
 
+///|
 test "Tokenize Keyword" {
-  let code = 
+  let code =
     #|fn let mut if else struct return
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 8)
   assert_true(tokens[0].kind is Keyword(Fn))
@@ -44,10 +44,10 @@ test "Tokenize Keyword" {
   assert_true(tokens[7].kind is EOF)
 }
 
+///|
 test "Tokenize Int Number" {
-  let code = 
+  let code =
     #|42 0 65 15899 65355 78451 00012
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 8)
   assert_true(tokens[0].kind is Int(42))
@@ -60,10 +60,10 @@ test "Tokenize Int Number" {
   assert_true(tokens[7].kind is EOF)
 }
 
+///|
 test "Tokenize Float Number" {
-  let code = 
+  let code =
     #|3.14 0.0 2.718 1.6180339887 0.57721 42.0
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 7)
   assert_true(tokens[0].kind is Double(3.14))
@@ -75,10 +75,10 @@ test "Tokenize Float Number" {
   assert_true(tokens[6].kind is EOF)
 }
 
+///|
 test "Tokenize Binary Operators" {
-  let code = 
+  let code =
     #|+ - * / % == != < > <= >= && || & | << >>
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 18)
   assert_true(tokens[0].kind is BinaryOp(Add))
@@ -101,10 +101,10 @@ test "Tokenize Binary Operators" {
   assert_true(tokens[17].kind is EOF)
 }
 
+///|
 test "Tokenize Assignment Operators" {
-  let code = 
+  let code =
     #|= += -= *= /= %=
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 7)
   assert_true(tokens[0].kind is AssignOp(Assign))
@@ -116,10 +116,10 @@ test "Tokenize Assignment Operators" {
   assert_true(tokens[6].kind is EOF)
 }
 
+///|
 test "Tokenize Punctuation" {
-  let code = 
+  let code =
     #|( ) [ ] { } . , : ; -> => ! _
-
   let tokens = tokenize(code)
   assert_true(tokens.length() is 15)
   assert_true(tokens[0].kind is Bracket('('))
@@ -139,13 +139,13 @@ test "Tokenize Punctuation" {
   assert_true(tokens[14].kind is EOF)
 }
 
+///|
 test "Tokenize Code - 1" {
-  let code = 
+  let code =
     #|fn add(x: Int, y: Int) -> Int {
     #|  return x + y  // simple addition
     #|}
     #|
-
   let tokens = tokenize(code)
   assert_true(tokens[0].kind is Keyword(Fn))
   assert_true(tokens[1].kind is Lower("add"))
@@ -169,8 +169,9 @@ test "Tokenize Code - 1" {
   assert_true(tokens[19].kind is EOF)
 }
 
+///|
 test "Tokenize Code - 2" {
-  let code = 
+  let code =
     #|struct Point {
     #|  x: Double;
     #|  y: Double;
@@ -181,7 +182,6 @@ test "Tokenize Code - 2" {
     #|  let dy = p2.y - p1.y;
     #|  return sqrt(dx * dx + dy * dy);
     #|}
-
   let tokens = tokenize(code)
   assert_true(tokens[0].kind is Keyword(Struct))
   assert_true(tokens[1].kind is Upper("Point"))

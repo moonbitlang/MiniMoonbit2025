@@ -80,7 +80,7 @@ pub struct Token {
 
 ///|
 pub fn Token::new(kind : TokenKind) -> Token {
-  Token::{ kind }
+  Token::{ kind, }
 }
 
 ///|
@@ -102,7 +102,7 @@ pub(all) enum TokenKind {
 } derive(Show, Eq)
 
 ///|
-pub fn tokenize(code: String) -> Array[Token] raise TokenizeError {
+pub fn tokenize(code : String) -> Array[Token] raise TokenizeError {
   let tokens = Array::new()
   tokens.clear()
   loop code[:] {
@@ -111,17 +111,11 @@ pub fn tokenize(code: String) -> Array[Token] raise TokenizeError {
       tokens.push(tok)
       break
     }
-    [' ' | '\t' | '\r', .. rest] => {
-      continue rest
-    }
-    ['\n', .. rest] => {
-      continue rest
-    }
+    [' ' | '\t' | '\r', .. rest] => continue rest
+    ['\n', .. rest] => continue rest
     [.. "//", .. rest] =>
       continue loop rest {
-          ['\n', .. rest_str] => {
-            break rest_str
-          }
+          ['\n', .. rest_str] => break rest_str
           [_, .. rest_str] => continue rest_str
           [] as rest_str => break rest_str
         }
@@ -418,20 +412,16 @@ fn tokenize_number(
     _ => rest
   }
   let num_str = sb.to_string()
-
   let (kind, rest) = if is_float {
     let value = @strconv.parse_double(num_str) catch {
       _ => raise TokenizeError("Invalid Float literal: \{num_str}")
     }
     (TokenKind::Double(value), rest)
   } else {
-    let value = try {
-      @strconv.parse_int(num_str)
-    } catch {
+    let value = @strconv.parse_int(num_str) catch {
       _ => raise TokenizeError("Invalid Int literal: \{num_str}")
     }
     (TokenKind::Int(value), rest)
   }
   (Token::new(kind), rest)
 }
-
