@@ -1,3 +1,10 @@
+
+///|
+typealias @lexer.Token
+
+///|
+pub suberror ParseError String derive(Show)
+
 ///|
 pub impl Show for TypeKind with output(self, logger) {
   let s = match self {
