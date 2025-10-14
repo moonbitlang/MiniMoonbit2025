@@ -1,6 +1,6 @@
 pub struct TopLet {
   name : String
-  ty : Type
+  ty : Type?
   expr : Expr
 } derive(Show, Eq)
 
@@ -14,10 +14,12 @@ pub fn parse_top_let(
   guard tokens is [{ kind: Lower(name) }, .. tokens] else {
     raise ParseError("Expect a lower ident")
   }
-  guard tokens is [{ kind: Symbol(":") }, .. tokens] else {
-    raise ParseError("Expect ':'")
+  let (ty, tokens) = if tokens is [{ kind: Symbol(":") }, .. tokens] {
+    let (ty, rest) = parse_type(tokens)
+    (Some(ty), rest)
+  } else {
+    (None, tokens)
   }
-  let (ty, tokens) = parse_type(tokens)
   guard tokens is [{ kind: AssignOp(Assign) }, .. tokens] else {
     raise ParseError("Expect '='")
   }
@@ -43,7 +45,8 @@ test "Top Let Parsing Test" {
   let (s, tok_view) = parse_top_let(tokens)
   assert_true(
     s.name is "x" &&
-    s.ty.kind is Int &&
+    s.ty is Some(ty) &&
+    ty.kind is Int &&
     s.expr.kind is ApplyExpr(a) &&
     a.kind is AtomExpr(atom) &&
     atom.kind is Int(42)
@@ -51,7 +54,8 @@ test "Top Let Parsing Test" {
   let (s, tok_view) = parse_top_let(tok_view)
   assert_true(
     s.name is "y" &&
-    s.ty.kind is Bool &&
+    s.ty is Some(ty) &&
+    ty.kind is Bool &&
     s.expr.kind is ApplyExpr(a) &&
     a.kind is AtomExpr(atom) &&
     atom.kind is Bool(true)
@@ -59,7 +63,8 @@ test "Top Let Parsing Test" {
   let (s, _) = parse_top_let(tok_view)
   assert_true(
     s.name is "z" &&
-    s.ty.kind is Array(Int) &&
+    s.ty is Some(ty) &&
+    ty.kind is Array(Int) &&
     s.expr.kind is ApplyExpr(a) &&
     a.kind is AtomExpr(atom) &&
     atom.kind is Array([e1, e2, e3]) &&

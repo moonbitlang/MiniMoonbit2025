@@ -52,7 +52,7 @@ pub fn parse_atom_expr(
       println("Compiler ICE: Empty Token ArrayView")
       panic()
     }
-    tokens => raise ParseError("InValid Atom Expression, \{tokens[0]}")
+    tokens => raise ParseError("InValid Atom Expression, \{tokens[0:5]}")
   }
 }
 

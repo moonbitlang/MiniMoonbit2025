@@ -3,7 +3,7 @@ pub(all) struct Program {
   top_lets: Map[String, TopLet]
   top_functions: Map[String, TopFunction]
   struct_defs: Map[String, StructDef]
-}
+} derive(Show)
 
 pub fn parse(tokens: Array[Token]) -> Program raise ParseError {
   let top_lets = Map::new()

@@ -22,9 +22,6 @@ pub fn parse_param(
   guard tokens is [{ kind: Symbol(":") }, .. tokens] else {
     raise ParseError("Expect a `:`")
   }
-  guard tokens is [{ kind: Upper(_) }, ..] else {
-    raise ParseError("Expect type name")
-  }
   let (ty, tokens) = parse_type(tokens)
   let param = Param::{ name, ty }
   (param, tokens)

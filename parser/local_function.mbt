@@ -4,7 +4,7 @@ pub(all) struct LocalFunction {
   param_list: Array[(String, Type?)]
   ret_ty: Type?
   body: BlockExpr
-}
+} derive(Show, Eq)
 
 pub fn parse_local_function(
   tokens: ArrayView[Token],

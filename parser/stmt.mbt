@@ -11,6 +11,7 @@ pub(all) enum StmtKind {
   WhileStmt(WhileStmt)
   ExprStmt(Expr)
   ReturnStmt(Expr?)
+  LocalFunction(LocalFunction)
 } derive(Show, Eq)
 
 ///|
@@ -66,7 +67,11 @@ pub fn parse_stmt(
         let stmt = Stmt::{
           kind: StmtKind::ExprStmt(expr),
         }
-        guard rest is [{ kind: Symbol(";")}, ..rest] else {
+        let rest = if rest is [{kind: Symbol(";")}, ..rest] {
+          rest
+        } else if rest is [{kind: Bracket('}')}, ..] {
+          rest
+        } else {
           raise ParseError("Expected ';' after expression statement")
         }
         (stmt, rest)
@@ -79,6 +84,13 @@ pub fn parse_stmt(
       }
       (stmt, rest)
     }
+    [{ kind: Keyword(Fn) }, ..] as tokens => {
+      let (local_function, rest) = parse_local_function(tokens)
+      let stmt = Stmt::{
+        kind: StmtKind::LocalFunction(local_function),
+      }
+      (stmt, rest)
+    }
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
@@ -88,7 +100,11 @@ pub fn parse_stmt(
       let stmt = Stmt::{
         kind: StmtKind::ExprStmt(expr),
       }
-      guard rest is [{ kind: Symbol(";")}, ..rest] else {
+      let rest = if rest is [{kind: Symbol(";")}, ..rest] {
+        rest
+      } else if rest is [{kind: Bracket('}')}, ..] {
+        rest
+      } else {
         raise ParseError("Expected ';' after expression statement")
       }
       (stmt, rest)
