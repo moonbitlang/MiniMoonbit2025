@@ -14,7 +14,7 @@ pub(all) enum AtomExprKind {
   Tuple(Array[Expr]) // (expr, expr, ...)
   Array(Array[Expr]) // [expr, expr, ...]
   ArrayMake(Expr, Expr) // Array::make(size, init)
-  StructConstruct(String, Array[(String, Expr)]) // StructName::{ field: expr, ... }
+  StructConstruct(StructConstructExpr) // StructName::{ field: expr, ... }
 } derive(Show, Eq)
 
 ///|
@@ -39,8 +39,8 @@ pub fn parse_atom_expr(
       (expr, tokens[1:])
     }
     [{ kind: Upper("Array") }, ..] as tokens => parse_array_make_expr(tokens)
-    //[{ kind: Upper(_) }, ..] as tokens =>
-    //  parse_struct_or_enum_construct(tokens)
+    [{ kind: Upper(_) }, ..] as tokens =>
+      parse_struct_construct(tokens)
     [{ kind: Bracket('(') }, ..] as tokens => parse_paren_expr(tokens)
     [{ kind: Bracket('[') }, ..] as tokens => parse_array_expr(tokens)
     [] => {
