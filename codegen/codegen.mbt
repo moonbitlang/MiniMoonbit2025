@@ -1,3 +1,12 @@
+pub fn codegen_all(code: String) -> @llvm.Module raise {
+  let tokens = @lexer.tokenize(code)
+  let ast = @parser.parse(tokens)
+  let typed_ast = @typecheck.typecheck(ast)
+  let knf_prog = @knf.knf_transform(typed_ast)
+  let llvm_mod = codegen(knf_prog)
+  return llvm_mod
+}
+
 ///|
 pub fn codegen(knf_prog : @knf.KnfProgram) -> @llvm.Module raise {
   let codegen_ctx = Context::new("demo")

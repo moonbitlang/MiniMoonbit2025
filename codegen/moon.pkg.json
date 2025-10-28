@@ -1,16 +1,13 @@
 {
   "import": [
     "Kaida-Amethyst/MiniMoonbit/knf",
-    "Kaida-Amethyst/either",
+    "Kaida-Amethyst/MiniMoonbit/lexer",
+    "Kaida-Amethyst/MiniMoonbit/parser",
+    "Kaida-Amethyst/MiniMoonbit/typecheck",
     {
       "path" : "Kaida-Amethyst/MoonLLVM/IR",
       "alias" : "llvm"
     },
-  ],
-  "test-import" : [
-    "Kaida-Amethyst/MiniMoonbit/lexer",
-    "Kaida-Amethyst/MiniMoonbit/parser",
-    "Kaida-Amethyst/MiniMoonbit/typecheck",
   ]
 }
 
