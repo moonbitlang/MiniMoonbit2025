@@ -77,30 +77,16 @@ pub fn Context::new(mod_name : String) -> Context {
     ])
   let int_of_float_ty = try! llvm_ctx.getFunctionType(i32ty, [doublety])
   let float_of_int_ty = try! llvm_ctx.getFunctionType(doublety, [i32ty])
-  let builtin_print_int_ty = try! llvm_ctx.getFunctionType(
-      voidty, [i32ty],
-    )
-  let builtin_print_double_ty = try! llvm_ctx.getFunctionType(
-      voidty, [doublety],
-    )
-  let builtin_print_bool_ty = try! llvm_ctx.getFunctionType(
-      voidty, [boolty],
-    )
-  let builtin_print_string_ty = try! llvm_ctx.getFunctionType(
-      voidty, [ptrty],
-    )
-  let builtin_println_int_ty = try! llvm_ctx.getFunctionType(
-      voidty, [i32ty],
-    )
-  let builtin_println_double_ty = try! llvm_ctx.getFunctionType(
-      voidty, [doublety],
-    )
-  let builtin_println_bool_ty = try! llvm_ctx.getFunctionType(
-      voidty, [boolty],
-    )
-  let builtin_println_string_ty = try! llvm_ctx.getFunctionType(
-      voidty, [ptrty],
-    )
+  let builtin_print_int_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
+  let builtin_print_double_ty = try! llvm_ctx.getFunctionType(voidty, [doublety])
+  let builtin_print_bool_ty = try! llvm_ctx.getFunctionType(voidty, [boolty])
+  let builtin_print_string_ty = try! llvm_ctx.getFunctionType(voidty, [ptrty])
+  let builtin_println_int_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
+  let builtin_println_double_ty = try! llvm_ctx.getFunctionType(voidty, [
+      doublety,
+    ])
+  let builtin_println_bool_ty = try! llvm_ctx.getFunctionType(voidty, [boolty])
+  let builtin_println_string_ty = try! llvm_ctx.getFunctionType(voidty, [ptrty])
   let builtin_func_tys = {
     "moonbit_malloc": moonbit_malloc_ty,
     "make_int_array": make_int_array_ty,
@@ -173,22 +159,23 @@ pub fn Context::get_builtin_function(
   }
 }
 
+///|
 pub fn Context::get_extern_function(
   self : Context,
   name : String,
 ) -> @llvm.Function raise CodegenError {
   match self.extern_funcs.get(name) {
     Some(func) => func
-    None => {
-      raise CodegenError("Extern function \{name} not found")
-    }
+    None => raise CodegenError("Extern function \{name} not found")
   }
 }
 
+///|
 fn Context::is_builtin_name(self : Context, name : @knf.Name) -> Bool {
   self.builtin_func_tys.get(name.to_string()) is Some(_)
 }
 
+///|
 fn Context::is_extern_name(self : Context, name : @knf.Name) -> Bool {
   self.extern_funcs.get(name.to_string()) is Some(_)
 }
@@ -204,14 +191,13 @@ pub fn Context::generate_extern_or_builtin_closure(
 ) -> &@llvm.Value raise CodegenError {
   let func_name = name.to_string()
   let func_value = if self.is_builtin_name(name) {
-    self.get_builtin_function(func_name) 
+    self.get_builtin_function(func_name)
   } else {
     guard self.extern_funcs.get(func_name) is Some(extern_func) else {
       raise CodegenError("Extern function not found for \{func_name}")
     }
     extern_func
   }
-
   let func_ty = func_value.getFunctionType()
 
   // Create wrapper function name

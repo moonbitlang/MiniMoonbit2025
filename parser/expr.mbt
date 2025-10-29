@@ -83,13 +83,13 @@ pub fn parse_expr(
 
   // Parse unary expression (Not or Neg) or apply expression
   let (head_expr, tokens) = match tokens {
-    [{ kind: Not }, .. rest] => {
+    [{ kind: Not, .. }, .. rest] => {
       let (apply_expr, rest) = parse_apply_expr(rest)
       let expr = Expr::{ kind: ExprKind::ApplyExpr(apply_expr) }
       let not_expr = Expr::{ kind: ExprKind::NotExpr(expr) }
       (not_expr, rest)
     }
-    [{ kind: BinaryOp(Sub) }, .. rest] => {
+    [{ kind: BinaryOp(Sub), .. }, .. rest] => {
       let (apply_expr, rest) = parse_apply_expr(rest)
       let expr = Expr::{ kind: ExprKind::ApplyExpr(apply_expr) }
       let neg_expr = Expr::{ kind: ExprKind::NegExpr(expr) }
@@ -102,16 +102,16 @@ pub fn parse_expr(
   }
   expr_stack.push_back(head_expr)
   let mut tokens = tokens
-  while tokens is [{ kind: BinaryOp(op) }, .. rest] {
+  while tokens is [{ kind: BinaryOp(op), .. }, .. rest] {
     // Parse unary expression or apply expression after binary operator
     let (next_expr, rest) = match rest {
-      [{ kind: Not }, .. rest] => {
+      [{ kind: Not, .. }, .. rest] => {
         let (apply_expr, rest) = parse_apply_expr(rest)
         let expr = Expr::{ kind: ExprKind::ApplyExpr(apply_expr) }
         let not_expr = Expr::{ kind: ExprKind::NotExpr(expr) }
         (not_expr, rest)
       }
-      [{ kind: BinaryOp(Sub) }, .. rest] => {
+      [{ kind: BinaryOp(Sub), .. }, .. rest] => {
         let (apply_expr, rest) = parse_apply_expr(rest)
         let expr = Expr::{ kind: ExprKind::ApplyExpr(apply_expr) }
         let neg_expr = Expr::{ kind: ExprKind::NegExpr(expr) }
@@ -167,10 +167,10 @@ fn parse_expr_list(
 ) -> (Array[Expr], ArrayView[Token]) raise ParseError {
   let exprs : Array[Expr] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Bracket(')') }, ..] as tokens => break tokens
-    [{ kind: Symbol(",") }, { kind: Bracket(')') }, ..] as tokens =>
+    [{ kind: Bracket(')'), .. }, ..] as tokens => break tokens
+    [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, ..] as tokens =>
       break tokens[1:]
-    [{ kind: Symbol(",") }, .. tokens] => {
+    [{ kind: Symbol(","), .. }, .. tokens] => {
       let (expr, rest) = parse_expr(tokens)
       exprs.push(expr)
       continue rest

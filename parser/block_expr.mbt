@@ -7,13 +7,13 @@ pub(all) struct BlockExpr {
 pub fn parse_block_expr(
   tokens : ArrayView[Token],
 ) -> (BlockExpr, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Bracket('{') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('{'), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_block_expr")
     panic()
   }
   let stmts : Array[Stmt] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Bracket('}') }, .. rest] => break rest
+    [{ kind: Bracket('}'), .. }, .. rest] => break rest
     [] => {
       println("Compiler ICE: Failed Parsing BlockExpr, Empty Token ArrayView")
       panic()

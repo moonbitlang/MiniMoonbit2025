@@ -73,12 +73,14 @@ pub(all) enum AssignOp {
 ///|
 pub struct Token {
   kind : TokenKind
-  // other info
+  line : Int
+  col : Int
+  idx : Int
 } derive(Show, Eq)
 
 ///|
-pub fn Token::new(kind : TokenKind) -> Token {
-  Token::{ kind, }
+pub fn Token::new(kind : TokenKind, line : Int, col : Int, idx : Int) -> Token {
+  Token::{ kind, line, col, idx }
 }
 
 ///|
@@ -102,208 +104,302 @@ pub(all) enum TokenKind {
 ///|
 pub fn tokenize(code : String) -> Array[Token] raise TokenizeError {
   let tokens = Array::new()
+  let mut line = 1
+  let mut col = 1
+  let mut idx = 0
   loop code[:] {
     [] => {
-      let tok = Token::new(EOF)
+      let tok = Token::new(EOF, line, col, idx)
       tokens.push(tok)
       break
     }
-    [' ' | '\t' | '\r', .. rest] => continue rest
-    ['\n', .. rest] => continue rest
+    [' ' | '\t' | '\r', .. rest] => {
+      col += 1
+      idx += 1
+      continue rest
+    }
+    ['\n', .. rest] => {
+      line += 1
+      col = 1
+      idx += 1
+      continue rest
+    }
     [.. "//", .. rest] =>
       continue loop rest {
-          ['\n', .. rest_str] => break rest_str
+          ['\n', .. rest_str] => {
+            line += 1
+            col = 1
+            idx += 1
+            break rest_str
+          }
           [_, .. rest_str] => continue rest_str
           [] as rest_str => break rest_str
         }
     [.. "::", .. rest] => {
-      let tok = Token::new(Symbol("::"))
+      let tok = Token::new(Symbol("::"), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "->", .. rest] => {
-      let tok = Token::new(Symbol("->"))
+      let tok = Token::new(Symbol("->"), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "=>", .. rest] => {
-      let tok = Token::new(Symbol("=>"))
+      let tok = Token::new(Symbol("=>"), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "!=", .. rest] => {
-      let tok = Token::new(BinaryOp(NE))
+      let tok = Token::new(BinaryOp(NE), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "==", .. rest] => {
-      let tok = Token::new(BinaryOp(Eq))
+      let tok = Token::new(BinaryOp(Eq), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "<=", .. rest] => {
-      let tok = Token::new(BinaryOp(LE))
+      let tok = Token::new(BinaryOp(LE), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. ">=", .. rest] => {
-      let tok = Token::new(BinaryOp(GE))
+      let tok = Token::new(BinaryOp(GE), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "&&", .. rest] => {
-      let tok = Token::new(BinaryOp(And))
+      let tok = Token::new(BinaryOp(And), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "||", .. rest] => {
-      let tok = Token::new(BinaryOp(Or))
+      let tok = Token::new(BinaryOp(Or), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "<<", .. rest] => {
-      let tok = Token::new(BinaryOp(ShiftLeft))
+      let tok = Token::new(BinaryOp(ShiftLeft), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. ">>", .. rest] => {
-      let tok = Token::new(BinaryOp(ShiftRight))
+      let tok = Token::new(BinaryOp(ShiftRight), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "+=", .. rest] => {
-      let tok = Token::new(AssignOp(PlusAssign))
+      let tok = Token::new(AssignOp(PlusAssign), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "-=", .. rest] => {
-      let tok = Token::new(AssignOp(MinusAssign))
+      let tok = Token::new(AssignOp(MinusAssign), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "*=", .. rest] => {
-      let tok = Token::new(AssignOp(MultAssign))
+      let tok = Token::new(AssignOp(MultAssign), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "/=", .. rest] => {
-      let tok = Token::new(AssignOp(DivAssign))
+      let tok = Token::new(AssignOp(DivAssign), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     [.. "%=", .. rest] => {
-      let tok = Token::new(AssignOp(ModAssign))
+      let tok = Token::new(AssignOp(ModAssign), line, col, idx)
       tokens.push(tok)
+      col += 2
+      idx += 2
       continue rest
     }
     ['+', .. rest] => {
-      let tok = Token::new(BinaryOp(Add))
+      let tok = Token::new(BinaryOp(Add), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['-', .. rest] => {
-      let tok = Token::new(BinaryOp(Sub))
+      let tok = Token::new(BinaryOp(Sub), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['*', .. rest] => {
-      let tok = Token::new(BinaryOp(Mul))
+      let tok = Token::new(BinaryOp(Mul), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['/', .. rest] => {
-      let tok = Token::new(BinaryOp(Div))
+      let tok = Token::new(BinaryOp(Div), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['%', .. rest] => {
-      let tok = Token::new(BinaryOp(Mod))
+      let tok = Token::new(BinaryOp(Mod), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['&', .. rest] => {
-      let tok = Token::new(BinaryOp(BitAnd))
+      let tok = Token::new(BinaryOp(BitAnd), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['|', .. rest] => {
-      let tok = Token::new(BinaryOp(BitOr))
+      let tok = Token::new(BinaryOp(BitOr), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['<', .. rest] => {
-      let tok = Token::new(BinaryOp(LT))
+      let tok = Token::new(BinaryOp(LT), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['>', .. rest] => {
-      let tok = Token::new(BinaryOp(GT))
+      let tok = Token::new(BinaryOp(GT), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['=', .. rest] => {
-      let tok = Token::new(AssignOp(Assign))
+      let tok = Token::new(AssignOp(Assign), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['!', .. rest] => {
-      let tok = Token::new(Not)
+      let tok = Token::new(Not, line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['(', .. rest] => {
-      let tok = Token::new(Bracket('('))
+      let tok = Token::new(Bracket('('), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     [')', .. rest] => {
-      let tok = Token::new(Bracket(')'))
+      let tok = Token::new(Bracket(')'), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['[', .. rest] => {
-      let tok = Token::new(Bracket('['))
+      let tok = Token::new(Bracket('['), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     [']', .. rest] => {
-      let tok = Token::new(Bracket(']'))
+      let tok = Token::new(Bracket(']'), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['{', .. rest] => {
-      let tok = Token::new(Bracket('{'))
+      let tok = Token::new(Bracket('{'), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['}', .. rest] => {
-      let tok = Token::new(Bracket('}'))
+      let tok = Token::new(Bracket('}'), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['.', .. rest] => {
-      let tok = Token::new(Symbol("."))
+      let tok = Token::new(Symbol("."), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     [',', .. rest] => {
-      let tok = Token::new(Symbol(","))
+      let tok = Token::new(Symbol(","), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     [':', .. rest] => {
-      let tok = Token::new(Symbol(":"))
+      let tok = Token::new(Symbol(":"), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     [';', .. rest] => {
-      let tok = Token::new(Symbol(";"))
+      let tok = Token::new(Symbol(";"), line, col, idx)
       tokens.push(tok)
+      col += 1
+      idx += 1
       continue rest
     }
     ['\"', ..] as code => {
-      let (tok, rest) = tokenize_string(code)
+      let (tok_kind, len, rest) = tokenize_string(code)
+      let tok = Token::new(tok_kind, line, col, idx)
       tokens.push(tok)
+      col += len
+      idx += len
       continue rest
     }
     ['A'..='Z', ..] as code => {
@@ -311,24 +407,31 @@ pub fn tokenize(code : String) -> Array[Token] raise TokenizeError {
       let rest = loop code {
         ['A'..='Z' | 'a'..='z' | '0'..='9' | '_' as c, .. rest] => {
           sb.write_char(c)
+          col += 1
+          idx += 1
           continue rest
         }
         rest => break rest
       }
       let ident = sb.to_string()
-      let tok = Token::new(Upper(ident))
+      let tok = Token::new(Upper(ident), line, col, idx)
       tokens.push(tok)
       continue rest
     }
     ['_' | 'a'..='z', ..] as code => {
-      let (ident, rest) = tokenize_lower_ident(code)
-      let tok = Token::new(ident)
+      let (ident, len, rest) = tokenize_lower_ident(code)
+      col += len
+      idx += len
+      let tok = Token::new(ident, line, col, idx)
       tokens.push(tok)
       continue rest
     }
     ['0'..='9', ..] as code => {
-      let (tok, rest) = tokenize_number(code)
+      let (tok_kind, len, rest) = tokenize_number(code)
+      let tok = Token::new(tok_kind, line, col, idx)
       tokens.push(tok)
+      col += len
+      idx += len
       continue rest
     }
     other_strs =>
@@ -338,7 +441,7 @@ pub fn tokenize(code : String) -> Array[Token] raise TokenizeError {
 }
 
 ///|
-fn tokenize_lower_ident(code : StringView) -> (TokenKind, StringView) {
+fn tokenize_lower_ident(code : StringView) -> (TokenKind, Int, StringView) {
   let sb = StringBuilder::new()
   let rest = loop code {
     ['a'..='z' | 'A'..='Z' | '0'..='9' | '_' as c, .. rest] => {
@@ -364,22 +467,14 @@ fn tokenize_lower_ident(code : StringView) -> (TokenKind, StringView) {
     "_" => Wildcard
     _ => Lower(ident)
   }
-  (kind, rest)
+  (kind, ident.length(), rest)
 }
 
 ///|
 ///
-/// Handle Int64, UInt, UInt64, Float, Double
-/// Support:
-///
-/// 1. normal integer: 42 1577
-/// 2. hex integer: 0x1A 0xFF
-/// 3. binary integer: 0b1010 0b1101
-/// 4. integer with suffix: 42L, 100u (allowed: u, U, l, L, ul, uL, Ul, UL)
-/// 5. float: 3.14, 2.71f (allowed suffix: f, F)
 fn tokenize_number(
   code : StringView,
-) -> (Token, StringView) raise TokenizeError {
+) -> (TokenKind, Int, StringView) raise TokenizeError {
   let sb = StringBuilder::new()
   let mut is_float = false
 
@@ -423,13 +518,13 @@ fn tokenize_number(
     }
     (TokenKind::Int(value), rest)
   }
-  (Token::new(kind), rest)
+  (kind, num_str.length(), rest)
 }
 
 ///|
 fn tokenize_string(
   code : StringView,
-) -> (Token, StringView) raise TokenizeError {
+) -> (TokenKind, Int, StringView) raise TokenizeError {
   guard code is ['\"', .. code] else {
     println("Compiler ICE: Tokenize String Error")
     panic()
@@ -444,5 +539,6 @@ fn tokenize_string(
     [] => raise TokenizeError("Tokenize Error: Unterminated string literal")
   }
   let str_val = sb.to_string()
-  (Token::new(String(str_val)), rest)
+  // + 2 for the surrounding quotes
+  (String(str_val), str_val.length() + 2, rest)
 }

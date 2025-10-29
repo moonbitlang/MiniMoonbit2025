@@ -103,11 +103,15 @@ pub fn Context::substitute_apply_expr_type_var(
             Double => ("__builtin_println_double", Double)
             Bool => ("__builtin_println_bool", Bool)
             String => ("__builtin_println_string", String)
-            ty => raise TypeCheckError("println does not support this type: \{ty}")
+            ty =>
+              raise TypeCheckError("println does not support this type: \{ty}")
           }
           let callee_atom_kind = AtomExprKind::Ident(new_callee_name)
           let callee_type_kind = Function([new_callee_arg_ty], Unit)
-          let callee_atom_expr = AtomExpr::{ kind: callee_atom_kind, ty: callee_type_kind }
+          let callee_atom_expr = AtomExpr::{
+            kind: callee_atom_kind,
+            ty: callee_type_kind,
+          }
           ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind }
         } else if a.kind is Ident("print") {
           let arg_ty = new_arg_exprs[0].ty
@@ -116,11 +120,15 @@ pub fn Context::substitute_apply_expr_type_var(
             Double => ("__builtin_print_double", Double)
             Bool => ("__builtin_print_bool", Bool)
             String => ("__builtin_print_string", String)
-            ty => raise TypeCheckError("print does not support this type: \{ty}")
+            ty =>
+              raise TypeCheckError("print does not support this type: \{ty}")
           }
           let callee_atom_kind = AtomExprKind::Ident(new_callee_name)
           let callee_type_kind = Function([new_callee_arg_ty], Unit)
-          let callee_atom_expr = AtomExpr::{ kind: callee_atom_kind, ty: callee_type_kind }
+          let callee_atom_expr = AtomExpr::{
+            kind: callee_atom_kind,
+            ty: callee_type_kind,
+          }
           ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind }
         } else {
           new_callee_expr

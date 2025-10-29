@@ -23,30 +23,31 @@ pub fn parse_atom_expr(
   tokens : ArrayView[Token],
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
   match tokens {
-    [{ kind: Int(v) }, .. tokens] => {
+    [{ kind: Int(v), .. }, .. tokens] => {
       let expr = AtomExpr::{ kind: AtomExprKind::Int(v) }
       (expr, tokens)
     }
-    [{ kind: Double(v) }, .. tokens] => {
+    [{ kind: Double(v), .. }, .. tokens] => {
       let expr = AtomExpr::{ kind: AtomExprKind::Double(v) }
       (expr, tokens)
     }
-    [{ kind: Bool(v) }, .. tokens] => {
+    [{ kind: Bool(v), .. }, .. tokens] => {
       let expr = AtomExpr::{ kind: AtomExprKind::Bool(v) }
       (expr, tokens)
     }
-    [{ kind: String(s) }, .. tokens] => {
+    [{ kind: String(s), .. }, .. tokens] => {
       let expr = AtomExpr::{ kind: AtomExprKind::String(s) }
       (expr, tokens)
     }
-    [{ kind: Lower(ident) }, .. tokens] => {
+    [{ kind: Lower(ident), .. }, .. tokens] => {
       let expr = AtomExpr::{ kind: AtomExprKind::Ident(ident) }
       (expr, tokens)
     }
-    [{ kind: Upper("Array") }, ..] as tokens => parse_array_make_expr(tokens)
-    [{ kind: Upper(_) }, ..] as tokens => parse_struct_construct(tokens)
-    [{ kind: Bracket('(') }, ..] as tokens => parse_paren_expr(tokens)
-    [{ kind: Bracket('[') }, ..] as tokens => parse_array_expr(tokens)
+    [{ kind: Upper("Array"), .. }, ..] as tokens =>
+      parse_array_make_expr(tokens)
+    [{ kind: Upper(_), .. }, ..] as tokens => parse_struct_construct(tokens)
+    [{ kind: Bracket('('), .. }, ..] as tokens => parse_paren_expr(tokens)
+    [{ kind: Bracket('['), .. }, ..] as tokens => parse_array_expr(tokens)
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
@@ -59,15 +60,16 @@ pub fn parse_atom_expr(
 fn parse_paren_expr(
   tokens : ArrayView[Token],
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Bracket('(') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('('), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_paren_or_tuple_expr")
     panic()
   }
   let exprs : Array[Expr] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Bracket(')') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, { kind: Bracket(')') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, .. tokens] => {
+    [{ kind: Bracket(')'), .. }, .. rest] => break rest
+    [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, .. rest] =>
+      break rest
+    [{ kind: Symbol(","), .. }, .. tokens] => {
       let (expr, rest) = parse_expr(tokens)
       exprs.push(expr)
       continue rest
@@ -97,21 +99,21 @@ fn parse_array_make_expr(
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
   guard tokens
     is [
-      { kind: Upper("Array") },
-      { kind: Symbol("::") },
-      { kind: Lower("make") },
-      { kind: Bracket('(') },
+      { kind: Upper("Array"), .. },
+      { kind: Symbol("::"), .. },
+      { kind: Lower("make"), .. },
+      { kind: Bracket('('), .. },
       .. tokens,
     ] else {
     println("Compiler ICE: Misuse parse_array_make_expr, \{tokens}")
     panic()
   }
   let (size_expr, tokens) = parse_expr(tokens)
-  guard tokens is [{ kind: Symbol(",") }, .. tokens] else {
+  guard tokens is [{ kind: Symbol(","), .. }, .. tokens] else {
     raise ParseError("Expected ',' after size expression in Array::make")
   }
   let (init_expr, tokens) = parse_expr(tokens)
-  guard tokens is [{ kind: Bracket(')') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket(')'), .. }, .. tokens] else {
     raise ParseError("Expected ')' after init expression in Array::make")
   }
   let atom_expr = AtomExpr::{
@@ -124,15 +126,16 @@ fn parse_array_make_expr(
 fn parse_array_expr(
   tokens : ArrayView[Token],
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Bracket('[') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('['), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_array_expr")
     panic()
   }
   let exprs : Array[Expr] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Bracket(']') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, { kind: Bracket(']') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, .. tokens] => {
+    [{ kind: Bracket(']'), .. }, .. rest] => break rest
+    [{ kind: Symbol(","), .. }, { kind: Bracket(']'), .. }, .. rest] =>
+      break rest
+    [{ kind: Symbol(","), .. }, .. tokens] => {
       let (expr, rest) = parse_expr(tokens)
       exprs.push(expr)
       continue rest

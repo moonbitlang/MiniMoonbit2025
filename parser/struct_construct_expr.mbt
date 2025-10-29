@@ -8,31 +8,31 @@ pub(all) struct StructConstructExpr {
 pub fn parse_struct_construct(
   tokens : ArrayView[Token],
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Upper(name) }, .. tokens] else {
+  guard tokens is [{ kind: Upper(name), ..  }, .. tokens] else {
     println("Compiler ICE: Misuse parse_struct_or_enum_construct")
     panic()
   }
-  guard tokens is [{ kind: Symbol("::") }, .. tokens] else {
+  guard tokens is [{ kind: Symbol("::"), ..  }, .. tokens] else {
     println("Compiler ICE: Misuse parse_struct_or_enum_construct")
     panic()
   }
-  guard tokens is [{ kind: Bracket('{') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('{'), ..  }, .. tokens] else {
     raise ParseError("Expect '{' for struct construct")
   }
   let fields : Array[(String, Expr)] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Bracket('}') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, { kind: Bracket('}') }, .. rest] => break rest
-    [{ kind: Symbol(",") }, { kind: Lower(field) }, .. tokens] => {
-      guard tokens is [{ kind: Symbol(":") }, .. tokens] else {
+    [{ kind: Bracket('}'), ..  }, .. rest] => break rest
+    [{ kind: Symbol(","), ..  }, { kind: Bracket('}'), ..  }, .. rest] => break rest
+    [{ kind: Symbol(","), ..  }, { kind: Lower(field), ..  }, .. tokens] => {
+      guard tokens is [{ kind: Symbol(":"), ..  }, .. tokens] else {
         raise ParseError("Expect ':'")
       }
       let (expr, rest) = parse_expr(tokens)
       fields.push((field, expr))
       continue rest
     }
-    [{ kind: Lower(field) }, .. tokens] => {
-      guard tokens is [{ kind: Symbol(":") }, ..] else {
+    [{ kind: Lower(field), ..  }, .. tokens] => {
+      guard tokens is [{ kind: Symbol(":"), ..  }, ..] else {
         raise ParseError("Expect ':'")
       }
       let (expr, rest) = parse_expr(tokens[1:])

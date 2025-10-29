@@ -8,7 +8,7 @@ pub(all) struct WhileStmt {
 pub fn parse_while_stmt(
   tokens : ArrayView[Token],
 ) -> (WhileStmt, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Keyword(While) }, .. tokens] else {
+  guard tokens is [{ kind: Keyword(While), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_while_stmt")
     panic()
   }

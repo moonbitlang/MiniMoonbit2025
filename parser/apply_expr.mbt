@@ -17,14 +17,14 @@ pub fn parse_apply_expr(
 ) -> (ApplyExpr, ArrayView[Token]) raise ParseError {
   let (atom_expr, tokens) = parse_atom_expr(tokens)
   let apply_expr = ApplyExpr::{ kind: ApplyExprKind::AtomExpr(atom_expr) }
-  if !(tokens is [{ kind: Bracket('[') | Symbol(".") | Bracket('(') }, ..]) {
+  if !(tokens is [{ kind: Bracket('[') | Symbol(".") | Bracket('('), .. }, ..]) {
     return (apply_expr, tokens)
   }
   let mut apply_expr = apply_expr
   loop tokens {
-    [{ kind: Bracket('[') }, .. tokens] => {
+    [{ kind: Bracket('['), ..  }, .. tokens] => {
       let (index_expr, tokens) = parse_expr(tokens)
-      guard tokens is [{ kind: Bracket(']') }, .. tokens] else {
+      guard tokens is [{ kind: Bracket(']'), .. }, .. tokens] else {
         raise ParseError("Expect ']'")
       }
       apply_expr = ApplyExpr::{
@@ -32,15 +32,15 @@ pub fn parse_apply_expr(
       }
       continue tokens
     }
-    [{ kind: Symbol(".") }, { kind: Lower(field) }, .. tokens] => {
+    [{ kind: Symbol("."), .. }, { kind: Lower(field), .. }, .. tokens] => {
       apply_expr = ApplyExpr::{
         kind: ApplyExprKind::FieldAccess(apply_expr, field),
       }
       continue tokens
     }
-    [{ kind: Bracket('(') }, .. tokens] => {
+    [{ kind: Bracket('('), .. }, .. tokens] => {
       let (args, tokens) = parse_expr_list(tokens)
-      guard tokens is [{ kind: Bracket(')') }, .. tokens] else {
+      guard tokens is [{ kind: Bracket(')'), .. }, .. tokens] else {
         raise ParseError("Expect ')'")
       }
       apply_expr = ApplyExpr::{ kind: ApplyExprKind::Call(apply_expr, args) }

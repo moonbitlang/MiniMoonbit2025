@@ -6,6 +6,7 @@ pub(all) struct ExternFunction {
   ffi_name : String
 } derive(Show)
 
+///|
 pub fn Context::check_extern_function(
   self : Context,
   func : @parser.ExternFunction,
@@ -20,5 +21,10 @@ pub fn Context::check_extern_function(
     self.type_env.set(name, param_ty)
     param_list.push(Param::{ name, ty: param_ty.kind })
   }
-  ExternFunction::{ fname: func.fname, param_list, ret_ty, ffi_name: func.ffi_name }
+  ExternFunction::{
+    fname: func.fname,
+    param_list,
+    ret_ty,
+    ffi_name: func.ffi_name,
+  }
 }

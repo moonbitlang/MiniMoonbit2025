@@ -1,4 +1,5 @@
-pub fn codegen_all(code: String) -> @llvm.Module raise {
+///|
+pub fn codegen_all(code : String) -> @llvm.Module raise {
   let tokens = @lexer.tokenize(code)
   let ast = @parser.parse(tokens)
   let typed_ast = @typecheck.typecheck(ast)

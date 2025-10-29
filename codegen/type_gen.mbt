@@ -45,6 +45,7 @@ pub fn Context::type_codegen_concrete(
   }
 }
 
+///|
 pub fn Context::collect_extern_func_values(
   self : Context,
   knf_externs : Map[String, @knf.KnfExtern],

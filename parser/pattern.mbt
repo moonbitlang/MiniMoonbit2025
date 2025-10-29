@@ -15,26 +15,26 @@ pub fn parse_pattern(
   tokens : ArrayView[Token],
 ) -> (Pattern, ArrayView[Token]) raise ParseError {
   match tokens {
-    [{ kind: Wildcard }, .. tokens] => {
+    [{ kind: Wildcard, ..  }, .. tokens] => {
       let pattern = Pattern::{ kind: Wildcard }
       (pattern, tokens)
     }
-    [{ kind: Lower(ident) }, .. tokens] => {
+    [{ kind: Lower(ident), ..  }, .. tokens] => {
       let pattern = Pattern::{ kind: Ident(ident) }
       (pattern, tokens)
     }
-    [{ kind: Bracket('(') }, .. tokens] => {
+    [{ kind: Bracket('('), ..  }, .. tokens] => {
       let patterns : Array[Pattern] = Array::new()
       let tokens = loop tokens {
-        [{ kind: Bracket(')') }, .. tokens] => break tokens
-        [{ kind: Lower(_) | Wildcard | Bracket('(') }, ..] as tokens => {
+        [{ kind: Bracket(')'), ..  }, .. tokens] => break tokens
+        [{ kind: Lower(_) | Wildcard | Bracket('('), ..  }, ..] as tokens => {
           let (pat, rest) = parse_pattern(tokens)
           patterns.push(pat)
           continue rest
         }
         [
-          { kind: Symbol(",") },
-          { kind: Lower(_) | Wildcard | Bracket('(') | Bracket(')') },
+          { kind: Symbol(","), ..  },
+          { kind: Lower(_) | Wildcard | Bracket('(') | Bracket(')'), ..  },
           ..,
         ] as tokens => continue tokens[1:]
         [] => {

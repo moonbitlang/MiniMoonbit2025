@@ -21,15 +21,15 @@ pub fn parse_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
   match tokens {
-    [{ kind: Upper("Unit") }, .. rest] => (Type::{ kind: Unit }, rest)
-    [{ kind: Upper("Bool") }, .. rest] => (Type::{ kind: Bool }, rest)
-    [{ kind: Upper("Int") }, .. rest] => (Type::{ kind: Int }, rest)
-    [{ kind: Upper("Double") }, .. rest] => (Type::{ kind: Double }, rest)
-    [{ kind: Upper("String") }, .. rest] => (Type::{ kind: String }, rest)
-    [{ kind: Bracket('(') }, ..] as tokens =>
+    [{ kind: Upper("Unit"), .. }, .. rest] => (Type::{ kind: Unit }, rest)
+    [{ kind: Upper("Bool"), .. }, .. rest] => (Type::{ kind: Bool }, rest)
+    [{ kind: Upper("Int"), .. }, .. rest] => (Type::{ kind: Int }, rest)
+    [{ kind: Upper("Double"), .. }, .. rest] => (Type::{ kind: Double }, rest)
+    [{ kind: Upper("String"), .. }, .. rest] => (Type::{ kind: String }, rest)
+    [{ kind: Bracket('('), .. }, ..] as tokens =>
       parse_tuple_or_function_type(tokens)
-    [{ kind: Upper("Array") }, ..] as tokens => parse_array_type(tokens)
-    [{ kind: Upper(def) }, .. rest] => (Type::{ kind: Defined(def) }, rest)
+    [{ kind: Upper("Array"), .. }, ..] as tokens => parse_array_type(tokens)
+    [{ kind: Upper(def), .. }, .. rest] => (Type::{ kind: Defined(def) }, rest)
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
@@ -42,30 +42,30 @@ pub fn parse_type(
 fn parse_tuple_or_function_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Bracket('(') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('('), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_tuple_or_function_type")
     panic()
   }
   let tys : Array[TypeKind] = Array::new()
   let tokens = loop tokens {
-    [{ kind: Upper(_) | Bracket('(') }, ..] as tokens => {
+    [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
       let (ty, rest) = parse_type(tokens)
       tys.push(ty.kind)
       continue rest
     }
-    [{ kind: Symbol(",") }, { kind: Upper(_) | Bracket('(') }, ..] as tokens => {
+    [{ kind: Symbol(","), .. }, { kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
       let (ty, rest) = parse_type(tokens[1:])
       tys.push(ty.kind)
       continue rest
     }
-    [{ kind: Bracket(')') }, .. rest] => break rest
+    [{ kind: Bracket(')'), .. }, .. rest] => break rest
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
     }
     tok => raise ParseError("InValid Type Parsing, \{tok}")
   }
-  if tokens is [{ kind: Symbol("->") }, .. tokens] {
+  if tokens is [{ kind: Symbol("->"), .. }, .. tokens] {
     let (ret_ty, rest) = parse_type(tokens)
     (Type::{ kind: Function(tys, ret_ty.kind) }, rest)
   } else {
@@ -77,15 +77,15 @@ fn parse_tuple_or_function_type(
 fn parse_array_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
-  guard tokens is [{ kind: Upper("Array") }, .. tokens] else {
+  guard tokens is [{ kind: Upper("Array"), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_array_type")
     panic()
   }
-  guard tokens is [{ kind: Bracket('[') }, .. tokens] else {
+  guard tokens is [{ kind: Bracket('['), .. }, .. tokens] else {
     raise ParseError("InValid Array Type Parsing, missing '['")
   }
   let (elem_ty, rest) = parse_type(tokens)
-  guard rest is [{ kind: Bracket(']') }, .. rest] else {
+  guard rest is [{ kind: Bracket(']'), .. }, .. rest] else {
     raise ParseError("InValid Array Type Parsing, missing ']'")
   }
   (Type::{ kind: Array(elem_ty.kind) }, rest)
