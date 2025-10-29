@@ -152,6 +152,10 @@ void print_bool(uint8_t value) {
   }
 }
 
+void print_string(const char *str) {
+  printf("%s", str);
+}
+
 void* moonbit_malloc(int32_t size) {
   return malloc(size);
 }
