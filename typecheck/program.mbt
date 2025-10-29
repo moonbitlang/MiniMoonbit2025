@@ -52,6 +52,10 @@ pub fn Context::new() -> Context {
 
 ///|
 pub fn Context::lookup_type(self : Context, name : String) -> Type? {
+  if name is ("println" | "print") {
+    let t = Type::{ kind: Function([Any], Unit), mutable: false }
+    return Some(t)
+  }
   match self.type_env.get(name) {
     None => None
     Some({ kind, mutable }) => {

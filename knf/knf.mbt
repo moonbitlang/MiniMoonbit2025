@@ -78,5 +78,13 @@ pub fn knf_transform(
   prog : @typecheck.Program,
 ) -> KnfProgram raise KnfTransformError {
   let context = Context::new()
+  context.globals.set("__builtin_println_int", Function([Int], Unit))
+  context.globals.set("__builtin_println_string", Function([String], Unit))
+  context.globals.set("__builtin_println_bool", Function([Bool], Unit))
+  context.globals.set("__builtin_println_double", Function([Double], Unit))
+  context.globals.set("__builtin_print_int", Function([Int], Unit))
+  context.globals.set("__builtin_print_string", Function([String], Unit))
+  context.globals.set("__builtin_print_bool", Function([Bool], Unit))
+  context.globals.set("__builtin_print_double", Function([Double], Unit))
   context.program_to_knf(prog)
 }

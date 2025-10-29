@@ -180,6 +180,46 @@ void print_endline() {
   printf("\n");
 }
 
+void __builtin_println_int(int value) {
+  printf("%d\n", value);
+}
+
+void __builtin_println_bool(uint8_t value) {
+  if (value) {
+    printf("true\n");
+  } else {
+    printf("false\n");
+  }
+}
+
+void __builtin_println_string(const char *str) {
+  printf("%s\n", str);
+}
+
+void __builtin_println_double(double value) {
+  printf("%f\n", value);
+}
+
+void __builtin_print_int(int value) {
+  printf("%d", value);
+}
+
+void __builtin_print_bool(uint8_t value) {
+  if (value) {
+    printf("true");
+  } else {
+    printf("false");
+  }
+}
+
+void __builtin_print_string(const char *str) {
+  printf("%s", str);
+}
+
+void __builtin_print_double(double value) {
+  printf("%f", value);
+}
+
 int main() {
   moonbit_main();
   return 0;

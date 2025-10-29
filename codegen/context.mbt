@@ -77,6 +77,30 @@ pub fn Context::new(mod_name : String) -> Context {
     ])
   let int_of_float_ty = try! llvm_ctx.getFunctionType(i32ty, [doublety])
   let float_of_int_ty = try! llvm_ctx.getFunctionType(doublety, [i32ty])
+  let builtin_print_int_ty = try! llvm_ctx.getFunctionType(
+      voidty, [i32ty],
+    )
+  let builtin_print_double_ty = try! llvm_ctx.getFunctionType(
+      voidty, [doublety],
+    )
+  let builtin_print_bool_ty = try! llvm_ctx.getFunctionType(
+      voidty, [boolty],
+    )
+  let builtin_print_string_ty = try! llvm_ctx.getFunctionType(
+      voidty, [ptrty],
+    )
+  let builtin_println_int_ty = try! llvm_ctx.getFunctionType(
+      voidty, [i32ty],
+    )
+  let builtin_println_double_ty = try! llvm_ctx.getFunctionType(
+      voidty, [doublety],
+    )
+  let builtin_println_bool_ty = try! llvm_ctx.getFunctionType(
+      voidty, [boolty],
+    )
+  let builtin_println_string_ty = try! llvm_ctx.getFunctionType(
+      voidty, [ptrty],
+    )
   let builtin_func_tys = {
     "moonbit_malloc": moonbit_malloc_ty,
     "make_int_array": make_int_array_ty,
@@ -98,6 +122,14 @@ pub fn Context::new(mod_name : String) -> Context {
     "array_ptr_put": array_ptr_put_ty,
     "int_of_float": int_of_float_ty,
     "float_of_int": float_of_int_ty,
+    "__builtin_print_int": builtin_print_int_ty,
+    "__builtin_print_double": builtin_print_double_ty,
+    "__builtin_print_bool": builtin_print_bool_ty,
+    "__builtin_print_string": builtin_print_string_ty,
+    "__builtin_println_int": builtin_println_int_ty,
+    "__builtin_println_double": builtin_println_double_ty,
+    "__builtin_println_bool": builtin_println_bool_ty,
+    "__builtin_println_string": builtin_println_string_ty,
   }
   let ctx = Context::{
     llvm_ctx,
@@ -153,6 +185,10 @@ pub fn Context::get_extern_function(
   }
 }
 
+fn Context::is_builtin_name(self : Context, name : @knf.Name) -> Bool {
+  self.builtin_func_tys.get(name.to_string()) is Some(_)
+}
+
 fn Context::is_extern_name(self : Context, name : @knf.Name) -> Bool {
   self.extern_funcs.get(name.to_string()) is Some(_)
 }
@@ -162,19 +198,24 @@ fn Context::is_extern_name(self : Context, name : @knf.Name) -> Bool {
 /// For example, for extern function `print_int: (Int) -> Unit`, 
 /// we generate a wrapper function that accepts an environment pointer
 /// and forwards the call to the actual builtin function.
-pub fn Context::generate_extern_closure(
+pub fn Context::generate_extern_or_builtin_closure(
   self : Context,
   name : @knf.Name,
 ) -> &@llvm.Value raise CodegenError {
-  let extern_name = name.to_string()
-
-  guard self.extern_funcs.get(extern_name) is Some(extern_func) else {
-    raise CodegenError("Extern function not found for \{extern_name}")
+  let func_name = name.to_string()
+  let func_value = if self.is_builtin_name(name) {
+    self.get_builtin_function(func_name) 
+  } else {
+    guard self.extern_funcs.get(func_name) is Some(extern_func) else {
+      raise CodegenError("Extern function not found for \{func_name}")
+    }
+    extern_func
   }
-  let extern_func_ty = extern_func.getFunctionType()
+
+  let func_ty = func_value.getFunctionType()
 
   // Create wrapper function name
-  let wrapper_name = "\{extern_name}$closure"
+  let wrapper_name = "\{func_name}$closure"
 
   // Check if wrapper already exists
   match self.functions.get(wrapper_name) {
@@ -202,11 +243,11 @@ pub fn Context::generate_extern_closure(
       let ptrty = self.llvm_ctx.getPtrTy()
 
       // Build wrapper function type: add env pointer as first parameter
-      let orig_param_types = extern_func_ty.getParamTypes()
+      let orig_param_types = func_ty.getParamTypes()
       let wrapper_param_types : Array[&@llvm.Type] = Array::new()
       wrapper_param_types.push(ptrty) // env pointer
       wrapper_param_types.append(orig_param_types)
-      let ret_ty = extern_func_ty.getReturnType()
+      let ret_ty = func_ty.getReturnType()
       let wrapper_func_ty = try! self.llvm_ctx.getFunctionType(
           ret_ty, wrapper_param_types,
         )
@@ -234,7 +275,7 @@ pub fn Context::generate_extern_closure(
       }
 
       // Call the extern function
-      let result = try! self.builder.createCall(extern_func, args)
+      let result = try! self.builder.createCall(func_value, args)
 
       // Return
       let ret_ty_enum = ret_ty.asTypeEnum()
@@ -336,7 +377,7 @@ fn Context::get_value_by_name_or_load(
 ) -> &@llvm.Value raise {
   // Check if this is a builtin function - if so, generate closure wrapper
   if self.is_extern_name(name) {
-    return self.generate_extern_closure(name)
+    return self.generate_extern_or_builtin_closure(name)
   }
 
   // Check if this is a top-level function first

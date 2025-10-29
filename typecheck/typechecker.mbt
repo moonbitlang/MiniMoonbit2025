@@ -89,11 +89,44 @@ pub fn Context::substitute_apply_expr_type_var(
       ApplyExprKind::FieldAccess(new_struct_expr, field_name)
     }
     ApplyExprKind::Call(callee_expr, arg_exprs) => {
-      let new_callee_expr = self.substitute_apply_expr_type_var(callee_expr)
       let new_arg_exprs = Array::new()
       for arg in arg_exprs {
         let new_arg = self.substitute_expr_type_var(arg)
         new_arg_exprs.push(new_arg)
+      }
+      let new_callee_expr = self.substitute_apply_expr_type_var(callee_expr)
+      let new_callee_expr = if new_callee_expr.kind is AtomExpr(a) {
+        if a.kind is Ident("println") {
+          let arg_ty = new_arg_exprs[0].ty
+          let (new_callee_name, new_callee_arg_ty) = match arg_ty {
+            Int => ("__builtin_println_int", TypeKind::Int)
+            Double => ("__builtin_println_double", Double)
+            Bool => ("__builtin_println_bool", Bool)
+            String => ("__builtin_println_string", String)
+            ty => raise TypeCheckError("println does not support this type: \{ty}")
+          }
+          let callee_atom_kind = AtomExprKind::Ident(new_callee_name)
+          let callee_type_kind = Function([new_callee_arg_ty], Unit)
+          let callee_atom_expr = AtomExpr::{ kind: callee_atom_kind, ty: callee_type_kind }
+          ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind }
+        } else if a.kind is Ident("print") {
+          let arg_ty = new_arg_exprs[0].ty
+          let (new_callee_name, new_callee_arg_ty) = match arg_ty {
+            Int => ("__builtin_print_int", TypeKind::Int)
+            Double => ("__builtin_print_double", Double)
+            Bool => ("__builtin_print_bool", Bool)
+            String => ("__builtin_print_string", String)
+            ty => raise TypeCheckError("print does not support this type: \{ty}")
+          }
+          let callee_atom_kind = AtomExprKind::Ident(new_callee_name)
+          let callee_type_kind = Function([new_callee_arg_ty], Unit)
+          let callee_atom_expr = AtomExpr::{ kind: callee_atom_kind, ty: callee_type_kind }
+          ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind }
+        } else {
+          new_callee_expr
+        }
+      } else {
+        new_callee_expr
       }
       ApplyExprKind::Call(new_callee_expr, new_arg_exprs)
     }
