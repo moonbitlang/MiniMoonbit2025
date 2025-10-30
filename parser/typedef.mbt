@@ -1,6 +1,7 @@
 ///|
 pub struct Type {
   kind : TypeKind
+  toks: ArrayView[Token]
 } derive(Show, Eq)
 
 ///|
@@ -24,18 +25,18 @@ pub fn parse_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
   match tokens {
-    [{ kind: Upper("Unit"), .. }, .. rest] => (Type::{ kind: Unit }, rest)
-    [{ kind: Upper("Bool"), .. }, .. rest] => (Type::{ kind: Bool }, rest)
-    [{ kind: Upper("Int"), .. }, .. rest] => (Type::{ kind: Int }, rest)
-    [{ kind: Upper("Int64"), .. }, .. rest] => (Type::{ kind: Int64 }, rest)
-    [{ kind: Upper("Double"), .. }, .. rest] => (Type::{ kind: Double }, rest)
-    [{ kind: Upper("Float"), .. }, .. rest] => (Type::{ kind: Float }, rest)
-    [{ kind: Upper("Char"), .. }, .. rest] => (Type::{ kind: Char }, rest)
-    [{ kind: Upper("String"), .. }, .. rest] => (Type::{ kind: String }, rest)
+    [{ kind: Upper("Unit"), .. }, .. rest] => (Type::{ kind: Unit, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Bool"), .. }, .. rest] => (Type::{ kind: Bool, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Int"), .. }, .. rest] => (Type::{ kind: Int, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Int64"), .. }, .. rest] => (Type::{ kind: Int64, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Double"), .. }, .. rest] => (Type::{ kind: Double, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Float"), .. }, .. rest] => (Type::{ kind: Float, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Char"), .. }, .. rest] => (Type::{ kind: Char, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("String"), .. }, .. rest] => (Type::{ kind: String, toks: tokens[0:1] }, rest)
     [{ kind: Bracket('('), .. }, ..] as tokens =>
       parse_tuple_or_function_type(tokens)
     [{ kind: Upper("Array"), .. }, ..] as tokens => parse_array_type(tokens)
-    [{ kind: Upper(def), .. }, .. rest] => (Type::{ kind: Defined(def) }, rest)
+    [{ kind: Upper(def), .. }, .. rest] => (Type::{ kind: Defined(def), toks: tokens[0:1] }, rest)
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
@@ -48,6 +49,7 @@ pub fn parse_type(
 fn parse_tuple_or_function_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
+  let init_tokens = tokens
   guard tokens is [{ kind: Bracket('('), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_tuple_or_function_type")
     panic()
@@ -73,9 +75,13 @@ fn parse_tuple_or_function_type(
   }
   if tokens is [{ kind: Symbol("->"), .. }, .. tokens] {
     let (ret_ty, rest) = parse_type(tokens)
-    (Type::{ kind: Function(tys, ret_ty.kind) }, rest)
+    let len = rest.start_offset() - init_tokens.start_offset()
+    let toks = init_tokens[0:len]
+    (Type::{ kind: Function(tys, ret_ty.kind), toks }, rest)
   } else {
-    (Type::{ kind: Tuple(tys) }, tokens)
+    let len = tokens.start_offset() - init_tokens.start_offset()
+    let toks = init_tokens[0:len]
+    (Type::{ kind: Tuple(tys), toks }, tokens)
   }
 }
 
@@ -83,6 +89,7 @@ fn parse_tuple_or_function_type(
 fn parse_array_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
+  let init_tokens = tokens
   guard tokens is [{ kind: Upper("Array"), .. }, .. tokens] else {
     println("Compiler ICE: Misuse parse_array_type")
     panic()
@@ -94,5 +101,7 @@ fn parse_array_type(
   guard rest is [{ kind: Bracket(']'), .. }, .. rest] else {
     raise ParseError("InValid Array Type Parsing, missing ']'")
   }
-  (Type::{ kind: Array(elem_ty.kind) }, rest)
+  let len = rest.start_offset() - init_tokens.start_offset()
+  let toks = init_tokens[0:len]
+  (Type::{ kind: Array(elem_ty.kind), toks }, rest)
 }

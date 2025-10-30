@@ -1,4 +1,4 @@
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 
 fn f(u: Unit) -> Int {
@@ -10,6 +10,6 @@ fn g(u: Unit) -> Int {
 }
 
 fn main {
-  let x = f(());
+  let x = f(())
   print_int((if x <= 0 { g(()) + x } else { x }) + x)
 }

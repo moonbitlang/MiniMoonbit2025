@@ -1,12 +1,12 @@
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 fn foo(a: Int, b: Int, c: Int, d: Int, e: Int, f: Int) -> Unit {
-  let _ =  print_int(a);
-  let _ =  print_int(b);
-  let _ =  print_int(c);
-  let _ =  print_int(d);
-  let _ =  print_int(e);
-  let _ =  print_int(f);
+  let _ =  print_int(a)
+  let _ =  print_int(b)
+  let _ =  print_int(c)
+  let _ =  print_int(d)
+  let _ =  print_int(e)
+  let _ =  print_int(f)
   ()
 }
 

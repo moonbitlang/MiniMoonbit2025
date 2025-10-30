@@ -28,8 +28,15 @@ pub fn parse_struct_field(
   }
   let (ty, tokens) = parse_type(tokens)
   let struct_field = StructField::{ is_mut, name, ty }
-  guard tokens is [{ kind: Symbol(";"), .. }, .. tokens] else {
-    raise ParseError("Expect ';' after struct field")
+  //guard tokens is [{ kind: Symbol(";"), .. }, .. tokens] else {
+  //  raise ParseError("Expect ';' after struct field")
+  //}
+  let tokens = if tokens is [{ kind: Symbol(";"), .. }, ..tokens] {
+    tokens
+  } else if tokens is [tok, ..] && tok.line != ty.toks[ty.toks.length() - 1].line {
+    tokens
+  } else {
+    tokens
   }
   (struct_field, tokens)
 }

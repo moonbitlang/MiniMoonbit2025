@@ -3,7 +3,7 @@ extern "C" fn int_of_float(x : Double) -> Int = "int_of_float";
 extern "C" fn float_of_int(x : Int) -> Double = "float_of_int";
 extern "C" fn sqrt(x : Double) -> Double = "sqrt";
 
-let n : Int = 400;
+let n : Int = 400
 
 let next : Array[Int] = [1];
 
@@ -19,10 +19,10 @@ fn simple_srand(seed : Int) -> Unit {
 
 fn new_mat(rows : Int, cols : Int) -> Array[Array[Double]] {
   let data = Array::make(rows, Array::make(cols, 0.0));
-  let mut i = 0;
+  let mut i = 0
   while i < rows {
     data[i] = Array::make(cols, 0.0);
-    i = i + 1;
+    i = i + 1
   }
   data
 }
@@ -32,7 +32,7 @@ fn mat_get(m : Array[Array[Double]], i : Int, j : Int) -> Double {
 }
 
 fn set_mat(m : Array[Array[Double]], i : Int, j : Int, value : Double) -> Unit {
-  m[i][j] = value;
+  m[i][j] = value
 }
 
 fn rand_mat(mat : Array[Array[Double]], n : Int) -> Unit {
@@ -49,14 +49,14 @@ fn rand_mat(mat : Array[Array[Double]], n : Int) -> Unit {
 
 fn sum_of_mat(mat : Array[Array[Double]], n : Int) -> Double {
   let mut sum = 0.0;
-  let mut i = 0;
+  let mut i = 0
   while i < n {
     let mut j = 0;
     while j < n {
       sum = sum + mat_get(mat, i, j);
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
   sum
 }
@@ -75,7 +75,7 @@ fn copy_mat(dest : Array[Array[Double]], src : Array[Array[Double]], n : Int) ->
 
 fn qr_decomp(a : Array[Array[Double]], q : Array[Array[Double]], r : Array[Array[Double]], n : Int) -> Int {
   let a_copy = new_mat(n, n);
-  copy_mat(a_copy, a, n);
+  copy_mat(a_copy, a, n)
 
   let mut i = 0;
   while i < n {
@@ -89,12 +89,12 @@ fn qr_decomp(a : Array[Array[Double]], q : Array[Array[Double]], r : Array[Array
 
   let mut i = 0;
   while i < n {
-    let mut norm = 0.0;
-    let mut k = 0;
+    let mut norm = 0.0
+    let mut k = 0
     while k < n {
       let val = mat_get(a_copy, k, i);
       norm = norm + val * val;
-      k = k + 1;
+      k = k + 1
     }
     set_mat(r, i, i, sqrt(norm));
 
@@ -111,7 +111,7 @@ fn qr_decomp(a : Array[Array[Double]], q : Array[Array[Double]], r : Array[Array
         set_mat(q, k, i, mat_get(a_copy, k, i) / rii);
         k = k + 1;
       }
-    };
+    }
 
     let mut j = i + 1;
     while j < n {
@@ -127,11 +127,11 @@ fn qr_decomp(a : Array[Array[Double]], q : Array[Array[Double]], r : Array[Array
         let old_val = mat_get(a_copy, k, j);
         let new_val = old_val - mat_get(r, i, j) * mat_get(q, k, i);
         set_mat(a_copy, k, j, new_val);
-        k = k + 1;
+        k = k + 1
       }
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
   1
 }

@@ -1,5 +1,5 @@
 
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 fn f(x: Int) -> Int {
   x + 123

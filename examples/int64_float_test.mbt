@@ -1,9 +1,9 @@
 // Test for Int64, Float and Char types support
 
 fn test_int64() -> Unit {
-  let a: Int64 = 100L;
-  let b: Int64 = 200L;
-  let c: Int64 = a + b;
+  let a = 100L;
+  let b = 200L;
+  let c = a + b;
   println(c);
   
   let arr: Array[Int64] = [1L, 2L, 3L, 4L, 5L];
@@ -29,10 +29,10 @@ fn test_float() -> Unit {
 }
 
 fn test_char() -> Unit {
-  let c1: Char = 'A';
+  let c1 = 'A';
   let c2: Char = 'Z';
-  println(c1);
-  println(c2);
+  println(c1)
+  println(c2)
   
   let carr: Array[Char] = ['H', 'e', 'l', 'l', 'o'];
   for i = 0; i < carr.length(); i = i + 1 {
@@ -41,9 +41,9 @@ fn test_char() -> Unit {
 }
 
 fn test_string_char() -> Unit {
-  let s: String = "Hello";
+  let s: String = "Hello"
   for i = 0; i < s.length(); i = i + 1 {
-    println(s[i]);
+    println(s[i])
   }
 }
 

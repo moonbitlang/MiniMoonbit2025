@@ -13,7 +13,7 @@ fn loop3(i: Int, j: Int, k: Int, a: Array[Array[Double]], b: Array[Array[Double]
 
 fn loop2(i: Int, m: Int, j: Int, a: Array[Array[Double]], b: Array[Array[Double]], c: Array[Array[Double]]) -> Unit {
     if 0 <= j {
-        let _ = loop3(i, j, m - 1, a, b, c);
+        let _ = loop3(i, j, m - 1, a, b, c)
         loop2(i, m, j - 1, a, b, c)
     } else {
       ()
@@ -22,7 +22,7 @@ fn loop2(i: Int, m: Int, j: Int, a: Array[Array[Double]], b: Array[Array[Double]
 
 fn loop1(i: Int, m: Int, n: Int, a: Array[Array[Double]], b: Array[Array[Double]], c: Array[Array[Double]]) -> Unit {
     if 0 <= i {
-        let _ = loop2(i, m, n - 1, a, b, c);
+        let _ = loop2(i, m, n - 1, a, b, c)
         loop1(i - 1, m, n, a, b, c)
     } else {
       ()
@@ -35,10 +35,10 @@ fn mul(l: Int, m: Int, n: Int, a: Array[Array[Double]], b: Array[Array[Double]],
 }
 
 fn main {
-  let dummy = Array::make(0, 0.0);
+  let dummy = Array::make(0, 0.0)
   fn init(i: Int, n: Int, mat: Array[Array[Double]]) -> Unit {
     if 0 <= i {
-        mat[i] = Array::make(n, 0.0);
+        mat[i] = Array::make(n, 0.0)
         init(i - 1, n, mat)
     } else {
       ()

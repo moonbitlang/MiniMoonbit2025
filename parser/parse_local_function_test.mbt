@@ -56,7 +56,7 @@ test "Local Function Parsing Test - 1" {
   assert_true(func.param_list.length() is 2)
   assert_true(func.param_list[0] is ("x", None))
   assert_true(func.param_list[1] is ("y", None))
-  assert_true(func.ret_ty is Some({ kind: Int }))
+  assert_true(func.ret_ty is Some({ kind: Int, .. }))
   assert_true(func.body.stmts.length() is 1)
   assert_true(func.body.stmts[0].kind is ExprStmt(_))
 }
@@ -77,7 +77,7 @@ test "Local Function Parsing Test - 2" {
   let (func, _) = parse_local_function(tokens)
   assert_true(func.fname is "sin_max")
   assert_true(func.param_list.length() is 2)
-  assert_true(func.param_list[0] is ("x", Some({ kind: Double })))
+  assert_true(func.param_list[0] is ("x", Some({ kind: Double, .. })))
   assert_true(func.param_list[1] is ("y", None))
   assert_true(func.ret_ty is None)
   assert_true(func.body.stmts.length() is 3)

@@ -133,7 +133,7 @@ pub fn Context::check_apply_expr(
     Call(callee_expr, arg_exprs) => {
       let callee_expr = self.check_apply_expr(callee_expr)
       guard callee_expr.ty is Function(arg_tys, ret_ty) else {
-        let msg = "Attempted to call a non-function type"
+        let msg = "Attempted to call a non-function type: \{callee_expr.ty}"
         self.throw_(callee_expr.toks[0], msg, Error)
         return ApplyExpr::{
           kind: Call(callee_expr, arg_exprs.map(e => self.check_expr(e))),

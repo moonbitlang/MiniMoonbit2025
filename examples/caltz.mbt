@@ -1,5 +1,5 @@
 
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 fn callatz(input : Int) -> Int {
   let mut cnt = 0
@@ -11,13 +11,13 @@ fn callatz(input : Int) -> Int {
     } else {
       n = (3 * n + 1) / 2
       cnt = cnt + 1
-    };
+    }
   }
   cnt
 }
 
 fn main {
   let input = 7
-  let result = callatz(input);
+  let result = callatz(input)
   print_int(result);
 }

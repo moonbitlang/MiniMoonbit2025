@@ -1,5 +1,5 @@
 
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 fn f(n: Int) -> Unit {
   if !(0 <= n) {
@@ -7,7 +7,7 @@ fn f(n: Int) -> Unit {
   } else {
     let t1 = print_int(n);
     let a = Array::make(1, f);
-    let a0 = a[0];
+    let a0 = a[0]
     a0(n - 1)
   }
 }

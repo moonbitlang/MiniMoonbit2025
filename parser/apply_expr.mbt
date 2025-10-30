@@ -38,9 +38,10 @@ pub fn parse_apply_expr(
   if !(tokens is [{ kind: Bracket('[') | Symbol(".") | Bracket('('), .. }, ..]) {
     return (apply_expr, tokens)
   }
+  let mut last_apply_line = atom_expr.toks[atom_expr.toks.length() - 1].line
   let mut apply_expr = apply_expr
   loop tokens {
-    [{ kind: Bracket('['), .. }, .. tokens] => {
+    [{ kind: Bracket('['), line, .. }, .. tokens] if line == last_apply_line => {
       let (index_expr, tokens) = parse_expr(tokens)
       guard tokens is [{ kind: Bracket(']'), .. }, .. tokens] else {
         @lexer.throw_(tokens[0], "ParseError: Expect ']'", Error)
@@ -51,17 +52,19 @@ pub fn parse_apply_expr(
         init_tokens,
         tokens,
       )
+      last_apply_line = tokens[0].line
       continue tokens
     }
-    [{ kind: Symbol("."), .. }, { kind: Lower(field), .. }, .. tokens] => {
+    [{ kind: Symbol("."), line, .. }, { kind: Lower(field), .. }, .. tokens] if line == last_apply_line => {
       apply_expr = ApplyExpr::new(
         FieldAccess(apply_expr, field),
         init_tokens,
         tokens,
       )
+      last_apply_line = tokens[0].line
       continue tokens
     }
-    [{ kind: Bracket('('), .. }, .. tokens] => {
+    [{ kind: Bracket('('), line, .. }, .. tokens] if line == last_apply_line => {
       let (args, tokens) = parse_expr_list(tokens)
       guard tokens is [{ kind: Bracket(')'), .. }, .. tokens] else {
         @lexer.throw_(tokens[0], "ParseError: Expect ')'", Error)

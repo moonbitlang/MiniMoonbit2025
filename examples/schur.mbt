@@ -7,7 +7,7 @@ let rng_next : Array[Int] = [1];
 
 fn simple_rand() -> Int {
   rng_next[0] = rng_next[0] * 1103515245 + 12345;
-  let temp = rng_next[0] / 65536 % 32768;
+  let temp = rng_next[0] / 65536 % 32768
   if temp < 0 { -temp } else { temp }
 }
 
@@ -26,7 +26,7 @@ fn new_matrix(rows : Int, cols : Int) -> Matrix {
   let mut i = 0;
   while i < rows {
     data[i] = Array::make(cols, 0.0);
-    i = i + 1;
+    i = i + 1
   }
   Matrix::{ data: data, rows: rows, cols: cols }
 }
@@ -78,9 +78,9 @@ fn copy_matrix(dest : Matrix, src : Matrix, rows : Int, cols : Int) -> Unit {
 }
 
 fn identity_matrix(mat : Matrix, n : Int) -> Unit {
-  let mut i = 0;
+  let mut i = 0
   while i < n {
-    let mut j = 0;
+    let mut j = 0
     while j < n {
       mat_set(mat, i, j, if i == j { 1.0 } else { 0.0 });
       j = j + 1;
@@ -93,13 +93,13 @@ fn multiply_matrices(a : Matrix, b : Matrix, result : Matrix, rows : Int, inner 
   let temp = new_matrix(rows, cols);
   let mut i = 0;
   while i < rows {
-    let mut j = 0;
+    let mut j = 0
     while j < cols {
       let mut sum = 0.0;
       let mut k = 0;
       while k < inner {
         sum = sum + mat_get(a, i, k) * mat_get(b, k, j);
-        k = k + 1;
+        k = k + 1
       }
       mat_set(temp, i, j, sum);
       j = j + 1;
@@ -115,9 +115,9 @@ fn transpose_matrix(source : Matrix, target : Matrix, rows : Int, cols : Int) ->
     let mut j = 0;
     while j < cols {
       mat_set(target, j, i, mat_get(source, i, j));
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
 }
 

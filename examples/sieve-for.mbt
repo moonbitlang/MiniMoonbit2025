@@ -1,5 +1,3 @@
-extern "C" fn print_int(x : Int) = "print_int";
-extern "C" fn print_endline() = "print_endline";
 
 // Sieve of Eratosthenes using for loops with complex conditions
 fn sqrt_int(n: Int) -> Int {
@@ -88,23 +86,19 @@ fn main {
   let count = sieve(limit, primes);
   
   // Print number of primes found
-  print_int(count);
-  print_endline();
+  println(count);
   
   // Print sum of all primes
   let sum = sum_primes(primes, count);
-  print_int(sum);
-  print_endline();
+  println(sum);
   
   // Print number of twin prime pairs
   let twins = count_twin_primes(primes, count);
-  print_int(twins);
-  print_endline();
+  println(twins);
   
   // Print first 10 primes
   for i = 0; i < 10; i = i + 1 {
-    print_int(primes[i]);
-    print_endline();
+    println(primes[i]);
   }
   
   ()

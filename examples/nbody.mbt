@@ -6,9 +6,9 @@ extern "C" fn int_of_float(x : Double) -> Int = "int_of_float";
 // Converted to MiniMoonbit syntax
 
 // Constants as global let declarations
-let pi : Double = 3.141592653589793;
-let solar_mass : Double = 4.0 * pi * pi;
-let days_per_year : Double = 365.24;
+let pi : Double = 3.141592653589793
+let solar_mass : Double = 4.0 * pi * pi
+let days_per_year : Double = 365.24
 
 // Create a new planet
 fn new_planet(
@@ -53,7 +53,7 @@ let body3: (Array[Double], Array[Double], Array[Double], Array[Double], Array[Do
 2.37847173959480950 * days_per_year,
 -2.96589568540237556 * days_per_year,
 4.36624404335156298 * solar_mass
-);
+)
 
 let body4: (Array[Double], Array[Double], Array[Double], Array[Double], Array[Double], Array[Double], Double) = new_planet(
 1.53796971148509165,
@@ -63,7 +63,7 @@ let body4: (Array[Double], Array[Double], Array[Double], Array[Double], Array[Do
 1.62824170038242295 * days_per_year,
 -9.51592254519715870 * days_per_year,
 5.15138902046611451 * solar_mass
-);
+)
 
 let bodies : Array[Array[(Array[Double], Array[Double], Array[Double], Array[Double], Array[Double], Array[Double], Double)]] = Array::make(5000000, [body0, body1, body2, body3, body4]);
 

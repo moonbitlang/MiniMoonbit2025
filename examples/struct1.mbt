@@ -2,8 +2,8 @@
 extern "C" fn print_int(x : Int) = "print_int";
 
 struct Point {
-  x: Int;
-  y: Int;
+  x: Int
+  y: Int
 }
 
 fn point_add(a: Point, b: Point) -> Point {

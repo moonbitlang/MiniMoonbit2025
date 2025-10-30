@@ -27,9 +27,9 @@ fn sqrt_double(x : Double) -> Double {
 }
 
 struct Matrix {
-  data : Array[Array[Double]];
-  rows : Int;
-  cols : Int;
+  data : Array[Array[Double]]
+  rows : Int
+  cols : Int
 }
 
 fn alloc_mat(rows : Int, cols : Int) -> Matrix {
@@ -51,18 +51,18 @@ fn mat_get(m : Matrix, i : Int, j : Int) -> Double {
 }
 
 fn mat_set(m : Matrix, i : Int, j : Int, value : Double) -> Unit {
-  m.data[i][j] = value;
+  m.data[i][j] = value
 }
 
 fn rand_mat(mat : Matrix, n : Int) -> Unit {
-  let mut i = 0;
+  let mut i = 0
   while i < n {
-    let mut j = 0;
+    let mut j = 0
     while j < n {
       mat_set(mat, i, j, float_of_int(simple_rand() % 10));
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
 }
 
@@ -70,18 +70,18 @@ fn sum_of_mat(mat : Matrix, n : Int) -> Double {
   let mut sum = 0.0;
   let mut i = 0;
   while i < n {
-    let mut j = 0;
+    let mut j = 0
     while j < n {
       sum = sum + mat_get(mat, i, j);
       j = j + 1;
     }
-    i = i + 1;
+    i = i + 1
   }
   sum
 }
 
 fn mat_mul(a : Matrix, b : Matrix, c : Matrix, m : Int, p : Int, n : Int) -> Unit {
-  let mut i = 0;
+  let mut i = 0
   while i < m {
     let mut j = 0;
     while j < n {
@@ -91,18 +91,18 @@ fn mat_mul(a : Matrix, b : Matrix, c : Matrix, m : Int, p : Int, n : Int) -> Uni
         let old_val = mat_get(c, i, j);
         let new_val = old_val + mat_get(a, i, k) * mat_get(b, k, j);
         mat_set(c, i, j, new_val);
-        k = k + 1;
+        k = k + 1
       }
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
 }
 
 fn mat_transpose(a : Matrix, b : Matrix, m : Int, n : Int) -> Unit {
   let mut i = 0;
   while i < m {
-    let mut j = 0;
+    let mut j = 0
     while j < n {
       mat_set(b, j, i, mat_get(a, i, j));
       j = j + 1;
@@ -115,12 +115,12 @@ fn jacobi_rotation(a : Matrix, n : Int, d : Array[Double], v : Matrix) -> Unit {
   let a_copy = alloc_mat(n, n);
   let mut i = 0;
   while i < n {
-    let mut j = 0;
+    let mut j = 0
     while j < n {
       mat_set(a_copy, i, j, mat_get(a, i, j));
-      j = j + 1;
+      j = j + 1
     }
-    i = i + 1;
+    i = i + 1
   }
   
   let mut i = 0;
@@ -134,7 +134,7 @@ fn jacobi_rotation(a : Matrix, n : Int, d : Array[Double], v : Matrix) -> Unit {
   }
   
   let max_iter = 10000;
-  let mut iter = 0;
+  let mut iter = 0
   while iter < max_iter {
     let mut max_off_diag = 0.0;
     let mut p = 0;

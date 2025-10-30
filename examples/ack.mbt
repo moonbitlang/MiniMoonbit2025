@@ -1,5 +1,5 @@
 
-extern "C" fn print_int(x : Int) = "print_int";
+extern "C" fn print_int(x : Int) = "print_int"
 
 fn ack(x : Int, y : Int) -> Int {
   if x <= 0 {

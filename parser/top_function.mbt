@@ -80,7 +80,7 @@ pub fn parse_top_function(
     let (ret_ty, tokens) = parse_type(tokens)
     (param_list, ret_ty, tokens)
   } else {
-    let ret_type = Type::{ kind: Unit }
+    let ret_type = Type::{ kind: Unit, toks: [] }
     (Array::new(), ret_type, tokens)
   }
   let (body, tokens) = parse_block_expr(tokens)
