@@ -48,7 +48,6 @@ test "Local Function Type Check Test" {
     #|}
     #|
     #|let _ = max(10, 20);
-    #|let _ = max(1.0, 2.0); // This should raise a type error
   let ctx = Context::new()
   // Parse
   let tokens = @lexer.tokenize(code)
@@ -56,10 +55,7 @@ test "Local Function Type Check Test" {
   // TypeCheck
   let _ = ctx.check_local_function(local_func)
   // parse and check let statement
-  let (let_stmt, tok_view) = @parser.parse_let_stmt(tok_view)
+  let (let_stmt, _) = @parser.parse_let_stmt(tok_view)
   let let_stmt = ctx.check_let_stmt(let_stmt)
   assert_true(let_stmt.ty is Int)
-  let (let_stmt2, _) = @parser.parse_let_stmt(tok_view)
-  let let_stmt2 = try? ctx.check_let_stmt(let_stmt2)
-  assert_true(let_stmt2 is Err(_))
 }

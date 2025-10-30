@@ -1,4 +1,57 @@
 ///|
+/// Handle primitive type conversion method calls
+fn handle_primitive_conversion(
+  method_name : String,
+  base_name : Name,
+  base_type : @typecheck.TypeKind,
+) -> KnfExpr? {
+  match base_type {
+    // Int conversions
+    Int => match method_name {
+      "to_int64" => Some(Cast(Int64, base_name))
+      "to_float" => Some(Cast(Float, base_name))
+      "to_double" => Some(Cast(Double, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_int_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_float" => Some(BitCast(Float, base_name))
+      _ => None
+    }
+    // Int64 conversions
+    Int64 => match method_name {
+      "to_int" => Some(Cast(Int, base_name))
+      "to_float" => Some(Cast(Float, base_name))
+      "to_double" => Some(Cast(Double, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_int64_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_double" => Some(BitCast(Double, base_name))
+      _ => None
+    }
+    // Float conversions
+    Float => match method_name {
+      "to_int" => Some(Cast(Int, base_name))
+      "to_int64" => Some(Cast(Int64, base_name))
+      "to_double" => Some(Cast(Double, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_float_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_int" => Some(BitCast(Int, base_name))
+      _ => None
+    }
+    // Double conversions
+    Double => match method_name {
+      "to_int" => Some(Cast(Int, base_name))
+      "to_int64" => Some(Cast(Int64, base_name))
+      "to_float" => Some(Cast(Float, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_double_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_int64" => Some(BitCast(Int64, base_name))
+      _ => None
+    }
+    // Char conversions
+    Char => match method_name {
+      "to_string" => Some(Call(Name::{ id: "__builtin_char_to_string", slot: 0 }, [base_name]))
+      _ => None
+    }
+    _ => None
+  }
+}
+
+///|
 pub fn Context::apply_expr_to_knf(
   self : Context,
   apply_expr : @typecheck.ApplyExpr,
@@ -94,6 +147,17 @@ pub fn Context::apply_expr_to_knf(
               let push_func = Name::{ id: push_func_name, slot: 0 }
               return (stmts, Call(push_func, arg_names))
             }
+          }
+          
+          // Check if this is a primitive type conversion method
+          let (base_stmts, base_knf_expr) = self.apply_expr_to_knf(array_expr)
+          stmts.append(base_stmts)
+          let base_type = self.typekind_to_knf(array_expr.ty)
+          let base_name = self.expr_to_knf_name(base_knf_expr, base_type, stmts)
+          
+          match handle_primitive_conversion(method_name, base_name, array_expr.ty) {
+            Some(knf_expr) => return (stmts, knf_expr)
+            None => ()
           }
         }
         _ => ()

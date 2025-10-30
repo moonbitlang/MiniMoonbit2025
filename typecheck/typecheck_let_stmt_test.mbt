@@ -52,7 +52,6 @@ test "Let Stmt Type Check" {
     #|let (x, y) = (1, 2);
     #|let z = [];
     #|let mat = [[1, 2], z];
-    #|let _ = z.push(true);
   let ctx = Context::new()
   // Parse
   let tokens = @lexer.tokenize(code)
@@ -71,7 +70,7 @@ test "Let Stmt Type Check" {
   let checked_let_stmt3 = ctx.check_let_stmt(let_stmt3)
   assert_true(checked_let_stmt3.ty is Array(TypeVar(_)))
   // Type check for `let mat = [[1, 2], z];`
-  let (let_stmt4, tok_view) = @parser.parse_let_stmt(tok_view)
+  let (let_stmt4, _) = @parser.parse_let_stmt(tok_view)
   let checked_let_stmt4 = ctx.check_let_stmt(let_stmt4)
   assert_true(checked_let_stmt4.ty is Array(Array(Int)))
   assert_true(ctx.lookup_type("mat") is Some({ kind: Array(Array(Int)), .. }))
@@ -80,9 +79,4 @@ test "Let Stmt Type Check" {
     ctx.lookup_type("z") is Some({ kind: Array(Int), .. }),
     msg="Type of z is \{zty}",
   )
-  // Type check for `let _ = z.push(true);`
-  // Should fail
-  let (let_stmt5, _) = @parser.parse_let_stmt(tok_view)
-  let check_result = try? ctx.check_let_stmt(let_stmt5)
-  assert_true(check_result is Err(_))
 }

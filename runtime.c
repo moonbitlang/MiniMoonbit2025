@@ -395,6 +395,37 @@ char __builtin_get_char_in_string(MoonBitStr* str, int32_t index) {
   return str->data[index];
 }
 
+MoonBitStr* __builtin_int_to_string(int32_t value) {
+  char buffer[32];
+  snprintf(buffer, sizeof(buffer), "%d", value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_int64_to_string(int64_t value) {
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "%lld", (long long)value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_float_to_string(float value) {
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "%g", value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_double_to_string(double value) {
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "%g", value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_char_to_string(char value) {
+  char buffer[2];
+  buffer[0] = value;
+  buffer[1] = '\0';
+  return __builtin_create_string(buffer);
+}
+
 int main() {
   moonbit_main();
   return 0;

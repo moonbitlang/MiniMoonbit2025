@@ -101,6 +101,11 @@ pub fn Context::check_apply_expr(
           return e
         }
       }
+      // Handle primitive type methods (Int, Int64, Float, Double, Char)
+      match check_primitive_method(struct_expr, field_name, apply_expr.toks) {
+        Some(result) => return result
+        None => ()
+      }
       guard struct_expr.ty is Struct(struct_type_name) else {
         let msg = "Attempted to access field of a non-struct type"
         self.throw_(struct_expr.toks[0], msg, Error)
@@ -167,5 +172,142 @@ fn min(a: Int, b: Int) -> Int {
     a
   } else {
     b
+  }
+}
+
+///|
+/// Check primitive type method calls (e.g., n.to_string(), n.to_double(), etc.)
+fn check_primitive_method(
+  base_expr : ApplyExpr,
+  method_name : String,
+  toks : ArrayView[Token],
+) -> ApplyExpr? {
+  match base_expr.ty {
+    // Int methods
+    Int => match method_name {
+      "to_int64" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int64),
+        toks,
+      })
+      "to_float" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Float),
+        toks,
+      })
+      "to_double" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Double),
+        toks,
+      })
+      "to_string" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], String),
+        toks,
+      })
+      "reinterpret_as_float" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Float),
+        toks,
+      })
+      _ => None
+    }
+    // Int64 methods
+    Int64 => match method_name {
+      "to_int" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int),
+        toks,
+      })
+      "to_float" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Float),
+        toks,
+      })
+      "to_double" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Double),
+        toks,
+      })
+      "to_string" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], String),
+        toks,
+      })
+      "reinterpret_as_double" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Double),
+        toks,
+      })
+      _ => None
+    }
+    // Float methods
+    Float => match method_name {
+      "to_int" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int),
+        toks,
+      })
+      "to_int64" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int64),
+        toks,
+      })
+      "to_double" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Double),
+        toks,
+      })
+      "to_string" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], String),
+        toks,
+      })
+      "reinterpret_as_int" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int),
+        toks,
+      })
+      _ => None
+    }
+    // Double methods
+    Double => match method_name {
+      "to_int" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int),
+        toks,
+      })
+      "to_int64" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int64),
+        toks,
+      })
+      "to_float" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Float),
+        toks,
+      })
+      "to_string" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], String),
+        toks,
+      })
+      "reinterpret_as_int64" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], Int64),
+        toks,
+      })
+      _ => None
+    }
+    // Char methods
+    Char => match method_name {
+      "to_string" => Some(ApplyExpr::{
+        kind: FieldAccess(base_expr, method_name),
+        ty: Function([], String),
+        toks,
+      })
+      _ => None
+    }
+    _ => None
   }
 }

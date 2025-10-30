@@ -125,6 +125,12 @@ pub fn Context::new(mod_name : String) -> Context {
   let builtin_get_string_length_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty])
   let builtin_string_concat_ty = try! llvm_ctx.getFunctionType(ptrty, [ptrty, ptrty])
   let builtin_get_char_in_string_ty = try! llvm_ctx.getFunctionType(i8ty, [ptrty, i32ty])
+  // Type conversion to string functions
+  let builtin_int_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty])
+  let builtin_int64_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i64ty])
+  let builtin_float_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [floatty])
+  let builtin_double_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [doublety])
+  let builtin_char_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i8ty])
   let builtin_func_tys = {
     "moonbit_malloc": moonbit_malloc_ty,
     "make_int_array": make_int_array_ty,
@@ -176,6 +182,11 @@ pub fn Context::new(mod_name : String) -> Context {
     "__builtin_get_string_length": builtin_get_string_length_ty,
     "__builtin_string_concat": builtin_string_concat_ty,
     "__builtin_get_char_in_string": builtin_get_char_in_string_ty,
+    "__builtin_int_to_string": builtin_int_to_string_ty,
+    "__builtin_int64_to_string": builtin_int64_to_string_ty,
+    "__builtin_float_to_string": builtin_float_to_string_ty,
+    "__builtin_double_to_string": builtin_double_to_string_ty,
+    "__builtin_char_to_string": builtin_char_to_string_ty,
   }
   let ctx = Context::{
     llvm_ctx,

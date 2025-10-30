@@ -22,6 +22,8 @@ pub(all) enum KnfExpr {
   ArrayLiteral(Type, Array[Name])
   ArrayMake(Name, Name)
   TupleLiteral(Array[Name])
+  Cast(Type, Name)
+  BitCast(Type, Name)
 }
 
 ///|
@@ -59,6 +61,8 @@ pub fn KnfExpr::to_string(self : KnfExpr, ident? : Int = 0) -> String {
       let elems_strs = elem_names.map(elem => elem.to_string()).join(", ")
       "(\{elems_strs})"
     }
+    Cast(ty, name) => "cast<\{ty}>(\{name})"
+    BitCast(ty, name) => "bitcast<\{ty}>(\{name})"
     Block(block) => block.to_string(ident)
     If(cond, then_block, else_block) => {
       let cond_str = cond.to_string()

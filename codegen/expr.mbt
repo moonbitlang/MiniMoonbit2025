@@ -500,6 +500,91 @@ pub fn Context::expr_codegen(
       let v = self.builder.createCall(func_value, arg_values)
       Some(v)
     }
+    Cast(target_ty, source_name) => {
+      let source_value = self.get_value_by_name_or_load(source_name)
+      guard self.get_knf_type_by_name(source_name) is Some(source_ty) else {
+        raise CodegenError("Failed to get KNF type for cast source: \{source_name}")
+      }
+      let v = match (source_ty, target_ty) {
+        // Int conversions
+        (Int, Int64) => {
+          let int64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createSExt(source_value, int64_ty)
+        }
+        (Int, Float) => {
+          let float_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createSIToFP(source_value, float_ty)
+        }
+        (Int, Double) => {
+          let double_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createSIToFP(source_value, double_ty)
+        }
+        // Int64 conversions
+        (Int64, Int) => {
+          let int_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createTrunc(source_value, int_ty)
+        }
+        (Int64, Float) => {
+          let float_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createSIToFP(source_value, float_ty)
+        }
+        (Int64, Double) => {
+          let double_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createSIToFP(source_value, double_ty)
+        }
+        // Float conversions
+        (Float, Int) => {
+          let int_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createFPToSI(source_value, int_ty)
+        }
+        (Float, Int64) => {
+          let int64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createFPToSI(source_value, int64_ty)
+        }
+        (Float, Double) => {
+          let double_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createFPExt(source_value, double_ty)
+        }
+        // Double conversions
+        (Double, Int) => {
+          let int_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createFPToSI(source_value, int_ty)
+        }
+        (Double, Int64) => {
+          let int64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createFPToSI(source_value, int64_ty)
+        }
+        (Double, Float) => {
+          let float_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createFPTrunc(source_value, float_ty)
+        }
+        _ => raise CodegenError("Unsupported cast from \{source_ty} to \{target_ty}")
+      }
+      Some(v)
+    }
+    BitCast(target_ty, source_name) => {
+      let source_value = self.get_value_by_name_or_load(source_name)
+      let v = match target_ty {
+        Int => {
+          let target_llvm_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        Int64 => {
+          let target_llvm_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        Float => {
+          let target_llvm_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        Double => {
+          let target_llvm_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        _ => raise CodegenError("Unsupported bitcast target type: \{target_ty}")
+      }
+      Some(v)
+    }
     e => raise CodegenError("Unsupported expression in codegen: \{e}")
   }
 }
