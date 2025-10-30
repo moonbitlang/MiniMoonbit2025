@@ -72,11 +72,12 @@ test "Codegen for Empty Top Function Test" {
   inspect(
     llvm_func,
     content=(
-      #|define void @foo(ptr %0) {
+      #|define void @foo() {
       #|entry:
       #|  ret void
       #|}
       #|
+
     ),
   )
 
@@ -86,11 +87,12 @@ test "Codegen for Empty Top Function Test" {
   inspect(
     llvm_func2,
     content=(
-      #|define void @bar(ptr %0, i32 %1, double %2) {
+      #|define void @bar(i32 %0, double %1) {
       #|entry:
       #|  ret void
       #|}
       #|
+
     ),
   )
 }

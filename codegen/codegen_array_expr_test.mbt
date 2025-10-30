@@ -60,15 +60,16 @@ test "Codegen for Array Literal Test" {
   inspect(
     llvm_func,
     content=(
-      #|define ptr @create_arr(ptr %0) {
+      #|define ptr @create_arr() {
       #|entry:
-      #|  %1 = call ptr @make_int_array(i32 3, i32 0)
-      #|  call void @array_int_put(ptr %1, i32 0, i32 1)
-      #|  call void @array_int_put(ptr %1, i32 1, i32 2)
-      #|  call void @array_int_put(ptr %1, i32 2, i32 3)
-      #|  ret ptr %1
+      #|  %0 = call ptr @make_int_array(i32 3, i32 0)
+      #|  call void @array_int_put(ptr %0, i32 0, i32 1)
+      #|  call void @array_int_put(ptr %0, i32 1, i32 2)
+      #|  call void @array_int_put(ptr %0, i32 2, i32 3)
+      #|  ret ptr %0
       #|}
       #|
+
     ),
   )
 }

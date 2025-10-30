@@ -7,7 +7,7 @@ test "Codegen Call Test" {
     #|
     #|fn main {
     #|  let result = add(2, 3);
-    #|  print_int(result);
+    #|  println(result);
     #|}
   let tokens = @lexer.tokenize(code)
   let ast = @parser.parse(tokens)
@@ -24,11 +24,12 @@ test "Codegen Call Test" {
     content=(
       #|define void @moonbit_main() {
       #|entry:
-      #|  %0 = call i32 @add(ptr null, i32 2, i32 3)
-      #|  call void @print_int(i32 %0)
+      #|  %0 = call i32 @add(i32 2, i32 3)
+      #|  call void @__builtin_println_int(i32 %0)
       #|  ret void 
       #|}
       #|
+
     ),
   )
 }

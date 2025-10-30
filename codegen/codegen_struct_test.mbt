@@ -86,16 +86,17 @@ test "Codegen for Struct Create, Access and Set Test" {
   inspect(
     llvm_func,
     content=(
-      #|define ptr @create_point(ptr %0) {
+      #|define ptr @create_point() {
       #|entry:
-      #|  %1 = call ptr @moonbit_malloc(i32 8)
-      #|  %2 = getelementptr %Point, ptr %1, i32 0, i32 0
-      #|  store i32 10, ptr %2, align 4
-      #|  %4 = getelementptr %Point, ptr %1, i32 0, i32 1
-      #|  store i32 20, ptr %4, align 4
-      #|  ret ptr %1
+      #|  %0 = call ptr @moonbit_malloc(i32 8)
+      #|  %1 = getelementptr %Point, ptr %0, i32 0, i32 0
+      #|  store i32 10, ptr %1, align 4
+      #|  %3 = getelementptr %Point, ptr %0, i32 0, i32 1
+      #|  store i32 20, ptr %3, align 4
+      #|  ret ptr %0
       #|}
       #|
+
     ),
   )
 
@@ -105,19 +106,20 @@ test "Codegen for Struct Create, Access and Set Test" {
   inspect(
     llvm_func,
     content=(
-      #|define void @swap_x_y(ptr %0, ptr %1) {
+      #|define void @swap_x_y(ptr %0) {
       #|entry:
-      #|  %2 = getelementptr %Point, ptr %1, i32 0, i32 0
-      #|  %3 = load i32, ptr %2, align 4
-      #|  %4 = getelementptr %Point, ptr %1, i32 0, i32 1
-      #|  %5 = load i32, ptr %4, align 4
-      #|  %6 = getelementptr %Point, ptr %1, i32 0, i32 0
-      #|  store i32 %5, ptr %6, align 4
-      #|  %8 = getelementptr %Point, ptr %1, i32 0, i32 1
-      #|  store i32 %3, ptr %8, align 4
+      #|  %1 = getelementptr %Point, ptr %0, i32 0, i32 0
+      #|  %2 = load i32, ptr %1, align 4
+      #|  %3 = getelementptr %Point, ptr %0, i32 0, i32 1
+      #|  %4 = load i32, ptr %3, align 4
+      #|  %5 = getelementptr %Point, ptr %0, i32 0, i32 0
+      #|  store i32 %4, ptr %5, align 4
+      #|  %7 = getelementptr %Point, ptr %0, i32 0, i32 1
+      #|  store i32 %2, ptr %7, align 4
       #|  ret void
       #|}
       #|
+
     ),
   )
 }

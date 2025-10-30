@@ -59,15 +59,16 @@ test "Codegen for Array Make Test" {
   inspect(
     llvm_func,
     content=(
-      #|define void @swap_head_two(ptr %0, ptr %1) {
+      #|define void @swap_head_two(ptr %0) {
       #|entry:
-      #|  %2 = call i32 @array_int_get(ptr %1, i32 0)
-      #|  %3 = call i32 @array_int_get(ptr %1, i32 1)
-      #|  call void @array_int_put(ptr %1, i32 0, i32 %3)
-      #|  call void @array_int_put(ptr %1, i32 1, i32 %2)
+      #|  %1 = call i32 @array_int_get(ptr %0, i32 0)
+      #|  %2 = call i32 @array_int_get(ptr %0, i32 1)
+      #|  call void @array_int_put(ptr %0, i32 0, i32 %2)
+      #|  call void @array_int_put(ptr %0, i32 1, i32 %1)
       #|  ret void
       #|}
       #|
+
     ),
   )
 }

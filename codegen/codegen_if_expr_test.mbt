@@ -101,22 +101,23 @@ test "Codegen for If Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @max(ptr %0, i32 %1, i32 %2) {
+      #|define i32 @max(i32 %0, i32 %1) {
       #|entry:
-      #|  %3 = icmp sgt i32 %1, %2
-      #|  br i1 %3, label %5, label %7
+      #|  %2 = icmp sgt i32 %0, %1
+      #|  br i1 %2, label %4, label %6
       #|
-      #|5:                                     ; preds = %entry
-      #|  br label %9
+      #|4:                                     ; preds = %entry
+      #|  br label %8
       #|
-      #|7:                                     ; preds = %entry
-      #|  br label %9
+      #|6:                                     ; preds = %entry
+      #|  br label %8
       #|
-      #|9:                                     ; preds = %5, %7
-      #|  %10 = phi i32 [ %1, %5 ], [ %2, %7 ]
-      #|  ret i32 %10
+      #|8:                                     ; preds = %4, %6
+      #|  %9 = phi i32 [ %0, %4 ], [ %1, %6 ]
+      #|  ret i32 %9
       #|}
       #|
+
     ),
   )
 
@@ -126,18 +127,19 @@ test "Codegen for If Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @min(ptr %0, i32 %1, i32 %2) {
+      #|define i32 @min(i32 %0, i32 %1) {
       #|entry:
-      #|  %3 = icmp slt i32 %1, %2
-      #|  br i1 %3, label %5, label %7
+      #|  %2 = icmp slt i32 %0, %1
+      #|  br i1 %2, label %4, label %6
       #|
-      #|5:                                     ; preds = %entry
+      #|4:                                     ; preds = %entry
+      #|  ret i32 %0
+      #|
+      #|6:                                     ; preds = %entry
       #|  ret i32 %1
-      #|
-      #|7:                                     ; preds = %entry
-      #|  ret i32 %2
       #|}
       #|
+
     ),
   )
 }

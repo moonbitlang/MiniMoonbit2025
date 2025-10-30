@@ -53,15 +53,16 @@ test "Codegen for Simple Let and LetMut Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @foo(ptr %0, i32 %1) {
+      #|define i32 @foo(i32 %0) {
       #|entry:
-      #|  %2 = alloca i32, align 4
-      #|  store i32 0, ptr %2, align 4
-      #|  store i32 %1, ptr %2, align 4
-      #|  %5 = load i32, ptr %2, align 4
-      #|  ret i32 %5
+      #|  %1 = alloca i32, align 4
+      #|  store i32 0, ptr %1, align 4
+      #|  store i32 %0, ptr %1, align 4
+      #|  %4 = load i32, ptr %1, align 4
+      #|  ret i32 %4
       #|}
       #|
+
     ),
   )
 }

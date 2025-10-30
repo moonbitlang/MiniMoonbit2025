@@ -62,11 +62,12 @@ test "Codegen for Simple Top Function Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @ret42(ptr %0) {
+      #|define i32 @ret42() {
       #|entry:
       #|  ret i32 42
       #|}
       #|
+
     ),
   )
 
@@ -76,11 +77,12 @@ test "Codegen for Simple Top Function Test" {
   inspect(
     llvm_func2,
     content=(
-      #|define double @ret_double_63(ptr %0) {
+      #|define double @ret_double_63() {
       #|entry:
       #|  ret double 0x404F800000000000
       #|}
       #|
+
     ),
   )
 
@@ -90,11 +92,12 @@ test "Codegen for Simple Top Function Test" {
   inspect(
     llvm_func3,
     content=(
-      #|define ptr @hello(ptr %0) {
+      #|define ptr @hello() {
       #|entry:
       #|  ret ptr @str_lit_1
       #|}
       #|
+
     ),
   )
 }

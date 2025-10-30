@@ -64,17 +64,18 @@ test "Codegen for Struct Create And Set Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @first(ptr %0, ptr %1) {
+      #|define i32 @first(ptr %0) {
       #|entry:
-      #|  %2 = getelementptr { i32, double, i1 }, ptr %1, i32 0, i32 0
-      #|  %3 = load i32, ptr %2, align 4
-      #|  %4 = getelementptr { i32, double, i1 }, ptr %1, i32 0, i32 1
-      #|  %5 = load double, ptr %4, align 8
-      #|  %6 = getelementptr { i32, double, i1 }, ptr %1, i32 0, i32 2
-      #|  %7 = load i1, ptr %6, align 1
-      #|  ret i32 %3
+      #|  %1 = getelementptr { i32, double, i1 }, ptr %0, i32 0, i32 0
+      #|  %2 = load i32, ptr %1, align 4
+      #|  %3 = getelementptr { i32, double, i1 }, ptr %0, i32 0, i32 1
+      #|  %4 = load double, ptr %3, align 8
+      #|  %5 = getelementptr { i32, double, i1 }, ptr %0, i32 0, i32 2
+      #|  %6 = load i1, ptr %5, align 1
+      #|  ret i32 %2
       #|}
       #|
+
     ),
   )
   let combine = knf_prog.functions.get("combine").unwrap()
@@ -82,18 +83,19 @@ test "Codegen for Struct Create And Set Test" {
   inspect(
     llvm_func,
     content=(
-      #|define ptr @combine(ptr %0, i32 %1, double %2, i1 %3) {
+      #|define ptr @combine(i32 %0, double %1, i1 %2) {
       #|entry:
-      #|  %4 = call ptr @moonbit_malloc(i32 24)
-      #|  %5 = getelementptr { i32, double, i1 }, ptr %4, i32 0, i32 0
-      #|  store i32 %1, ptr %5, align 4
-      #|  %7 = getelementptr { i32, double, i1 }, ptr %4, i32 0, i32 1
-      #|  store double %2, ptr %7, align 8
-      #|  %9 = getelementptr { i32, double, i1 }, ptr %4, i32 0, i32 2
-      #|  store i1 %3, ptr %9, align 1
-      #|  ret ptr %4
+      #|  %3 = call ptr @moonbit_malloc(i32 24)
+      #|  %4 = getelementptr { i32, double, i1 }, ptr %3, i32 0, i32 0
+      #|  store i32 %0, ptr %4, align 4
+      #|  %6 = getelementptr { i32, double, i1 }, ptr %3, i32 0, i32 1
+      #|  store double %1, ptr %6, align 8
+      #|  %8 = getelementptr { i32, double, i1 }, ptr %3, i32 0, i32 2
+      #|  store i1 %2, ptr %8, align 1
+      #|  ret ptr %3
       #|}
       #|
+
     ),
   )
 }

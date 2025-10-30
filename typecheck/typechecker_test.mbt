@@ -81,7 +81,7 @@ test "Program TypeCheck Test" {
     #|  let maximum = fold(numbers, max, -1000);
     #|  let minimum = fold(numbers, min, 1000);
     #|  let max_min_diff = maximum - minimum;
-    #|  print_int(max_min_diff);
+    #|  println(max_min_diff);
     #|}
   let tokens = @lexer.tokenize(code)
   let program = @parser.parse(tokens)

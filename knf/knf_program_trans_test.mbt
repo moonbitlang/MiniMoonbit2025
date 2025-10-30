@@ -161,6 +161,7 @@
 ///|
 test "Top Function Knf Transformation Test" {
   let code =
+    #|extern "C" fn print_int(n: Int) = "print_int";
     #|let a = 3;
     #|let b = 4;
     #|fn fold(arr: Array[Int], f: (Int, Int) -> Int, initv: Int) -> Int { 

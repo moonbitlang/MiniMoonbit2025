@@ -78,12 +78,13 @@ test "Codegen for Simple Unary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @neg_int(ptr %0, i32 %1) {
+      #|define i32 @neg_int(i32 %0) {
       #|entry:
-      #|  %2 = sub i32 0, %1
-      #|  ret i32 %2
+      #|  %1 = sub i32 0, %0
+      #|  ret i32 %1
       #|}
       #|
+
     ),
   )
 
@@ -93,12 +94,13 @@ test "Codegen for Simple Unary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define double @neg_double(ptr %0, double %1) {
+      #|define double @neg_double(double %0) {
       #|entry:
-      #|  %2 = fneg double %1
-      #|  ret double %2
+      #|  %1 = fneg double %0
+      #|  ret double %1
       #|}
       #|
+
     ),
   )
 
@@ -108,12 +110,13 @@ test "Codegen for Simple Unary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i1 @not_bool(ptr %0, i1 %1) {
+      #|define i1 @not_bool(i1 %0) {
       #|entry:
-      #|  %2 = xor i1 true, %1
-      #|  ret i1 %2
+      #|  %1 = xor i1 true, %0
+      #|  ret i1 %1
       #|}
       #|
+
     ),
   )
 }

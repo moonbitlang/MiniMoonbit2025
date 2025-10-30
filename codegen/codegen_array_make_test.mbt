@@ -59,12 +59,13 @@ test "Codegen for Array Make Test" {
   inspect(
     llvm_func,
     content=(
-      #|define ptr @make_arr(ptr %0, i32 %1) {
+      #|define ptr @make_arr(i32 %0) {
       #|entry:
-      #|  %2 = call ptr @make_int_array(i32 %1, i32 0)
-      #|  ret ptr %2
+      #|  %1 = call ptr @make_int_array(i32 %0, i32 0)
+      #|  ret ptr %1
       #|}
       #|
+
     ),
   )
 }

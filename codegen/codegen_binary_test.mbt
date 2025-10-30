@@ -121,16 +121,17 @@ test "Codegen for Simple Binary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @arith_int(ptr %0, i32 %1, i32 %2) {
+      #|define i32 @arith_int(i32 %0, i32 %1) {
       #|entry:
-      #|  %3 = add i32 %1, %2
-      #|  %4 = sub i32 %1, %2
-      #|  %5 = mul i32 %1, %2
-      #|  %6 = sdiv i32 %1, %2
-      #|  %7 = srem i32 %1, %2
-      #|  ret i32 %7
+      #|  %2 = add i32 %0, %1
+      #|  %3 = sub i32 %0, %1
+      #|  %4 = mul i32 %0, %1
+      #|  %5 = sdiv i32 %0, %1
+      #|  %6 = srem i32 %0, %1
+      #|  ret i32 %6
       #|}
       #|
+
     ),
   )
 
@@ -140,15 +141,16 @@ test "Codegen for Simple Binary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define double @arith_double(ptr %0, double %1, double %2) {
+      #|define double @arith_double(double %0, double %1) {
       #|entry:
-      #|  %3 = fadd double %1, %2
-      #|  %4 = fsub double %1, %2
-      #|  %5 = fmul double %1, %2
-      #|  %6 = fdiv double %1, %2
-      #|  ret double %6
+      #|  %2 = fadd double %0, %1
+      #|  %3 = fsub double %0, %1
+      #|  %4 = fmul double %0, %1
+      #|  %5 = fdiv double %0, %1
+      #|  ret double %5
       #|}
       #|
+
     ),
   )
 
@@ -158,17 +160,18 @@ test "Codegen for Simple Binary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i1 @int_cmp(ptr %0, i32 %1, i32 %2) {
+      #|define i1 @int_cmp(i32 %0, i32 %1) {
       #|entry:
-      #|  %3 = icmp eq i32 %1, %2
-      #|  %4 = icmp ne i32 %1, %2
-      #|  %5 = icmp slt i32 %1, %2
-      #|  %6 = icmp sle i32 %1, %2
-      #|  %7 = icmp sgt i32 %1, %2
-      #|  %8 = icmp sge i32 %1, %2
-      #|  ret i1 %8
+      #|  %2 = icmp eq i32 %0, %1
+      #|  %3 = icmp ne i32 %0, %1
+      #|  %4 = icmp slt i32 %0, %1
+      #|  %5 = icmp sle i32 %0, %1
+      #|  %6 = icmp sgt i32 %0, %1
+      #|  %7 = icmp sge i32 %0, %1
+      #|  ret i1 %7
       #|}
       #|
+
     ),
   )
 
@@ -178,17 +181,18 @@ test "Codegen for Simple Binary Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i1 @double_cmp(ptr %0, double %1, double %2) {
+      #|define i1 @double_cmp(double %0, double %1) {
       #|entry:
-      #|  %3 = fcmp oeq double %1, %2
-      #|  %4 = fcmp one double %1, %2
-      #|  %5 = fcmp olt double %1, %2
-      #|  %6 = fcmp ole double %1, %2
-      #|  %7 = fcmp ogt double %1, %2
-      #|  %8 = fcmp oge double %1, %2
-      #|  ret i1 %8
+      #|  %2 = fcmp oeq double %0, %1
+      #|  %3 = fcmp one double %0, %1
+      #|  %4 = fcmp olt double %0, %1
+      #|  %5 = fcmp ole double %0, %1
+      #|  %6 = fcmp ogt double %0, %1
+      #|  %7 = fcmp oge double %0, %1
+      #|  ret i1 %7
       #|}
       #|
+
     ),
   )
 }

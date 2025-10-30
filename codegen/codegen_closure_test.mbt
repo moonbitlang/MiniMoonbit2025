@@ -75,7 +75,7 @@ test "Codegen Closure Test" {
     #|fn main {
     #|  let add_five = make_adder(5);
     #|  let result = add_five(10);
-    #|  print_int(result);
+    #|  println(result);
     #|}
   let tokens = @lexer.tokenize(code)
   let ast = @parser.parse(tokens)
@@ -88,16 +88,17 @@ test "Codegen Closure Test" {
   inspect(
     make_adder_ir,
     content=(
-      #|define ptr @make_adder(ptr %0, i32 %1) {
+      #|define ptr @make_adder(i32 %0) {
       #|entry:
-      #|  %2 = call ptr @moonbit_malloc(i32 16)
-      #|  %3 = getelementptr { ptr, i32 }, ptr %2, i32 0, i32 0
-      #|  store ptr @make_adder$adder, ptr %3, align 8
-      #|  %5 = getelementptr { ptr, i32 }, ptr %2, i32 0, i32 1
-      #|  store i32 %1, ptr %5, align 4
-      #|  ret ptr %2
+      #|  %1 = call ptr @moonbit_malloc(i32 16)
+      #|  %2 = getelementptr { ptr, i32 }, ptr %1, i32 0, i32 0
+      #|  store ptr @make_adder$adder, ptr %2, align 8
+      #|  %4 = getelementptr { ptr, i32 }, ptr %1, i32 0, i32 1
+      #|  store i32 %0, ptr %4, align 4
+      #|  ret ptr %1
       #|}
       #|
+
     ),
   )
   let main_func = knf_prog.functions.get("main").unwrap()
@@ -107,14 +108,15 @@ test "Codegen Closure Test" {
     content=(
       #|define void @moonbit_main() {
       #|entry:
-      #|  %0 = call ptr @make_adder(ptr null, i32 5)
+      #|  %0 = call ptr @make_adder(i32 5)
       #|  %1 = getelementptr { ptr }, ptr %0, i32 0, i32 0
       #|  %2 = load ptr, ptr %1, align 8
       #|  %3 = call i32 %2(ptr %0, i32 10)
-      #|  call void @print_int(i32 %3)
+      #|  call void @__builtin_println_int(i32 %3)
       #|  ret void 
       #|}
       #|
+
     ),
   )
 }

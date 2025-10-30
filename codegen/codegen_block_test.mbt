@@ -70,20 +70,21 @@ test "Codegen for Simple Let and LetMut Test" {
   inspect(
     llvm_func,
     content=(
-      #|define i32 @foo(ptr %0, i32 %1, i32 %2) {
+      #|define i32 @foo(i32 %0, i32 %1) {
       #|entry:
-      #|  br label %4
+      #|  br label %3
       #|
-      #|4:                                     ; preds = %entry
-      #|  %5 = add i32 %1, 1
-      #|  %6 = sub i32 %2, 1
-      #|  %7 = mul i32 %5, %6
-      #|  br label %9
+      #|3:                                     ; preds = %entry
+      #|  %4 = add i32 %0, 1
+      #|  %5 = sub i32 %1, 1
+      #|  %6 = mul i32 %4, %5
+      #|  br label %8
       #|
-      #|9:                                     ; preds = %4
-      #|  ret i32 %7
+      #|8:                                     ; preds = %3
+      #|  ret i32 %6
       #|}
       #|
+
     ),
   )
 }
