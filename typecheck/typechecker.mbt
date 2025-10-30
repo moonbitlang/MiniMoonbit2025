@@ -224,8 +224,9 @@ pub fn Context::substitute_stmt_type_var(
       let new_while_stmt = self.substitute_while_stmt_type_var(while_stmt)
       StmtKind::WhileStmt(new_while_stmt)
     }
-    StmtKind::ForStmt(_) => {
-      raise TypeCheckError("ForStmt is not supported in type variable substitution")
+    StmtKind::ForStmt(for_stmt) => {
+      let new_for_stmt = self.substitute_for_stmt_type_var(for_stmt)
+      StmtKind::ForStmt(new_for_stmt)
     }
     StmtKind::ExprStmt(expr) => {
       let new_expr = self.substitute_expr_type_var(expr)
@@ -353,6 +354,28 @@ pub fn Context::substitute_while_stmt_type_var(
   let new_cond = self.substitute_expr_type_var(while_stmt.cond)
   let new_body = self.substitute_block_expr_type_var(while_stmt.body)
   WhileStmt::{ cond: new_cond, body: new_body }
+}
+
+///|
+pub fn Context::substitute_for_stmt_type_var(
+  self : Context,
+  for_stmt : ForStmt,
+) -> ForStmt raise TypeCheckError {
+  let new_inits = Array::new()
+  for init in for_stmt.inits {
+    let (name, expr) = init
+    let new_expr = self.substitute_expr_type_var(expr)
+    new_inits.push((name, new_expr))
+  }
+  let new_cond = self.substitute_expr_type_var(for_stmt.cond)
+  let new_steps = Array::new()
+  for step in for_stmt.steps {
+    let (name, op, expr) = step
+    let new_expr = self.substitute_expr_type_var(expr)
+    new_steps.push((name, op, new_expr))
+  }
+  let new_body = self.substitute_block_expr_type_var(for_stmt.body)
+  ForStmt::{ inits: new_inits, cond: new_cond, steps: new_steps, body: new_body }
 }
 
 ///|
