@@ -94,7 +94,8 @@ test "Codegen for Simple Top Function Test" {
     content=(
       #|define ptr @hello() {
       #|entry:
-      #|  ret ptr @str_lit_1
+      #|  %0 = call ptr @__builtin_create_string(ptr @str_lit_1)
+      #|  ret ptr %0
       #|}
       #|
 

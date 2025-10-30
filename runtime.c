@@ -27,6 +27,11 @@ typedef struct {
   void **data;
 } PtrArray;
 
+typedef struct {
+  char *data;
+  int32_t length;
+} MoonBitStr;
+
 IntArray* make_int_array(int32_t length, int32_t init_value) {
   IntArray *arr = (IntArray *)malloc(sizeof(IntArray));
   arr->length = length;
@@ -152,8 +157,11 @@ void print_bool(uint8_t value) {
   }
 }
 
-void print_string(const char *str) {
-  printf("%s", str);
+void print_string(MoonBitStr *str) {
+  if (str == NULL || str->data == NULL) {
+    return;
+  }
+  printf("%s", str->data);
 }
 
 void* moonbit_malloc(int32_t size) {
@@ -192,8 +200,12 @@ void __builtin_println_bool(uint8_t value) {
   }
 }
 
-void __builtin_println_string(const char *str) {
-  printf("%s\n", str);
+void __builtin_println_string(MoonBitStr *str) {
+  if (str == NULL || str->data == NULL) {
+    printf("\n");
+    return;
+  }
+  printf("%s\n", str->data);
 }
 
 void __builtin_println_double(double value) {
@@ -212,12 +224,52 @@ void __builtin_print_bool(uint8_t value) {
   }
 }
 
-void __builtin_print_string(const char *str) {
-  printf("%s", str);
+void __builtin_print_string(MoonBitStr *str) {
+  if (str == NULL || str->data == NULL) {
+    return;
+  }
+  printf("%s", str->data);
 }
 
 void __builtin_print_double(double value) {
   printf("%f", value);
+}
+
+MoonBitStr* __builtin_create_string(const char* str) {
+  MoonBitStr *moonbit_str = (MoonBitStr *)malloc(sizeof(MoonBitStr));
+  int len = 0;
+  while (str[len] != '\0') {
+    len++;
+  }
+  moonbit_str->length = len;
+  moonbit_str->data = (char *)malloc((len + 1) * sizeof(char));
+  for (int i = 0; i < len; i++) {
+    moonbit_str->data[i] = str[i];
+  }
+  moonbit_str->data[len] = '\0';
+  return moonbit_str;
+}
+
+int32_t __builtin_get_string_length(MoonBitStr* str) {
+  return str->length;
+}
+
+MoonBitStr* __builtin_string_concat(MoonBitStr* str1, MoonBitStr* str2) {
+  MoonBitStr *result = (MoonBitStr *)malloc(sizeof(MoonBitStr));
+  result->length = str1->length + str2->length;
+  result->data = (char *)malloc((result->length + 1) * sizeof(char));
+  for (int i = 0; i < str1->length; i++) {
+    result->data[i] = str1->data[i];
+  }
+  for (int i = 0; i < str2->length; i++) {
+    result->data[str1->length + i] = str2->data[i];
+  }
+  result->data[result->length] = '\0';
+  return result;
+}
+
+int32_t __builtin_get_char_in_string(MoonBitStr* str, int32_t index) {
+  return (int32_t)str->data[index];
 }
 
 int main() {

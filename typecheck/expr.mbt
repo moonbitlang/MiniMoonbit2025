@@ -131,6 +131,14 @@ pub fn Context::check_expr(
           )
         }
         let ty = self.ensure_type(checked_left.ty)
+        // Allow String + String for concatenation
+        if op is Add && ty is String {
+          let e = Expr::{
+            kind: BinaryExpr(op, checked_left, checked_right),
+            ty: String,
+          }
+          return e
+        }
         if !(ty is (Int | Double | TypeVar(_))) {
           raise TypeCheckError(
             "Operands of arithmetic binary operation must be of type Int or Double",

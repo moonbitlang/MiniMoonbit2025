@@ -29,21 +29,30 @@ pub fn Context::check_apply_expr(
       let checked_array_expr = self.check_apply_expr(array_expr)
       let checked_index_expr = self.check_expr(index_expr)
 
-      // Ensure the array expression is of array type
-      match checked_array_expr.ty {
-        Array(element_type) => {
-          // Ensure the index expression is of integer type
-          if !(checked_index_expr.ty is Int) {
-            raise TypeCheckError("Array index must be of type Int")
-          }
-          ApplyExpr::{
-            kind: ApplyExprKind::ArrayAccess(
-              checked_array_expr, checked_index_expr,
-            ),
-            ty: element_type,
-          }
+      // Ensure the index expression is of integer type
+      if !(checked_index_expr.ty is Int) {
+        raise TypeCheckError("Array/String index must be of type Int")
+      }
+
+      // Handle String indexing (returns Int representing char)
+      if checked_array_expr.ty is String {
+        ApplyExpr::{
+          kind: ApplyExprKind::ArrayAccess(checked_array_expr, checked_index_expr),
+          ty: Int,
         }
-        _ => raise TypeCheckError("Attempted to index a non-array type")
+      } else {
+        // Ensure the array expression is of array type
+        match checked_array_expr.ty {
+          Array(element_type) => {
+            ApplyExpr::{
+              kind: ApplyExprKind::ArrayAccess(
+                checked_array_expr, checked_index_expr,
+              ),
+              ty: element_type,
+            }
+          }
+          _ => raise TypeCheckError("Attempted to index a non-array/non-string type")
+        }
       }
     }
     FieldAccess(struct_expr, field_name) => {
@@ -56,6 +65,16 @@ pub fn Context::check_apply_expr(
           }
           return e
         }
+        if field_name is "length" {
+          let e = ApplyExpr::{
+            kind: FieldAccess(struct_expr, field_name),
+            ty: Function([], Int),
+          }
+          return e
+        }
+      }
+      // Handle String.length()
+      if struct_expr.ty is String {
         if field_name is "length" {
           let e = ApplyExpr::{
             kind: FieldAccess(struct_expr, field_name),

@@ -194,6 +194,13 @@ pub fn Context::expr_to_knf(
           tmp_name
         }
       }
+      
+      // Handle String concatenation
+      if bin_op is Add && left_expr.ty is String {
+        let concat_func = Name::{ id: "__builtin_string_concat", slot: 0 }
+        return (stmts, Call(concat_func, [lhs_name, rhs_name]))
+      }
+      
       let bin_op = binop_to_knf(bin_op)
       (stmts, Binary(bin_op, lhs_name, rhs_name))
     }

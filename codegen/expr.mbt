@@ -20,9 +20,13 @@ pub fn Context::expr_codegen(
       Some(self.generate_top_level_function_closure(name))
     Ident(name) => self.get_value_by_name_or_load(name) |> Some
     String(s) => {
-      let s = self.builder.createGlobalString(s, name="str_lit_\{self.str_cnt}")
+      // Create global string constant
+      let str_ptr = self.builder.createGlobalString(s, name="str_lit_\{self.str_cnt}")
       self.str_cnt += 1
-      Some(s)
+      // Call __builtin_create_string to create MoonBitStr
+      let create_string_func = self.get_builtin_function("__builtin_create_string")
+      let moonbit_str = self.builder.createCall(create_string_func, [str_ptr])
+      Some(moonbit_str)
     }
     Binary(bin_op, left_name, right_name) => {
       let lhs_value = self.get_value_by_name_or_load(left_name)

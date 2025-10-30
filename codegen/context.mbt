@@ -87,6 +87,11 @@ pub fn Context::new(mod_name : String) -> Context {
     ])
   let builtin_println_bool_ty = try! llvm_ctx.getFunctionType(voidty, [boolty])
   let builtin_println_string_ty = try! llvm_ctx.getFunctionType(voidty, [ptrty])
+  // String related functions
+  let builtin_create_string_ty = try! llvm_ctx.getFunctionType(ptrty, [ptrty])
+  let builtin_get_string_length_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty])
+  let builtin_string_concat_ty = try! llvm_ctx.getFunctionType(ptrty, [ptrty, ptrty])
+  let builtin_get_char_in_string_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty, i32ty])
   let builtin_func_tys = {
     "moonbit_malloc": moonbit_malloc_ty,
     "make_int_array": make_int_array_ty,
@@ -116,6 +121,10 @@ pub fn Context::new(mod_name : String) -> Context {
     "__builtin_println_double": builtin_println_double_ty,
     "__builtin_println_bool": builtin_println_bool_ty,
     "__builtin_println_string": builtin_println_string_ty,
+    "__builtin_create_string": builtin_create_string_ty,
+    "__builtin_get_string_length": builtin_get_string_length_ty,
+    "__builtin_string_concat": builtin_string_concat_ty,
+    "__builtin_get_char_in_string": builtin_get_char_in_string_ty,
   }
   let ctx = Context::{
     llvm_ctx,

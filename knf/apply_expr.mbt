@@ -13,6 +13,13 @@ pub fn Context::apply_expr_to_knf(
       let array_name = self.expr_to_knf_name(array_knf_expr, array_type, stmts)
       let index_type = self.typekind_to_knf(index_expr.ty)
       let index_name = self.expr_to_knf_name(index_knf_expr, index_type, stmts)
+      
+      // Check if this is String indexing
+      if array_expr.ty is String {
+        let get_char_func = Name::{ id: "__builtin_get_char_in_string", slot: 0 }
+        return (stmts, Call(get_char_func, [array_name, index_name]))
+      }
+      
       (stmts, ArrayAccess(array_name, index_name))
     }
     FieldAccess(struct_expr, field_name) => {
@@ -26,9 +33,24 @@ pub fn Context::apply_expr_to_knf(
     Call(callee_expr, exprs) => {
       let stmts : Array[KnfStmt] = []
       
-      // Check if this is an Array method call (length or push)
+      // Check if this is an Array or String method call (length or push)
       match callee_expr.kind {
         FieldAccess(array_expr, method_name) => {
+          // Check if the base expression is a String type
+          if array_expr.ty is String {
+            // Handle String.length()
+            if method_name == "length" {
+              let (str_stmts, str_knf_expr) = self.apply_expr_to_knf(array_expr)
+              stmts.append(str_stmts)
+              let str_type = self.typekind_to_knf(array_expr.ty)
+              let str_name = self.expr_to_knf_name(str_knf_expr, str_type, stmts)
+              
+              // Call __builtin_get_string_length runtime function
+              let length_func = Name::{ id: "__builtin_get_string_length", slot: 0 }
+              return (stmts, Call(length_func, [str_name]))
+            }
+          }
+          
           // Check if the base expression is an Array type
           if array_expr.ty is Array(element_type) {
             // Handle Array.length()
