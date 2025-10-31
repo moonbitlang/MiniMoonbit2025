@@ -3,6 +3,14 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+// Boehm GC 支持
+#ifdef USE_BOEHM_GC
+#include <gc.h>
+#define MOONBIT_MALLOC(size) GC_MALLOC(size)
+#else
+#define MOONBIT_MALLOC(size) malloc(size)
+#endif
+
 typedef struct {
   int32_t length;
   int32_t capacity; // default: length * 2 + 1
@@ -51,10 +59,10 @@ typedef struct {
 } MoonBitStr;
 
 IntArray* make_int_array(int32_t length, int32_t init_value) {
-  IntArray *arr = (IntArray *)malloc(sizeof(IntArray));
+  IntArray *arr = (IntArray *)MOONBIT_MALLOC(sizeof(IntArray));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (int32_t *)malloc(arr->capacity * sizeof(int32_t));
+  arr->data = (int32_t *)MOONBIT_MALLOC(arr->capacity * sizeof(int32_t));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -62,10 +70,10 @@ IntArray* make_int_array(int32_t length, int32_t init_value) {
 }
 
 Int64Array* make_int64_array(int32_t length, int64_t init_value) {
-  Int64Array *arr = (Int64Array *)malloc(sizeof(Int64Array));
+  Int64Array *arr = (Int64Array *)MOONBIT_MALLOC(sizeof(Int64Array));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (int64_t *)malloc(arr->capacity * sizeof(int64_t));
+  arr->data = (int64_t *)MOONBIT_MALLOC(arr->capacity * sizeof(int64_t));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -73,10 +81,10 @@ Int64Array* make_int64_array(int32_t length, int64_t init_value) {
 }
 
 DoubleArray* make_double_array(int32_t length, double init_value) {
-  DoubleArray *arr = (DoubleArray *)malloc(sizeof(DoubleArray));
+  DoubleArray *arr = (DoubleArray *)MOONBIT_MALLOC(sizeof(DoubleArray));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (double *)malloc(arr->capacity * sizeof(double));
+  arr->data = (double *)MOONBIT_MALLOC(arr->capacity * sizeof(double));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -84,10 +92,10 @@ DoubleArray* make_double_array(int32_t length, double init_value) {
 }
 
 FloatArray* make_float_array(int32_t length, float init_value) {
-  FloatArray *arr = (FloatArray *)malloc(sizeof(FloatArray));
+  FloatArray *arr = (FloatArray *)MOONBIT_MALLOC(sizeof(FloatArray));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (float *)malloc(arr->capacity * sizeof(float));
+  arr->data = (float *)MOONBIT_MALLOC(arr->capacity * sizeof(float));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -95,10 +103,10 @@ FloatArray* make_float_array(int32_t length, float init_value) {
 }
 
 BoolArray* make_bool_array(int32_t length, uint8_t init_value) {
-  BoolArray *arr = (BoolArray *)malloc(sizeof(BoolArray));
+  BoolArray *arr = (BoolArray *)MOONBIT_MALLOC(sizeof(BoolArray));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (uint8_t *)malloc(arr->capacity * sizeof(uint8_t));
+  arr->data = (uint8_t *)MOONBIT_MALLOC(arr->capacity * sizeof(uint8_t));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -106,10 +114,10 @@ BoolArray* make_bool_array(int32_t length, uint8_t init_value) {
 }
 
 CharArray* make_char_array(int32_t length, char init_value) {
-  CharArray *arr = (CharArray *)malloc(sizeof(CharArray));
+  CharArray *arr = (CharArray *)MOONBIT_MALLOC(sizeof(CharArray));
   arr->length = length;
   arr->capacity = length * 2 + 1;
-  arr->data = (char *)malloc(arr->capacity * sizeof(char));
+  arr->data = (char *)MOONBIT_MALLOC(arr->capacity * sizeof(char));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -117,9 +125,9 @@ CharArray* make_char_array(int32_t length, char init_value) {
 }
 
 PtrArray* make_ptr_array(int32_t length, void *init_value) {
-  PtrArray *arr = (PtrArray *)malloc(sizeof(PtrArray));
+  PtrArray *arr = (PtrArray *)MOONBIT_MALLOC(sizeof(PtrArray));
   arr->length = length;
-  arr->data = (void **)malloc(length * sizeof(void *));
+  arr->data = (void **)MOONBIT_MALLOC(length * sizeof(void *));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -133,7 +141,11 @@ int32_t get_array_length(void *array) {
 void array_int_push(IntArray *arr, int32_t value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (int32_t *)GC_REALLOC(arr->data, arr->capacity * sizeof(int32_t));
+#else
     arr->data = (int32_t *)realloc(arr->data, arr->capacity * sizeof(int32_t));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -141,7 +153,11 @@ void array_int_push(IntArray *arr, int32_t value) {
 void array_int64_push(Int64Array *arr, int64_t value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (int64_t *)GC_REALLOC(arr->data, arr->capacity * sizeof(int64_t));
+#else
     arr->data = (int64_t *)realloc(arr->data, arr->capacity * sizeof(int64_t));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -149,7 +165,11 @@ void array_int64_push(Int64Array *arr, int64_t value) {
 void array_double_push(DoubleArray *arr, double value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (double *)GC_REALLOC(arr->data, arr->capacity * sizeof(double));
+#else
     arr->data = (double *)realloc(arr->data, arr->capacity * sizeof(double));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -157,7 +177,11 @@ void array_double_push(DoubleArray *arr, double value) {
 void array_float_push(FloatArray *arr, float value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (float *)GC_REALLOC(arr->data, arr->capacity * sizeof(float));
+#else
     arr->data = (float *)realloc(arr->data, arr->capacity * sizeof(float));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -165,7 +189,11 @@ void array_float_push(FloatArray *arr, float value) {
 void array_bool_push(BoolArray *arr, uint8_t value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (uint8_t *)GC_REALLOC(arr->data, arr->capacity * sizeof(uint8_t));
+#else
     arr->data = (uint8_t *)realloc(arr->data, arr->capacity * sizeof(uint8_t));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -173,7 +201,11 @@ void array_bool_push(BoolArray *arr, uint8_t value) {
 void array_char_push(CharArray *arr, char value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (char *)GC_REALLOC(arr->data, arr->capacity * sizeof(char));
+#else
     arr->data = (char *)realloc(arr->data, arr->capacity * sizeof(char));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -181,7 +213,11 @@ void array_char_push(CharArray *arr, char value) {
 void array_ptr_push(PtrArray *arr, void *value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
+#ifdef USE_BOEHM_GC
+    arr->data = (void **)GC_REALLOC(arr->data, arr->capacity * sizeof(void *));
+#else
     arr->data = (void **)realloc(arr->data, arr->capacity * sizeof(void *));
+#endif
   }
   arr->data[arr->length++] = value;
 }
@@ -264,10 +300,40 @@ void print_string(MoonBitStr *str) {
 }
 
 void* moonbit_malloc(int32_t size) {
-  return malloc(size);
+  void* ptr = MOONBIT_MALLOC(size);
+  if (ptr == NULL) {
+    fprintf(stderr, "Fatal: allocation of %d bytes failed - out of memory\n", size);
+    exit(1);
+  }
+  return ptr;
 }
 
+static int call_count = 0;
 int int_of_float(double value) {
+  call_count++;
+  // 检查 NaN (NaN != NaN)
+  if (value != value) {
+    fprintf(stderr, "[Call %d] ERROR: int_of_float received NaN, returning 0\n", call_count);
+    fflush(stderr);
+    return 0;
+  }
+  // 检查正无穷
+  if (value > 2147483647.0) {
+    fprintf(stderr, "[Call %d] ERROR: int_of_float received +Inf, returning INT_MAX\n", call_count);
+    fflush(stderr);
+    return 2147483647;
+  }
+  // 检查负无穷
+  if (value < -2147483648.0) {
+    fprintf(stderr, "[Call %d] ERROR: int_of_float received -Inf, returning INT_MIN\n", call_count);
+    fflush(stderr);
+    return -2147483648;
+  }
+  // 每1000次调用报告一次
+  if (call_count % 10000 == 0) {
+    fprintf(stderr, "[Debug] int_of_float call count: %d\n", call_count);
+    fflush(stderr);
+  }
   return (int)value;
 }
 
@@ -359,13 +425,13 @@ void __builtin_print_double(double value) {
 }
 
 MoonBitStr* __builtin_create_string(const char* str) {
-  MoonBitStr *moonbit_str = (MoonBitStr *)malloc(sizeof(MoonBitStr));
+  MoonBitStr *moonbit_str = (MoonBitStr *)MOONBIT_MALLOC(sizeof(MoonBitStr));
   int len = 0;
   while (str[len] != '\0') {
     len++;
   }
   moonbit_str->length = len;
-  moonbit_str->data = (char *)malloc((len + 1) * sizeof(char));
+  moonbit_str->data = (char *)MOONBIT_MALLOC((len + 1) * sizeof(char));
   for (int i = 0; i < len; i++) {
     moonbit_str->data[i] = str[i];
   }
@@ -378,9 +444,9 @@ int32_t __builtin_get_string_length(MoonBitStr* str) {
 }
 
 MoonBitStr* __builtin_string_concat(MoonBitStr* str1, MoonBitStr* str2) {
-  MoonBitStr *result = (MoonBitStr *)malloc(sizeof(MoonBitStr));
+  MoonBitStr *result = (MoonBitStr *)MOONBIT_MALLOC(sizeof(MoonBitStr));
   result->length = str1->length + str2->length;
-  result->data = (char *)malloc((result->length + 1) * sizeof(char));
+  result->data = (char *)MOONBIT_MALLOC((result->length + 1) * sizeof(char));
   for (int i = 0; i < str1->length; i++) {
     result->data[i] = str1->data[i];
   }
@@ -427,6 +493,9 @@ MoonBitStr* __builtin_char_to_string(char value) {
 }
 
 int main() {
+#ifdef USE_BOEHM_GC
+  GC_INIT();  // 初始化 Boehm GC
+#endif
   moonbit_main();
   return 0;
 }
