@@ -53,6 +53,7 @@ test "Expr TypeCheck Test" {
   ctx.struct_defs.set("Matrix", StructDef::{
     name: "Matrix",
     fields: [{ name: "data", ty: { kind: Array(Array(Int)), mutable: false } }],
+    methods: Map::new()
   })
   ctx.type_env.set("arr", { kind: Array(Int), mutable: false })
   ctx.type_env.set("mat", { kind: Struct("Matrix"), mutable: false })

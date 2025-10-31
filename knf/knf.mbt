@@ -78,6 +78,8 @@ pub fn knf_transform(
   prog : @typecheck.Program,
 ) -> KnfProgram raise KnfTransformError {
   let context = Context::new()
+  
+  // Builtin print functions
   context.globals.set("__builtin_println_int", Function([Int], Unit))
   context.globals.set("__builtin_println_int64", Function([Int64], Unit))
   context.globals.set("__builtin_println_string", Function([String], Unit))
@@ -92,5 +94,27 @@ pub fn knf_transform(
   context.globals.set("__builtin_print_double", Function([Double], Unit))
   context.globals.set("__builtin_print_float", Function([Float], Unit))
   context.globals.set("__builtin_print_char", Function([Char], Unit))
+  
+  // Array/String builtin methods
+  context.globals.set("get_array_length", Function([Int], Int)) // Takes array, returns length
+  context.globals.set("__builtin_get_string_length", Function([String], Int))
+  context.globals.set("__builtin_get_char_in_string", Function([String, Int], Char))
+  
+  // Array push methods
+  context.globals.set("array_int_push", Function([Int, Int], Unit))
+  context.globals.set("array_int64_push", Function([Int64, Int64], Unit))
+  context.globals.set("array_double_push", Function([Double, Double], Unit))
+  context.globals.set("array_float_push", Function([Float, Float], Unit))
+  context.globals.set("array_bool_push", Function([Bool, Bool], Unit))
+  context.globals.set("array_char_push", Function([Char, Char], Unit))
+  context.globals.set("array_ptr_push", Function([Int, Int], Unit)) // Generic pointer type
+  
+  // Type conversion to_string functions
+  context.globals.set("__builtin_int_to_string", Function([Int], String))
+  context.globals.set("__builtin_int64_to_string", Function([Int64], String))
+  context.globals.set("__builtin_float_to_string", Function([Float], String))
+  context.globals.set("__builtin_double_to_string", Function([Double], String))
+  context.globals.set("__builtin_char_to_string", Function([Char], String))
+  
   context.program_to_knf(prog)
 }

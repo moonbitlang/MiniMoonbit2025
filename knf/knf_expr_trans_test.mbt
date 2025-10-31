@@ -27,6 +27,7 @@ test "Expr Knf Transformation Test" {
       { name: "x", ty: { kind: Int, mutable: false } },
       { name: "y", ty: { kind: Int, mutable: false } },
     ],
+    methods: Map::new(),
   }
   typecheck_ctx.struct_defs.set("Point", point_struct_def)
   typecheck_ctx.type_env.set("a", { kind: Double, mutable: false })

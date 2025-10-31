@@ -262,6 +262,7 @@ test "Stmt Knf Transformation Test" {
       { name: "x", ty: { kind: Int, mutable: true } },
       { name: "y", ty: { kind: Int, mutable: true } },
     ],
+    methods: Map::new()
   }
   typecheck_ctx.struct_defs.set("Point", point_struct_def)
 

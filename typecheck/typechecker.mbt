@@ -198,6 +198,16 @@ pub fn Context::substitute_atom_expr_type_var(
       let new_sc_expr = self.substitute_struct_construct_expr_type_var(sc_expr)
       AtomExprKind::StructConstruct(new_sc_expr)
     }
+    AtomExprKind::Cast(target_ty, expr) => {
+      let new_target_ty = self.ensure_type(target_ty)
+      let new_expr = self.substitute_expr_type_var(expr)
+      AtomExprKind::Cast(new_target_ty, new_expr)
+    }
+    AtomExprKind::BitCast(target_ty, expr) => {
+      let new_target_ty = self.ensure_type(target_ty)
+      let new_expr = self.substitute_expr_type_var(expr)
+      AtomExprKind::BitCast(new_target_ty, new_expr)
+    }
   }
   AtomExpr::{ kind: new_atom_expr_kind, ty: new_ty_kind, toks: atom_expr.toks }
 }
@@ -434,7 +444,6 @@ pub fn Context::substitute_top_function_type_var(
   let new_ret_ty_kind = self.ensure_type(top_function.ret_ty)
   let new_body = self.substitute_block_expr_type_var(top_function.body)
   TopFunction::{
-    typeTag: top_function.typeTag,
     fname: top_function.fname,
     param_list: new_param_list,
     ret_ty: new_ret_ty_kind,

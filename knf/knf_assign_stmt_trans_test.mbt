@@ -171,6 +171,7 @@ test "Assign Stmt Knf Transformation Test" {
   let point_struct_def : @typecheck.StructDef = {
     name: "Point",
     fields: [{ name: "x", ty: { kind: Int, mutable: true } }],
+    methods: Map::new(),
   }
   typecheck_ctx.struct_defs.set("Point", point_struct_def)
   typecheck_ctx.type_env.set("x", { kind: Int, mutable: true })

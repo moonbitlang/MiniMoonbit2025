@@ -6,20 +6,11 @@ pub(all) struct Param {
 
 ///|
 pub(all) struct TopFunction {
-  typeTag: String
   fname : String
   param_list : Array[Param]
   ret_ty : TypeKind
   body : BlockExpr
 } derive(Show)
-
-pub fn TopFunction::whole_name(self : TopFunction) -> String {
-  if self.typeTag == "" {
-    self.fname
-  } else {
-    "\{self.typeTag}::\{self.fname}"
-  }
-}
 
 ///|
 pub fn Context::check_top_function(
@@ -38,6 +29,17 @@ pub fn Context::check_top_function(
     self.type_env.set(name, param_ty)
     param_list.push(Param::{ name, ty: param_ty.kind })
   }
+  if !(func.typeTag is "") {
+    guard self.struct_defs.get(func.typeTag) is Some(struct_def) else {
+      raise TypeCheckError("Struct type not found for method: \{func.typeTag}::\{func.fname}")
+    }
+    if param_list.get(0) is Some(p) && p.ty is Struct(s) && s == func.typeTag {
+      struct_def.methods.set(
+        func.fname,
+        Function(param_types, ret_ty),
+      )
+    }
+  }
   self.set_current_func_ret_ty(ret_ty)
   let checked_block = self.check_block_expr(func.body)
   if !self.is_type_compatible(checked_block.ty, ret_ty) {
@@ -47,5 +49,5 @@ pub fn Context::check_top_function(
   }
   self.exit_scope()
   self.current_func_ret_ty = None
-  TopFunction::{ typeTag: func.typeTag, fname: func.fname, param_list, ret_ty, body: checked_block }
+  TopFunction::{ fname: func_whole_name, param_list, ret_ty, body: checked_block }
 }

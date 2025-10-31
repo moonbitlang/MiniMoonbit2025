@@ -21,6 +21,8 @@ pub(all) enum AtomExprKind {
   Array(Array[Expr]) // [expr, expr, ...]
   ArrayMake(Expr, Expr) // Array::make(size, init)
   StructConstruct(StructConstructExpr) // StructName::{ field: expr, ... }
+  Cast(TypeKind, Expr) // Type cast: e.g., n.to_int()
+  BitCast(TypeKind, Expr) // Bitcast: e.g., n.reinterpret_as_float()
 } derive(Show)
 
 ///|
@@ -44,6 +46,21 @@ pub fn Context::check_atom_expr(
           self.throw_(
             atom_expr.toks[0],
             "Undefined identifier: \{name}",
+            Error,
+          )
+          { kind: TypeKind::Unit, mutable: false }
+        }
+      }
+      (Ident(name), ty.kind)
+    }
+    IdentWithTag(tag, name) => {
+      let whole_name = "\{tag}$$\{name}"
+      let ty = match self.lookup_type(whole_name) {
+        Some(ty) => ty
+        None => {
+          self.throw_(
+            atom_expr.toks[0],
+            "Undefined identifier: \{tag}::\{name}",
             Error,
           )
           { kind: TypeKind::Unit, mutable: false }

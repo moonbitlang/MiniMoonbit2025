@@ -89,66 +89,6 @@ pub fn Context::apply_expr_to_knf(
       // Check if this is an Array or String method call (length or push)
       match callee_expr.kind {
         FieldAccess(array_expr, method_name) => {
-          // Check if the base expression is a String type
-          if array_expr.ty is String {
-            // Handle String.length()
-            if method_name == "length" {
-              let (str_stmts, str_knf_expr) = self.apply_expr_to_knf(array_expr)
-              stmts.append(str_stmts)
-              let str_type = self.typekind_to_knf(array_expr.ty)
-              let str_name = self.expr_to_knf_name(str_knf_expr, str_type, stmts)
-              
-              // Call __builtin_get_string_length runtime function
-              let length_func = Name::{ id: "__builtin_get_string_length", slot: 0 }
-              return (stmts, Call(length_func, [str_name]))
-            }
-          }
-          
-          // Check if the base expression is an Array type
-          if array_expr.ty is Array(element_type) {
-            // Handle Array.length()
-            if method_name == "length" {
-              let (array_stmts, array_knf_expr) = self.apply_expr_to_knf(array_expr)
-              stmts.append(array_stmts)
-              let array_type = self.typekind_to_knf(array_expr.ty)
-              let array_name = self.expr_to_knf_name(array_knf_expr, array_type, stmts)
-              
-              // Call get_array_length runtime function
-              let length_func = Name::{ id: "get_array_length", slot: 0 }
-              return (stmts, Call(length_func, [array_name]))
-            }
-            
-            // Handle Array.push(value)
-            if method_name == "push" {
-              let (array_stmts, array_knf_expr) = self.apply_expr_to_knf(array_expr)
-              stmts.append(array_stmts)
-              let array_type = self.typekind_to_knf(array_expr.ty)
-              let array_name = self.expr_to_knf_name(array_knf_expr, array_type, stmts)
-              
-              // Process the argument
-              let arg_names : Array[Name] = []
-              arg_names.push(array_name)
-              for expr in exprs {
-                let (expr_stmts, expr_knf_expr) = self.expr_to_knf(expr)
-                stmts.append(expr_stmts)
-                let expr_type = self.typekind_to_knf(expr.ty)
-                let expr_name = self.expr_to_knf_name(expr_knf_expr, expr_type, stmts)
-                arg_names.push(expr_name)
-              }
-              
-              // Determine the correct push function based on element type
-              let knf_element_type = self.typekind_to_knf(element_type)
-              let push_func_name = match knf_element_type {
-                Int => "array_int_push"
-                Double => "array_double_push"
-                Bool => "array_bool_push"
-                _ => "array_ptr_push"
-              }
-              let push_func = Name::{ id: push_func_name, slot: 0 }
-              return (stmts, Call(push_func, arg_names))
-            }
-          }
-          
           // Check if this is a primitive type conversion method
           let (base_stmts, base_knf_expr) = self.apply_expr_to_knf(array_expr)
           stmts.append(base_stmts)

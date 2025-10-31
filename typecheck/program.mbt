@@ -73,6 +73,23 @@ pub fn Context::lookup_type(self : Context, name : String) -> Type? {
     let t = Type::{ kind: Function([Any], Unit), mutable: false }
     return Some(t)
   }
+  // Handle builtin array/string methods
+  if name == "get_array_length" {
+    // Array.length() - takes any array type and returns Int
+    return Some(Type::{ kind: Function([Any], Int), mutable: false })
+  }
+  if name == "__builtin_get_string_length" {
+    return Some(Type::{ kind: Function([String], Int), mutable: false })
+  }
+  // Handle builtin array push methods
+  if name.has_prefix("array_") && name.has_suffix("_push") {
+    // array_int_push, array_double_push, etc. - takes (Array[T], T) and returns Unit
+    return Some(Type::{ kind: Function([Any, Any], Unit), mutable: false })
+  }
+  // Handle builtin to_string functions
+  if name.has_prefix("__builtin_") && name.has_suffix("_to_string") {
+    return Some(Type::{ kind: Function([Any], String), mutable: false })
+  }
   match self.type_env.get(name) {
     None => None
     Some({ kind, mutable }) => {
@@ -161,6 +178,7 @@ pub fn Context::collect_struct_names(
       let struct_def = StructDef::{
         name: struct_def.name,
         fields: Array::new(),
+        methods: Map::new(),
       }
       self.struct_defs.set(struct_def.name, struct_def)
     }

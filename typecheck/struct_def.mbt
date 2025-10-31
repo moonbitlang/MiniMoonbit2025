@@ -2,6 +2,7 @@
 pub(all) struct StructDef {
   name : String
   fields : Array[StructField]
+  methods: Map[String, TypeKind]
 } derive(Show)
 
 ///|
@@ -33,7 +34,7 @@ pub fn Context::check_struct_def(
     let checked_field = StructField::{ name, ty }
     fields.push(checked_field)
   }
-  let struct_def = StructDef::{ name: struct_def.name, fields }
+  let struct_def = StructDef::{ name: struct_def.name, fields, methods: Map::new() }
   self.struct_defs.set(struct_def.name, struct_def)
   struct_def
 }

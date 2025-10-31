@@ -14,6 +14,7 @@ pub(all) enum AtomExprKind {
   Bool(Bool) // true | false
   String(String) // "hello", etc
   Ident(String) // var
+  IdentWithTag(String, String) // Point::x
   Unit // ()
   Paren(Expr) // (expr)
   Tuple(Array[Expr]) // (expr, expr, ...)
@@ -78,6 +79,11 @@ pub fn parse_atom_expr(
     }
     [{ kind: Upper("Array"), .. }, ..] as tokens =>
       parse_array_make_expr(tokens)
+    [{ kind: Upper(tag), .. }, { kind: Symbol("::"), .. }, { kind: Lower(ident), ..}, .. tokens] => {
+      let expr = AtomExpr::new(
+        IdentWithTag(tag, ident), init_tokens, tokens )
+      (expr, tokens)
+    }
     [{ kind: Upper(_), .. }, ..] as tokens => parse_struct_construct(tokens)
     [{ kind: Bracket('('), .. }, ..] as tokens => parse_paren_expr(tokens)
     [{ kind: Bracket('['), .. }, ..] as tokens => parse_array_expr(tokens)

@@ -75,5 +75,23 @@ pub fn Context::atom_expr_to_knf(
       }
       (stmts, CreateStruct(name, knf_fields))
     }
+    Cast(target_ty, expr) => {
+      let stmts : Array[KnfStmt] = []
+      let (expr_stmts, expr_knf_expr) = self.expr_to_knf(expr)
+      stmts.append(expr_stmts)
+      let expr_ty = self.typekind_to_knf(expr.ty)
+      let expr_name = self.expr_to_knf_name(expr_knf_expr, expr_ty, stmts)
+      let target_ty_knf = self.typekind_to_knf(target_ty)
+      (stmts, KnfExpr::Cast(target_ty_knf, expr_name))
+    }
+    BitCast(target_ty, expr) => {
+      let stmts : Array[KnfStmt] = []
+      let (expr_stmts, expr_knf_expr) = self.expr_to_knf(expr)
+      stmts.append(expr_stmts)
+      let expr_ty = self.typekind_to_knf(expr.ty)
+      let expr_name = self.expr_to_knf_name(expr_knf_expr, expr_ty, stmts)
+      let target_ty_knf = self.typekind_to_knf(target_ty)
+      (stmts, KnfExpr::BitCast(target_ty_knf, expr_name))
+    }
   }
 }

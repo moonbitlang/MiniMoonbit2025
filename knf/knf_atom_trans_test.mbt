@@ -121,6 +121,7 @@ test "Atom Expr Knf Transformation Test" {
       { name: "x", ty: { kind: Int, mutable: false } },
       { name: "y", ty: { kind: Int, mutable: false } },
     ],
+    methods: Map::new(),
   }
   typecheck_ctx.struct_defs.set("Point", point_struct_def)
   let knf_ctx = Context::new()
