@@ -1,5 +1,6 @@
 ///|
-pub fn codegen_all(code : String, source_file~: String="demo") -> @llvm.Module raise {
+#alias(codegen_all)
+pub fn compile(code : String, source_file~: String="demo") -> @llvm.Module raise {
   let tokens = @lexer.tokenize(code, source_file~)
   let ast = @parser.parse(tokens)
   let typed_ast = @typecheck.typecheck(ast)
