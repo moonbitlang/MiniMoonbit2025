@@ -51,8 +51,13 @@ fn binop_is_cmp(bin_op : BinaryOp) -> Bool {
 }
 
 ///|
-fn binop_is_bitwise(bin_op : BinaryOp) -> Bool {
-  bin_op is (BitAnd | BitOr | ShiftLeft | ShiftRight)
+fn binop_is_shift(bin_op : BinaryOp) -> Bool {
+  bin_op is (ShiftLeft | ShiftRight)
+}
+
+///|
+fn binop_is_bitandor(bin_op : BinaryOp) -> Bool {
+  bin_op is (BitAnd | BitOr)
 }
 
 ///|
@@ -192,10 +197,39 @@ pub fn Context::check_expr(
         }
         return e
       }
-      if binop_is_bitwise(op) {
+      if binop_is_shift(op) {
+        // Shift operations: left operand can be Int or Int64, right operand must be Int
+        let left_ty = self.ensure_type(checked_left.ty)
+        if !(left_ty is (Int | Int64 | TypeVar(_))) {
+          let msg = "Left operand of shift operation must be of type Int or Int64"+
+           " while got \{left_ty}"
+          self.throw_(
+            expr.toks[0],
+            msg,
+            Error,
+          )
+        }
+        let right_ty = self.ensure_type(checked_right.ty)
+        if !(right_ty is (Int | TypeVar(_))) {
+          let msg = "Right operand of shift operation must be of type Int"+
+           " while got \{right_ty}"
+          self.throw_(
+            expr.toks[0],
+            msg,
+            Error,
+          )
+        }
+        let e = Expr::{
+          kind: BinaryExpr(op, checked_left, checked_right),
+          ty: checked_left.ty, toks: expr.toks
+        }
+        return e
+      }
+      if binop_is_bitandor(op) {
+        // Bitwise AND/OR: both operands must be of the same type
         let t = self.is_type_compatible(checked_left.ty, checked_right.ty)
         if t is false {
-          let msg = "Operands of bitwise binary operation must be of the same type"+
+          let msg = "Operands of bitwise AND/OR operation must be of the same type"+
            " while got \{checked_left.ty} and \{checked_right.ty}"
           self.throw_(
             expr.toks[0],
@@ -205,7 +239,7 @@ pub fn Context::check_expr(
         }
         let ty = self.ensure_type(checked_left.ty)
         if !(ty is (Int | Int64 | TypeVar(_))) {
-          let msg = "Operands of bitwise binary operation must be of type Int or Int64"+
+          let msg = "Operands of bitwise AND/OR operation must be of type Int or Int64"+
            " while got \{ty}"
           self.throw_(
             expr.toks[0],

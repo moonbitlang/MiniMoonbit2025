@@ -212,8 +212,32 @@ pub fn Context::expr_to_knf(
         return (stmts, Call(concat_func, [lhs_name, rhs_name]))
       }
       
+      // Handle shift operations: right operand must match left operand type
+      let rhs_name_adjusted = if bin_op is (ShiftLeft | ShiftRight) {
+        // Check if types are different and need casting
+        let need_cast = match (left_ty, right_ty) {
+          (Int, Int) => false
+          (Int64, Int64) => false
+          (Int64, Int) => true  // Cast Int to Int64
+          (Int, Int64) => true  // This shouldn't happen after typecheck, but handle it
+          _ => false
+        }
+        if need_cast {
+          // Cast right operand to left operand's type
+          let cast_tmp = self.add_temp(left_ty)
+          let cast_expr = Cast(left_ty, rhs_name)
+          let knf_let = KnfStmt::Let(cast_tmp, left_ty, cast_expr)
+          stmts.push(knf_let)
+          cast_tmp
+        } else {
+          rhs_name
+        }
+      } else {
+        rhs_name
+      }
+      
       let bin_op = binop_to_knf(bin_op)
-      (stmts, Binary(bin_op, lhs_name, rhs_name))
+      (stmts, Binary(bin_op, lhs_name, rhs_name_adjusted))
     }
   }
 }

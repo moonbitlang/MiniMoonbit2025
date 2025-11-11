@@ -50,7 +50,7 @@ extern "C" fn sqrt(x: Double) -> Double = "sqrt";
 // Get high 32 bits of a double as Int
 fn __hi(x: Double) -> Int {
   let bits: Int64 = x.reinterpret_as_int64();
-  let shifted: Int64 = bits >> 32L;
+  let shifted: Int64 = bits >> 32;
   shifted.to_int()
 }
 
@@ -66,7 +66,7 @@ fn __combineW(hi: Int, low: Int) -> Double {
   let low64: Int64 = low.to_int64();
   // Mask low64 to ensure it's treated as unsigned 32 bits
   let low_masked: Int64 = low64 & 0xFFFFFFFFL;
-  let combined: Int64 = (hi64 << 32L) | low_masked;
+  let combined: Int64 = (hi64 << 32) | low_masked;
   combined.reinterpret_as_double()
 }
 
@@ -228,9 +228,9 @@ fn test_bitwise() -> Unit {
   
   // Test bit shifts
   let val: Int64 = 0x123456789ABCDEFL;
-  let shifted_right = val >> 32L;
+  let shifted_right = val >> 32;
   println(shifted_right);
-  let shifted_left = shifted_right << 32L;
+  let shifted_left = shifted_right << 32;
   println(shifted_left);
   
   // Test bit masking
@@ -238,7 +238,7 @@ fn test_bitwise() -> Unit {
   println(masked);
   
   // Test bit OR
-  let combined = (shifted_right << 32L) | masked;
+  let combined = (shifted_right << 32) | masked;
   println(combined);
 }
 
