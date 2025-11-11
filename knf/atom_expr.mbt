@@ -95,8 +95,9 @@ pub fn Context::atom_expr_to_knf(
       let target_ty_knf = self.typekind_to_knf(target_ty)
       (stmts, KnfExpr::BitCast(target_ty_knf, expr_name))
     }
-    EnumConstruct(_) => raise KnfTransformError(
-      "Enum construction not supported in atom expressions",
-    )
+    EnumConstruct(_) =>
+      raise KnfTransformError(
+        "Enum construction not supported in atom expressions",
+      )
   }
 }

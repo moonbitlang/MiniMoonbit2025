@@ -1,7 +1,95 @@
 ///|
 pub(all) struct Pattern {
   kind : PatternKind
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for Pattern with output(self, logger) {
+  let s = self.to_string(color=true)
+  logger.write_string(s)
+}
+
+///|
+pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
+  match self.kind {
+    Wildcard => {
+      let text = "_"
+      if color {
+        @color.taint(text, Magenta)
+      } else {
+        text
+      }
+    }
+    Integer(v) => {
+      let prefix = "int pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      "\{prefix} \{v}"
+    }
+    Ident(name) => {
+      let prefix = "ident pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      "\{prefix} \{name}"
+    }
+    Tuple(patterns) => {
+      let prefix = "tuple pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      if patterns.is_empty() {
+        "\{prefix} ()"
+      } else {
+        let mut result = "\{prefix}\n"
+        for i = 0; i < patterns.length(); i = i + 1 {
+          let pat_str = patterns[i].to_string(color~)
+          let lines = pat_str
+            .split("\n")
+            .map(fn(sv) { sv.to_string() })
+            .to_array()
+          let is_last = i == patterns.length() - 1
+          let formatted = if is_last {
+            format_lines(lines, head_with="└-", continue_with="  ")
+          } else {
+            format_lines(lines, head_with="├-", continue_with="│ ")
+          }
+          result = result + formatted
+          if i < patterns.length() - 1 {
+            result = result + "\n"
+          }
+        }
+        result
+      }
+    }
+    EnumVariant(tag, variant, patterns) => {
+      let tag_prefix = match tag {
+        Some(t) => "\{t}::"
+        None => ""
+      }
+      let prefix = "enum pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      if patterns.is_empty() {
+        "\{prefix} \{tag_prefix}\{variant}"
+      } else {
+        let mut result = "\{prefix} \{tag_prefix}\{variant}\n"
+        for i = 0; i < patterns.length(); i = i + 1 {
+          let pat_str = patterns[i].to_string(color~)
+          let lines = pat_str
+            .split("\n")
+            .map(fn(sv) { sv.to_string() })
+            .to_array()
+          let is_last = i == patterns.length() - 1
+          let formatted = if is_last {
+            format_lines(lines, head_with="└-", continue_with="  ")
+          } else {
+            format_lines(lines, head_with="├-", continue_with="│ ")
+          }
+          result = result + formatted
+          if i < patterns.length() - 1 {
+            result = result + "\n"
+          }
+        }
+        result
+      }
+    }
+  }
+}
 
 ///|
 pub(all) enum PatternKind {
@@ -10,7 +98,33 @@ pub(all) enum PatternKind {
   Ident(String)
   Tuple(Array[Pattern])
   EnumVariant(String?, String, Array[Pattern])
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for PatternKind with output(self, logger) {
+  let s = match self {
+    Wildcard => "_"
+    Integer(v) => "\{v}"
+    Ident(name) => "\{name}"
+    Tuple(patterns) => {
+      let items = patterns.map(fn(p) { p.to_string() }).join(", ")
+      "(\{items})"
+    }
+    EnumVariant(tag, variant, patterns) => {
+      let tag_prefix = match tag {
+        Some(t) => "\{t}::"
+        None => ""
+      }
+      if patterns.is_empty() {
+        "\{tag_prefix}\{variant}"
+      } else {
+        let items = patterns.map(fn(p) { p.to_string() }).join(", ")
+        "\{tag_prefix}\{variant}(\{items})"
+      }
+    }
+  }
+  logger.write_string(s)
+}
 
 ///|
 pub fn parse_pattern(
@@ -25,13 +139,14 @@ pub fn parse_pattern(
       let pattern = Pattern::{ kind: Ident(ident) }
       (pattern, tokens)
     }
-    [{ kind: Int(v), ..}, ..tokens] => {
+    [{ kind: Int(v), .. }, .. tokens] => {
       let pattern = Pattern::{ kind: Integer(v) }
       (pattern, tokens)
     }
-    [{ kind: Upper(name1), ..}, .. tokens] => {
-      let (tag, enum_name, tokens) = if tokens is [{ kind: Symbol("::"), .. }, ..tokens] {
-        guard tokens is [{ kind: Upper(name2), .. }, ..tokens] else {
+    [{ kind: Upper(name1), .. }, .. tokens] => {
+      let (tag, enum_name, tokens) = if tokens
+        is [{ kind: Symbol("::"), .. }, .. tokens] {
+        guard tokens is [{ kind: Upper(name2), .. }, .. tokens] else {
           @lexer.throw_(tokens[0], "Parse Error: InValid Pattern", Error)
           raise ParseError("InValid Pattern")
         }
@@ -39,31 +154,40 @@ pub fn parse_pattern(
       } else {
         (None, name1, tokens)
       }
-      let patterns: Array[Pattern] = Array::new()
-      guard tokens is [{ kind: Bracket('('), .. } as tok, ..tokens] else {
+      let patterns : Array[Pattern] = Array::new()
+      guard tokens is [{ kind: Bracket('('), .. } as tok, .. tokens] else {
         let patternkind = EnumVariant(tag, enum_name, patterns)
         let pattern = Pattern::{ kind: patternkind }
         return (pattern, tokens)
       }
       let tokens = loop tokens {
         [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
-        [{ kind: Int(_) | Lower(_) | Wildcard | Bracket('(') | Upper(_), .. }, ..] as tokens => {
+        [
+          { kind: Int(_) | Lower(_) | Wildcard | Bracket('(') | Upper(_), .. },
+          ..,
+        ] as tokens => {
           let (pat, rest) = parse_pattern(tokens)
           patterns.push(pat)
           continue rest
         }
         [
           { kind: Symbol(","), .. },
-          { kind: Int(_) | Lower(_) | Wildcard | Bracket('(') | Bracket(')') | Upper(_), .. },
+          {
+            kind: Int(_)
+            | Lower(_)
+            | Wildcard
+            | Bracket('(')
+            | Bracket(')')
+            | Upper(_),
+            ..,
+          },
           ..,
         ] as tokens => continue tokens[1:]
         [] => {
           println("Compiler ICE: Failed Parsing Pattern Empty Token ArrayView")
           panic()
         }
-        tokens => {
-          raise ParseError("InValid Pattern: \{tokens[0]}")
-        }
+        tokens => raise ParseError("InValid Pattern: \{tokens[0]}")
       }
       let kind = if patterns.length() == 0 {
         @lexer.throw_(tok, "Parse Error: InValid Pattern", Error)
@@ -85,7 +209,14 @@ pub fn parse_pattern(
         }
         [
           { kind: Symbol(","), .. },
-          { kind: Lower(_) | Wildcard | Bracket('(') | Bracket(')') | Upper(_), .. },
+          {
+            kind: Lower(_)
+            | Wildcard
+            | Bracket('(')
+            | Bracket(')')
+            | Upper(_),
+            ..,
+          },
           ..,
         ] as tokens => continue tokens[1:]
         [] => {
@@ -98,7 +229,11 @@ pub fn parse_pattern(
         @lexer.throw_(tok, "Parse Error: InValid Pattern", Error)
         raise ParseError("InValid Pattern")
       } else if patterns.length() == 1 {
-        @lexer.throw_(tok, "Warning: Should Not use tuple pattern for single pattern", Warning)
+        @lexer.throw_(
+          tok,
+          "Warning: Should Not use tuple pattern for single pattern",
+          Warning,
+        )
         patterns[0].kind
       } else {
         PatternKind::Tuple(patterns)
@@ -115,4 +250,119 @@ pub fn parse_pattern(
       raise ParseError("InValid Pattern")
     }
   }
+}
+
+///|
+test "Pattern to_string Test - Basic" {
+  let color = false
+  let code =
+    #|_ ; x ; 42 ; (a, b)
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `_` (Wildcard)
+  let (pattern, rest) = parse_pattern(tokens)
+  inspect(pattern.to_string(color~), content="_")
+
+  // Skip semicolon and parse `x` (Ident)
+  let rest = skip_semicolon(rest)
+  let (pattern, rest) = parse_pattern(rest)
+  inspect(pattern.to_string(color~), content="ident pattern x")
+
+  // Skip semicolon and parse `42` (Integer)
+  let rest = skip_semicolon(rest)
+  let (pattern, rest) = parse_pattern(rest)
+  inspect(pattern.to_string(color~), content="int pattern 42")
+
+  // Skip semicolon and parse `(a, b)` (Tuple)
+  let rest = skip_semicolon(rest)
+  let (pattern, _) = parse_pattern(rest)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|tuple pattern
+      #|├-ident pattern a
+      #|└-ident pattern b
+    ),
+  )
+}
+
+///|
+test "Pattern to_string Test - Enum" {
+  let color = false
+  let code =
+    #|None ; Some(x) ; Option::Some(42) ; Result::Ok((a, b))
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `None` (EnumVariant without args)
+  let (pattern, rest) = parse_pattern(tokens)
+  inspect(pattern.to_string(color~), content="enum pattern None")
+
+  // Skip semicolon and parse `Some(x)` (EnumVariant with one arg)
+  let rest = skip_semicolon(rest)
+  let (pattern, rest) = parse_pattern(rest)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|enum pattern Some
+      #|└-ident pattern x
+    ),
+  )
+
+  // Skip semicolon and parse `Option::Some(42)` (EnumVariant with tag)
+  let rest = skip_semicolon(rest)
+  let (pattern, rest) = parse_pattern(rest)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|enum pattern Option::Some
+      #|└-int pattern 42
+    ),
+  )
+
+  // Skip semicolon and parse `Result::Ok((a, b))` (EnumVariant with nested tuple)
+  let rest = skip_semicolon(rest)
+  let (pattern, _) = parse_pattern(rest)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|enum pattern Result::Ok
+      #|└-tuple pattern
+      #|  ├-ident pattern a
+      #|  └-ident pattern b
+    ),
+  )
+}
+
+///|
+test "Pattern to_string Test - Nested" {
+  let color = false
+  let code =
+    #|(x, (y, z)) ; Some((a, b))
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `(x, (y, z))` (Nested tuple)
+  let (pattern, rest) = parse_pattern(tokens)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|tuple pattern
+      #|├-ident pattern x
+      #|└-tuple pattern
+      #|  ├-ident pattern y
+      #|  └-ident pattern z
+    ),
+  )
+
+  // Skip semicolon and parse `Some((a, b))` (EnumVariant with tuple)
+  let rest = skip_semicolon(rest)
+  let (pattern, _) = parse_pattern(rest)
+  inspect(
+    pattern.to_string(color~),
+    content=(
+      #|enum pattern Some
+      #|└-tuple pattern
+      #|  ├-ident pattern a
+      #|  └-ident pattern b
+    ),
+  )
 }

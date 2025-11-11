@@ -4,7 +4,66 @@ pub(all) struct ExternFunction {
   param_list : Array[Param]
   ret_ty : Type?
   ffi_name : String
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for ExternFunction with output(self, logger) {
+  let s = self.to_string(color=true)
+  logger.write_string(s)
+}
+
+///|
+pub fn ExternFunction::to_string(self : Self, color? : Bool = true) -> String {
+  let prefix = "extern function: \{self.fname}"
+  let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+  let mut result = prefix
+
+  // Format parameters
+  if self.param_list.length() > 0 {
+    let params_prefix = "params:"
+    let params_prefix = if color {
+      @color.taint(params_prefix, Blue)
+    } else {
+      params_prefix
+    }
+    result = "\{result}\n├-\{params_prefix}"
+    for i = 0; i < self.param_list.length(); i = i + 1 {
+      let param = self.param_list[i]
+      let param_text = param.to_string(color~)
+      let is_last_param = i == self.param_list.length() - 1
+      let param_formatted = if is_last_param {
+        format_lines([param_text], head_with="└-", continue_with="  ")
+      } else {
+        format_lines([param_text], head_with="├-", continue_with="│ ")
+      }
+      result = "\{result}\n│ \{param_formatted}"
+    }
+  }
+
+  // Format return type if present
+  match self.ret_ty {
+    Some(ret_ty) => {
+      let ret_text = "return: \{ret_ty.to_string(color~)}"
+      let ret_formatted = format_lines(
+        [ret_text],
+        head_with="├-",
+        continue_with="│ ",
+      )
+      result = "\{result}\n\{ret_formatted}"
+    }
+    None => ()
+  }
+
+  // Format FFI name
+  let ffi_text = "ffi: \"\{self.ffi_name}\""
+  let ffi_formatted = format_lines(
+    [ffi_text],
+    head_with="└-",
+    continue_with="  ",
+  )
+  result = "\{result}\n\{ffi_formatted}"
+  result
+}
 
 ///|
 ///
@@ -22,7 +81,11 @@ pub fn parse_extern_function(
     panic()
   }
   guard tokens is [{ kind: String(_), .. }, .. tokens] else {
-    @lexer.throw_(tokens[0], "Expect a language string, \"c\", \"ss\", \"wasm\" ect", Error)
+    @lexer.throw_(
+      tokens[0],
+      "Expect a language string, \"c\", \"ss\", \"wasm\" ect",
+      Error,
+    )
     raise ParseError("Expect a language string, \"c\", \"ss\", \"wasm\" ect")
   }
   guard tokens is [{ kind: Keyword(Fn), .. }, .. tokens] else {
@@ -64,9 +127,76 @@ pub fn parse_extern_function(
   } else if tokens is [{ kind: Bracket('}'), .. }, ..] {
     tokens
   } else {
-    @lexer.throw_(tokens[0], "Parse Error: Expect ';' or '}' or newline after let statement", Error)
+    @lexer.throw_(
+      tokens[0],
+      "Parse Error: Expect ';' or '}' or newline after let statement",
+      Error,
+    )
     raise ParseError("Expect ';' or '}' or newline after let statement")
   }
   let extern_function = ExternFunction::{ fname, param_list, ret_ty, ffi_name }
   (extern_function, tokens)
+}
+
+///|
+test "ExternFunction to_string Test - Simple" {
+  let color = false
+  let code =
+    #|extern "c" fn sqrt(x: Double) -> Double = "sqrt" ;
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse simple extern function
+  let (extern_fn, _) = parse_extern_function(tokens)
+  inspect(
+    extern_fn.to_string(color~),
+    content=(
+      #|extern function: sqrt
+      #|├-params:
+      #|│ └-x: Double
+      #|├-return: Double
+      #|└-ffi: "sqrt"
+    ),
+  )
+}
+
+///|
+test "ExternFunction to_string Test - Multiple Params" {
+  let color = false
+  let code =
+    #|extern "c" fn pow(x: Double, y: Double) -> Double = "pow" ;
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse extern function with multiple parameters
+  let (extern_fn, _) = parse_extern_function(tokens)
+  inspect(
+    extern_fn.to_string(color~),
+    content=(
+      #|extern function: pow
+      #|├-params:
+      #|│ ├-x: Double
+      #|│ └-y: Double
+      #|├-return: Double
+      #|└-ffi: "pow"
+    ),
+  )
+}
+
+///|
+test "ExternFunction to_string Test - No Return" {
+  let color = false
+  let code =
+    #|extern "c" fn print_int(x: Int) = "print_int" ;
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse extern function without return type
+  let (extern_fn, _) = parse_extern_function(tokens)
+  inspect(
+    extern_fn.to_string(color~),
+    content=(
+      #|extern function: print_int
+      #|├-params:
+      #|│ └-x: Int
+      #|└-ffi: "print_int"
+    ),
+  )
 }

@@ -1,12 +1,36 @@
 ///|
 pub(all) struct Program {
-  source_file: String
+  source_file : String
   top_lets : Map[String, TopLet]
   top_functions : Map[String, TopFunction]
   extern_funcions : Map[String, ExternFunction]
   struct_defs : Map[String, StructDef]
-  enum_defs: Map[String, EnumDef]
-} derive(Show)
+  enum_defs : Map[String, EnumDef]
+}
+
+pub fn Program::to_string(self: Self, color?: Bool = true) -> String {
+  let sb = StringBuilder::new()
+  for _, extern_fn in self.extern_funcions {
+    sb.write_string(extern_fn.to_string(color~))
+  }
+  for _, struct_def in self.struct_defs {
+    sb.write_string(struct_def.to_string(color~))
+  }
+  for _, enum_def in self.enum_defs {
+    sb.write_string(enum_def.to_string(color~))
+  }
+  for _, top_let in self.top_lets {
+    sb.write_string(top_let.to_string(color~))
+  }
+  for _, top_fn in self.top_functions {
+    sb.write_string(top_fn.to_string(color~))
+  }
+  sb.to_string()
+}
+
+pub impl Show for Program with output(self, logger) {
+  logger.write_string(self.to_string(color=true))
+}
 
 ///|
 pub fn parse(tokens : Array[Token]) -> Program raise ParseError {
@@ -54,6 +78,13 @@ pub fn parse(tokens : Array[Token]) -> Program raise ParseError {
     }
     tokens => raise ParseError("Unexpected token in top level: \{tokens[0]}")
   }
-  let prog = Program::{ top_lets, top_functions, extern_funcions, struct_defs, enum_defs, source_file }
+  let prog = Program::{
+    top_lets,
+    top_functions,
+    extern_funcions,
+    struct_defs,
+    enum_defs,
+    source_file,
+  }
   prog
 }

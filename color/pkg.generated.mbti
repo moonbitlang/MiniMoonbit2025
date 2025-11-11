@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "Kaida-Amethyst/mbtcc/color"
+package "Kaida-Amethyst/MiniMoonBit/color"
 
 // Values
 fn strip_color(String) -> String

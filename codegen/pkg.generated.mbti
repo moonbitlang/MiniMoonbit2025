@@ -1,18 +1,19 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbitlang/MiniMoonbit/codegen"
+package "Kaida-Amethyst/MiniMoonBit/codegen"
 
 import(
+  "Kaida-Amethyst/MiniMoonBit/knf"
   "Kaida-Amethyst/MoonLLVM/IR"
-  "moonbitlang/MiniMoonbit/knf"
 )
 
 // Values
-fn codegen(@knf.KnfProgram) -> @IR.Module raise
+fn codegen(@knf.KnfProgram, souce_file? : String) -> @IR.Module raise
+
+#alias(codegen_all)
+fn compile(String, source_file? : String) -> @IR.Module raise
 
 // Errors
 pub(all) suberror CodegenError String
-fn CodegenError::output(Self, &Logger) -> Unit // from trait `Show`
-fn CodegenError::to_string(Self) -> String // from trait `Show`
 impl Show for CodegenError
 
 // Types and methods
@@ -33,25 +34,28 @@ pub struct Context {
   global_array_inits : Array[(@knf.Name, @knf.Type, @knf.KnfExpr)]
   builtin_funcs : Map[String, @IR.Function]
   builtin_func_tys : Map[String, @IR.FunctionType]
+  extern_funcs : Map[String, @IR.Function]
 }
 fn Context::array_put_codegen(Self, @knf.Name, @knf.Name, @knf.KnfExpr) -> Unit raise
 fn Context::assign_stmt_codegen(Self, @knf.Name, @knf.KnfExpr) -> Unit raise
 fn Context::block_codegen(Self, @knf.KnfBlock) -> &@IR.Value? raise
 fn Context::closure_codegen(Self, @knf.KnfClosure) -> Unit raise
 fn Context::closure_func_codegen(Self, @knf.KnfClosure) -> @IR.Function raise
+fn Context::collect_extern_func_values(Self, Map[String, @knf.KnfExtern]) -> Unit raise
 fn Context::collect_func_values(Self, Map[String, @knf.KnfFunction]) -> Unit raise
 fn Context::collect_struct_types(Self, Map[String, @knf.KnfStructDef]) -> Unit raise
 fn Context::collect_top_lets(Self, Map[String, @knf.KnfTopLet]) -> Unit raise
 fn Context::expr_codegen(Self, @knf.KnfExpr) -> &@IR.Value? raise
-fn Context::generate_builtin_closure(Self, @knf.Name) -> &@IR.Value raise CodegenError
+fn Context::generate_extern_or_builtin_closure(Self, @knf.Name) -> &@IR.Value raise CodegenError
 fn Context::generate_functions(Self, Map[String, @knf.KnfFunction]) -> Unit raise
 fn Context::generate_global_stmts(Self, Array[@knf.KnfStmt]) -> Unit raise
+fn Context::generate_top_level_function_closure(Self, @knf.Name) -> &@IR.Value raise CodegenError
 fn Context::get_builtin_function(Self, String) -> @IR.Function raise CodegenError
+fn Context::get_extern_function(Self, String) -> @IR.Function raise CodegenError
 fn Context::get_knf_type_by_name(Self, @knf.Name) -> @knf.Type?
 fn Context::get_value_by_name(Self, @knf.Name) -> &@IR.Value?
 fn Context::global_expr_codegen(Self, @knf.KnfExpr) -> &@IR.Value raise
 fn Context::if_codegen(Self, @knf.KnfExpr, @knf.KnfBlock, @knf.KnfBlock) -> &@IR.Value? raise
-fn Context::is_builtin_name(Self, @knf.Name) -> Bool
 fn Context::let_mut_stmt_codegen(Self, @knf.Name, @knf.Type, @knf.KnfExpr) -> Unit raise
 fn Context::let_stmt_codegen(Self, @knf.Name, @knf.Type, @knf.KnfExpr) -> Unit raise
 fn Context::new(String) -> Self

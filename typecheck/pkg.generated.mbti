@@ -1,9 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbitlang/MiniMoonbit/typecheck"
+package "Kaida-Amethyst/MiniMoonBit/typecheck"
 
 import(
+  "Kaida-Amethyst/MiniMoonBit/lexer"
+  "Kaida-Amethyst/MiniMoonBit/parser"
   "Kaida-Amethyst/either"
-  "moonbitlang/MiniMoonbit/parser"
 )
 
 // Values
@@ -11,17 +12,14 @@ fn typecheck(@parser.Program) -> Program raise TypeCheckError
 
 // Errors
 pub(all) suberror TypeCheckError String
-fn TypeCheckError::output(Self, &Logger) -> Unit // from trait `Show`
-fn TypeCheckError::to_string(Self) -> String // from trait `Show`
 impl Show for TypeCheckError
 
 // Types and methods
 pub(all) struct ApplyExpr {
   kind : ApplyExprKind
   ty : TypeKind
+  toks : ArrayView[@lexer.Token]
 }
-fn ApplyExpr::output(Self, &Logger) -> Unit // from trait `Show`
-fn ApplyExpr::to_string(Self) -> String // from trait `Show`
 impl Show for ApplyExpr
 
 pub(all) enum ApplyExprKind {
@@ -30,8 +28,6 @@ pub(all) enum ApplyExprKind {
   FieldAccess(ApplyExpr, String)
   Call(ApplyExpr, Array[Expr])
 }
-fn ApplyExprKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn ApplyExprKind::to_string(Self) -> String // from trait `Show`
 impl Show for ApplyExprKind
 
 pub(all) enum AssignOp {
@@ -42,11 +38,6 @@ pub(all) enum AssignOp {
   DivAssign
   ModAssign
 }
-fn AssignOp::equal(Self, Self) -> Bool // from trait `Eq`
-#deprecated
-fn AssignOp::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn AssignOp::output(Self, &Logger) -> Unit // from trait `Show`
-fn AssignOp::to_string(Self) -> String // from trait `Show`
 impl Eq for AssignOp
 impl Show for AssignOp
 
@@ -55,21 +46,23 @@ pub(all) struct AssignStmt {
   op : AssignOp
   expr : Expr
 }
-fn AssignStmt::output(Self, &Logger) -> Unit // from trait `Show`
-fn AssignStmt::to_string(Self) -> String // from trait `Show`
 impl Show for AssignStmt
 
 pub(all) struct AtomExpr {
   kind : AtomExprKind
   ty : TypeKind
+  toks : ArrayView[@lexer.Token]
 }
-fn AtomExpr::output(Self, &Logger) -> Unit // from trait `Show`
-fn AtomExpr::to_string(Self) -> String // from trait `Show`
 impl Show for AtomExpr
 
 pub(all) enum AtomExprKind {
   Int(Int)
+  Int64(Int64)
+  UInt(UInt)
+  UInt64(UInt64)
   Double(Double)
+  Float(Double)
+  Char(Char)
   Bool(Bool)
   String(String)
   Ident(String)
@@ -79,9 +72,10 @@ pub(all) enum AtomExprKind {
   Array(Array[Expr])
   ArrayMake(Expr, Expr)
   StructConstruct(StructConstructExpr)
+  EnumConstruct(String, String, Array[Expr])
+  Cast(TypeKind, Expr)
+  BitCast(TypeKind, Expr)
 }
-fn AtomExprKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn AtomExprKind::to_string(Self) -> String // from trait `Show`
 impl Show for AtomExprKind
 
 pub(all) enum BinaryOp {
@@ -103,11 +97,6 @@ pub(all) enum BinaryOp {
   BitAnd
   BitOr
 }
-fn BinaryOp::equal(Self, Self) -> Bool // from trait `Eq`
-#deprecated
-fn BinaryOp::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn BinaryOp::output(Self, &Logger) -> Unit // from trait `Show`
-fn BinaryOp::to_string(Self) -> String // from trait `Show`
 impl Eq for BinaryOp
 impl Show for BinaryOp
 
@@ -115,64 +104,88 @@ pub(all) struct BlockExpr {
   stmts : Array[Stmt]
   ty : TypeKind
 }
-fn BlockExpr::output(Self, &Logger) -> Unit // from trait `Show`
-fn BlockExpr::to_string(Self) -> String // from trait `Show`
 impl Show for BlockExpr
 
 pub(all) struct Context {
   mut type_env : Env
   type_vars : Map[Int, TypeKind]
   struct_defs : Map[String, StructDef]
+  enum_defs : Map[String, EnumDef]
   func_types : Map[String, TypeKind]
   mut current_func_ret_ty : TypeKind?
+  // private fields
 }
 fn Context::add_type_var(Self) -> TypeKind
-fn Context::check_apply_expr(Self, @parser.ApplyExpr) -> ApplyExpr raise TypeCheckError
-fn Context::check_array_expr(Self, Array[@parser.Expr]) -> (AtomExprKind, TypeKind) raise TypeCheckError
-fn Context::check_array_make_expr(Self, @parser.Expr, @parser.Expr) -> (AtomExprKind, TypeKind) raise TypeCheckError
+fn Context::check_apply_expr(Self, @parser.ApplyExpr) -> ApplyExpr
+fn Context::check_array_expr(Self, Array[@parser.Expr]) -> (AtomExprKind, TypeKind)
+fn Context::check_array_make_expr(Self, @parser.Expr, @parser.Expr) -> (AtomExprKind, TypeKind)
 fn Context::check_assign_stmt(Self, @parser.AssignStmt) -> AssignStmt raise TypeCheckError
-fn Context::check_atom_expr(Self, @parser.AtomExpr) -> AtomExpr raise TypeCheckError
-fn Context::check_block_expr(Self, @parser.BlockExpr) -> BlockExpr raise TypeCheckError
-fn Context::check_expr(Self, @parser.Expr) -> Expr raise TypeCheckError
-fn Context::check_if_expr(Self, @parser.IfExpr) -> IfExpr raise TypeCheckError
+fn Context::check_atom_expr(Self, @parser.AtomExpr) -> AtomExpr
+fn Context::check_block_expr(Self, @parser.BlockExpr) -> BlockExpr
+fn Context::check_enum_constuct_expr(Self, String?, String, Array[@parser.Expr], @parser.AtomExpr) -> (AtomExprKind, TypeKind)
+fn Context::check_enum_def(Self, @parser.EnumDef) -> EnumDef raise TypeCheckError
+fn Context::check_expr(Self, @parser.Expr) -> Expr
+fn Context::check_extern_function(Self, @parser.ExternFunction) -> ExternFunction raise TypeCheckError
+fn Context::check_for_stmt(Self, @parser.ForStmt) -> ForStmt raise TypeCheckError
+fn Context::check_if_expr(Self, @parser.IfExpr) -> IfExpr
 fn Context::check_left_value(Self, @parser.LeftValue) -> LeftValue raise TypeCheckError
 fn Context::check_let_mut_stmt(Self, @parser.LetMutStmt) -> LetMutStmt raise TypeCheckError
 fn Context::check_let_stmt(Self, @parser.LetStmt) -> LetStmt raise TypeCheckError
 fn Context::check_local_function(Self, @parser.LocalFunction) -> LocalFunction raise TypeCheckError
+fn Context::check_match_expr(Self, @parser.MatchExpr) -> MatchExpr
 fn Context::check_parser_type(Self, @parser.Type, mutable? : Bool) -> Type raise TypeCheckError
 fn Context::check_parser_typekind(Self, @parser.TypeKind) -> TypeKind raise TypeCheckError
 fn Context::check_program(Self, @parser.Program) -> Program raise TypeCheckError
 fn Context::check_stmt(Self, @parser.Stmt) -> Stmt raise TypeCheckError
-fn Context::check_struct_construct_expr(Self, @parser.StructConstructExpr) -> (AtomExprKind, TypeKind) raise TypeCheckError
+fn Context::check_struct_construct_expr(Self, @parser.StructConstructExpr) -> (AtomExprKind, TypeKind)
 fn Context::check_struct_def(Self, @parser.StructDef) -> StructDef raise TypeCheckError
 fn Context::check_top_function(Self, @parser.TopFunction) -> TopFunction raise TypeCheckError
 fn Context::check_top_let(Self, @parser.TopLet) -> TopLet raise TypeCheckError
-fn Context::check_tuple_expr(Self, Array[@parser.Expr]) -> (AtomExprKind, TypeKind) raise TypeCheckError
+fn Context::check_tuple_expr(Self, Array[@parser.Expr]) -> (AtomExprKind, TypeKind)
 fn Context::check_while_stmt(Self, @parser.WhileStmt) -> WhileStmt raise TypeCheckError
 fn Context::collect_function_types(Self, @parser.Program) -> Unit raise TypeCheckError
-fn Context::collect_struct_names(Self, @parser.Program) -> Unit raise TypeCheckError
+fn Context::collect_struct_or_enum_names(Self, @parser.Program) -> Unit raise TypeCheckError
 fn Context::enter_scope(Self) -> Unit
 fn Context::exit_scope(Self) -> Unit
-fn Context::is_type_compatible(Self, TypeKind, TypeKind) -> Bool raise TypeCheckError
+fn Context::find_enum_def_by_variant_name(Self, String) -> Array[EnumDef]
+fn Context::has_error_happened(Self) -> Bool
+fn Context::is_type_compatible(Self, TypeKind, TypeKind) -> Bool
 fn Context::lookup_type(Self, String) -> Type?
 fn Context::new() -> Self
 fn Context::set_current_func_ret_ty(Self, TypeKind) -> Unit
+fn Context::set_error_happened(Self) -> Unit
 fn Context::substitute_apply_expr_type_var(Self, ApplyExpr) -> ApplyExpr raise TypeCheckError
 fn Context::substitute_assign_stmt_type_var(Self, AssignStmt) -> AssignStmt raise TypeCheckError
 fn Context::substitute_atom_expr_type_var(Self, AtomExpr) -> AtomExpr raise TypeCheckError
 fn Context::substitute_block_expr_type_var(Self, BlockExpr) -> BlockExpr raise TypeCheckError
 fn Context::substitute_expr_type_var(Self, Expr) -> Expr raise TypeCheckError
+fn Context::substitute_for_stmt_type_var(Self, ForStmt) -> ForStmt raise TypeCheckError
 fn Context::substitute_if_expr_type_var(Self, IfExpr) -> IfExpr raise TypeCheckError
 fn Context::substitute_left_value_type_var(Self, LeftValue) -> LeftValue raise TypeCheckError
 fn Context::substitute_let_mut_stmt_type_var(Self, LetMutStmt) -> LetMutStmt raise TypeCheckError
 fn Context::substitute_let_stmt_type_var(Self, LetStmt) -> LetStmt raise TypeCheckError
 fn Context::substitute_local_function_type_var(Self, LocalFunction) -> LocalFunction raise TypeCheckError
+fn Context::substitute_match_expr_type_var(Self, MatchExpr) -> MatchExpr raise TypeCheckError
 fn Context::substitute_stmt_type_var(Self, Stmt) -> Stmt raise TypeCheckError
 fn Context::substitute_struct_construct_expr_type_var(Self, StructConstructExpr) -> StructConstructExpr raise TypeCheckError
 fn Context::substitute_top_function_type_var(Self, TopFunction) -> TopFunction raise TypeCheckError
 fn Context::substitute_top_let_type_var(Self, TopLet) -> TopLet raise TypeCheckError
 fn Context::substitute_type_var(Self, Program) -> Program raise TypeCheckError
 fn Context::substitute_while_stmt_type_var(Self, WhileStmt) -> WhileStmt raise TypeCheckError
+fn Context::throw_(Self, @lexer.Token, String, @lexer.ThrowLevel) -> Unit
+
+pub struct EnumDef {
+  name : String
+  enum_fields : Array[EnumField]
+}
+fn EnumDef::get_field(Self, String) -> EnumField?
+impl Show for EnumDef
+
+pub struct EnumField {
+  name : String
+  types : Array[TypeKind]
+}
+impl Show for EnumField
 
 pub(all) struct Env {
   local_ : Map[String, Type]
@@ -185,9 +198,8 @@ fn Env::set(Self, String, Type) -> Unit
 pub(all) struct Expr {
   kind : ExprKind
   ty : TypeKind
+  toks : ArrayView[@lexer.Token]
 }
-fn Expr::output(Self, &Logger) -> Unit // from trait `Show`
-fn Expr::to_string(Self) -> String // from trait `Show`
 impl Show for Expr
 
 pub(all) enum ExprKind {
@@ -197,10 +209,25 @@ pub(all) enum ExprKind {
   NegExpr(Expr)
   BinaryExpr(BinaryOp, Expr, Expr)
   IfExpr(IfExpr)
+  MatchExpr(MatchExpr)
 }
-fn ExprKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn ExprKind::to_string(Self) -> String // from trait `Show`
 impl Show for ExprKind
+
+pub(all) struct ExternFunction {
+  fname : String
+  param_list : Array[Param]
+  ret_ty : TypeKind
+  ffi_name : String
+}
+impl Show for ExternFunction
+
+pub(all) struct ForStmt {
+  inits : Array[(String, Expr)]
+  cond : Expr
+  steps : Array[(String, AssignOp, Expr)]
+  body : BlockExpr
+}
+impl Show for ForStmt
 
 pub(all) struct IfExpr {
   cond : Expr
@@ -208,16 +235,12 @@ pub(all) struct IfExpr {
   else_block : @either.Either[IfExpr, BlockExpr]?
   ty : TypeKind
 }
-fn IfExpr::output(Self, &Logger) -> Unit // from trait `Show`
-fn IfExpr::to_string(Self) -> String // from trait `Show`
 impl Show for IfExpr
 
 pub(all) struct LeftValue {
   kind : LeftValueKind
   ty : Type
 }
-fn LeftValue::output(Self, &Logger) -> Unit // from trait `Show`
-fn LeftValue::to_string(Self) -> String // from trait `Show`
 impl Show for LeftValue
 
 pub(all) enum LeftValueKind {
@@ -225,8 +248,6 @@ pub(all) enum LeftValueKind {
   ArrayAccess(LeftValue, Expr)
   FieldAccess(LeftValue, String)
 }
-fn LeftValueKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn LeftValueKind::to_string(Self) -> String // from trait `Show`
 impl Show for LeftValueKind
 
 pub(all) struct LetMutStmt {
@@ -234,8 +255,6 @@ pub(all) struct LetMutStmt {
   ty : TypeKind
   expr : Expr
 }
-fn LetMutStmt::output(Self, &Logger) -> Unit // from trait `Show`
-fn LetMutStmt::to_string(Self) -> String // from trait `Show`
 impl Show for LetMutStmt
 
 pub(all) struct LetStmt {
@@ -243,8 +262,6 @@ pub(all) struct LetStmt {
   ty : TypeKind
   expr : Expr
 }
-fn LetStmt::output(Self, &Logger) -> Unit // from trait `Show`
-fn LetStmt::to_string(Self) -> String // from trait `Show`
 impl Show for LetStmt
 
 pub(all) struct LocalFunction {
@@ -253,26 +270,31 @@ pub(all) struct LocalFunction {
   ret_ty : Type
   body : BlockExpr
 }
-fn LocalFunction::output(Self, &Logger) -> Unit // from trait `Show`
-fn LocalFunction::to_string(Self) -> String // from trait `Show`
 impl Show for LocalFunction
+
+pub struct MatchArm {
+  pattern : Pattern
+  match_guard : Expr?
+  body : Expr
+}
+impl Show for MatchArm
+
+pub struct MatchExpr {
+  cond : Expr
+  arms : Array[MatchArm]
+  ty : TypeKind
+}
+impl Show for MatchExpr
 
 pub(all) struct Param {
   name : String
   ty : TypeKind
 }
-fn Param::output(Self, &Logger) -> Unit // from trait `Show`
-fn Param::to_string(Self) -> String // from trait `Show`
 impl Show for Param
 
 pub(all) struct Pattern {
   kind : PatternKind
 }
-fn Pattern::equal(Self, Self) -> Bool // from trait `Eq`
-#deprecated
-fn Pattern::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn Pattern::output(Self, &Logger) -> Unit // from trait `Show`
-fn Pattern::to_string(Self) -> String // from trait `Show`
 impl Eq for Pattern
 impl Show for Pattern
 
@@ -280,29 +302,25 @@ pub(all) enum PatternKind {
   Wildcard
   Ident(String)
   Tuple(Array[Pattern])
+  Integer(Int)
+  EnumVariant(String, String, Array[Pattern])
 }
-fn PatternKind::equal(Self, Self) -> Bool // from trait `Eq`
-#deprecated
-fn PatternKind::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn PatternKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn PatternKind::to_string(Self) -> String // from trait `Show`
 impl Eq for PatternKind
 impl Show for PatternKind
 
 pub(all) struct Program {
+  source_file : String
   top_lets : Map[String, TopLet]
   top_functions : Map[String, TopFunction]
+  extern_funcions : Map[String, ExternFunction]
   struct_defs : Map[String, StructDef]
+  enum_defs : Map[String, EnumDef]
 }
-fn Program::output(Self, &Logger) -> Unit // from trait `Show`
-fn Program::to_string(Self) -> String // from trait `Show`
 impl Show for Program
 
 pub(all) struct Stmt {
   kind : StmtKind
 }
-fn Stmt::output(Self, &Logger) -> Unit // from trait `Show`
-fn Stmt::to_string(Self) -> String // from trait `Show`
 impl Show for Stmt
 
 pub(all) enum StmtKind {
@@ -310,37 +328,32 @@ pub(all) enum StmtKind {
   LetMutStmt(LetMutStmt)
   AssignStmt(AssignStmt)
   WhileStmt(WhileStmt)
+  ForStmt(ForStmt)
   ExprStmt(Expr)
   ReturnStmt(Expr?)
   LocalFunction(LocalFunction)
 }
-fn StmtKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn StmtKind::to_string(Self) -> String // from trait `Show`
 impl Show for StmtKind
 
 pub(all) struct StructConstructExpr {
   name : String
   fields : Array[(String, Expr)]
+  toks : ArrayView[@lexer.Token]
 }
-fn StructConstructExpr::output(Self, &Logger) -> Unit // from trait `Show`
-fn StructConstructExpr::to_string(Self) -> String // from trait `Show`
 impl Show for StructConstructExpr
 
 pub(all) struct StructDef {
   name : String
   fields : Array[StructField]
+  methods : Map[String, TypeKind]
 }
 fn StructDef::get_field_type(Self, String) -> Type?
-fn StructDef::output(Self, &Logger) -> Unit // from trait `Show`
-fn StructDef::to_string(Self) -> String // from trait `Show`
 impl Show for StructDef
 
 pub(all) struct StructField {
   name : String
   ty : Type
 }
-fn StructField::output(Self, &Logger) -> Unit // from trait `Show`
-fn StructField::to_string(Self) -> String // from trait `Show`
 impl Show for StructField
 
 pub(all) struct TopFunction {
@@ -349,8 +362,6 @@ pub(all) struct TopFunction {
   ret_ty : TypeKind
   body : BlockExpr
 }
-fn TopFunction::output(Self, &Logger) -> Unit // from trait `Show`
-fn TopFunction::to_string(Self) -> String // from trait `Show`
 impl Show for TopFunction
 
 pub struct TopLet {
@@ -358,35 +369,33 @@ pub struct TopLet {
   ty : Type
   expr : Expr
 }
-fn TopLet::output(Self, &Logger) -> Unit // from trait `Show`
-fn TopLet::to_string(Self) -> String // from trait `Show`
 impl Show for TopLet
 
 pub(all) struct Type {
   kind : TypeKind
   mutable : Bool
 }
-fn Type::output(Self, &Logger) -> Unit // from trait `Show`
-fn Type::to_string(Self) -> String // from trait `Show`
 impl Show for Type
 
 pub(all) enum TypeKind {
   Unit
   Bool
   Int
+  Int64
+  UInt
+  UInt64
   Double
+  Float
+  Char
   String
   Tuple(Array[TypeKind])
   Array(TypeKind)
   Function(Array[TypeKind], TypeKind)
   Struct(String)
+  Enum(String)
   Any
   TypeVar(Int)
 }
-fn TypeKind::hash(Self) -> Int // from trait `Hash`
-fn TypeKind::hash_combine(Self, Hasher) -> Unit // from trait `Hash`
-fn TypeKind::output(Self, &Logger) -> Unit // from trait `Show`
-fn TypeKind::to_string(Self) -> String // from trait `Show`
 impl Hash for TypeKind
 impl Show for TypeKind
 
@@ -394,8 +403,6 @@ pub(all) struct WhileStmt {
   cond : Expr
   body : BlockExpr
 }
-fn WhileStmt::output(Self, &Logger) -> Unit // from trait `Show`
-fn WhileStmt::to_string(Self) -> String // from trait `Show`
 impl Show for WhileStmt
 
 // Type aliases

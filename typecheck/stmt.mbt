@@ -54,7 +54,9 @@ pub fn Context::check_stmt(
         raise TypeCheckError("Return statement used outside of a function")
       }
       if !self.is_type_compatible(func_ret_ty, checked_expr.ty) {
-        raise TypeCheckError("Return type mismatch, wanted: \{ func_ret_ty }, got: \{ checked_expr.ty }")
+        raise TypeCheckError(
+          "Return type mismatch, wanted: \{func_ret_ty}, got: \{checked_expr.ty}",
+        )
       }
       Stmt::{ kind: ReturnStmt(Some(checked_expr)) }
     }
@@ -70,8 +72,6 @@ pub fn Context::check_stmt(
       let checked_local_function = self.check_local_function(local_function)
       Stmt::{ kind: LocalFunction(checked_local_function) }
     }
-    NoopStmt => {
-      raise TypeCheckError("Error happened in Parser Phase")
-    }
+    NoopStmt => raise TypeCheckError("Error happened in Parser Phase")
   }
 }

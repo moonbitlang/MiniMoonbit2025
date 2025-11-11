@@ -1,8 +1,23 @@
 ///|
 pub struct Type {
   kind : TypeKind
-  toks: ArrayView[Token]
-} derive(Show, Eq)
+  toks : ArrayView[Token]
+} derive(Eq)
+
+///|
+pub fn Type::to_string(self : Self, color? : Bool = true) -> String {
+  let tk = self.kind.to_string()
+  if color {
+    @color.taint(tk, @color.Green)
+  } else {
+    tk
+  }
+}
+
+///|
+pub impl Show for Type with output(self, logger) {
+  logger.write_string(self.to_string(color=true))
+}
 
 ///|
 pub(all) enum TypeKind {
@@ -27,20 +42,31 @@ pub fn parse_type(
   tokens : ArrayView[Token],
 ) -> (Type, ArrayView[Token]) raise ParseError {
   match tokens {
-    [{ kind: Upper("Unit"), .. }, .. rest] => (Type::{ kind: Unit, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Bool"), .. }, .. rest] => (Type::{ kind: Bool, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Int"), .. }, .. rest] => (Type::{ kind: Int, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Int64"), .. }, .. rest] => (Type::{ kind: Int64, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("UInt"), .. }, .. rest] => (Type::{ kind: UInt, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("UInt64"), .. }, .. rest] => (Type::{ kind: UInt64, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Double"), .. }, .. rest] => (Type::{ kind: Double, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Float"), .. }, .. rest] => (Type::{ kind: Float, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("Char"), .. }, .. rest] => (Type::{ kind: Char, toks: tokens[0:1] }, rest)
-    [{ kind: Upper("String"), .. }, .. rest] => (Type::{ kind: String, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Unit"), .. }, .. rest] =>
+      (Type::{ kind: Unit, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Bool"), .. }, .. rest] =>
+      (Type::{ kind: Bool, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Int"), .. }, .. rest] =>
+      (Type::{ kind: Int, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Int64"), .. }, .. rest] =>
+      (Type::{ kind: Int64, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("UInt"), .. }, .. rest] =>
+      (Type::{ kind: UInt, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("UInt64"), .. }, .. rest] =>
+      (Type::{ kind: UInt64, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Double"), .. }, .. rest] =>
+      (Type::{ kind: Double, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Float"), .. }, .. rest] =>
+      (Type::{ kind: Float, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("Char"), .. }, .. rest] =>
+      (Type::{ kind: Char, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("String"), .. }, .. rest] =>
+      (Type::{ kind: String, toks: tokens[0:1] }, rest)
     [{ kind: Bracket('('), .. }, ..] as tokens =>
       parse_tuple_or_function_type(tokens)
     [{ kind: Upper("Array"), .. }, ..] as tokens => parse_array_type(tokens)
-    [{ kind: Upper(def), .. }, .. rest] => (Type::{ kind: Defined(def), toks: tokens[0:1] }, rest)
+    [{ kind: Upper(def), .. }, .. rest] =>
+      (Type::{ kind: Defined(def), toks: tokens[0:1] }, rest)
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()

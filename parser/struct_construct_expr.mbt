@@ -2,7 +2,7 @@
 pub(all) struct StructConstructExpr {
   name : String
   fields : Array[(String, Expr)]
-  toks: ArrayView[Token]
+  toks : ArrayView[Token]
 } derive(Show, Eq)
 
 ///|
@@ -11,11 +11,15 @@ pub fn parse_struct_construct(
 ) -> (AtomExpr, ArrayView[Token]) raise ParseError {
   let init_tokens = tokens
   guard tokens is [{ kind: Upper(name), .. }, .. tokens] else {
-    println("Compiler ICE: Misuse parse_struct_or_enum_construct, expected struct/enum name")
+    println(
+      "Compiler ICE: Misuse parse_struct_or_enum_construct, expected struct/enum name",
+    )
     panic()
   }
   guard tokens is [{ kind: Symbol("::"), .. }, .. tokens] else {
-    println("Compiler ICE: Misuse parse_struct_or_enum_construct, expected '::'")
+    println(
+      "Compiler ICE: Misuse parse_struct_or_enum_construct, expected '::'",
+    )
     panic()
   }
   guard tokens is [{ kind: Bracket('{'), .. }, .. tokens] else {
@@ -52,6 +56,10 @@ pub fn parse_struct_construct(
   let len = tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
   let struct_construct = StructConstructExpr::{ name, fields, toks }
-  let atom_expr = AtomExpr::new(StructConstruct(struct_construct), init_tokens, tokens)
+  let atom_expr = AtomExpr::new(
+    StructConstruct(struct_construct),
+    init_tokens,
+    tokens,
+  )
   (atom_expr, tokens)
 }

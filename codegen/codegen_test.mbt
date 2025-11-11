@@ -68,10 +68,10 @@ test "Codegen for Array Make Test" {
       #|  ret void
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 /// ================================================================================
 /// # LLVM Codegen: 数组字面量
@@ -143,11 +143,11 @@ test "Codegen for Array Literal Test" {
       #|  ret ptr %0
       #|}
       #|
-
     ),
   )
 }
 
+///|
 test "Codegen for Array Make Test - 2" {
   let code =
     #|fn make_arr(x: Int) -> Array[Int] {
@@ -173,10 +173,10 @@ test "Codegen for Array Make Test - 2" {
       #|  ret ptr %1
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 ///
 test "Codegen for Simple Let and LetMut Test" {
@@ -208,7 +208,6 @@ test "Codegen for Simple Let and LetMut Test" {
       #|  ret i32 %4
       #|}
       #|
-
     ),
   )
 }
@@ -275,7 +274,6 @@ test "Codegen for Simple Binary Test" {
       #|  ret i32 %6
       #|}
       #|
-
     ),
   )
 
@@ -294,7 +292,6 @@ test "Codegen for Simple Binary Test" {
       #|  ret double %5
       #|}
       #|
-
     ),
   )
 
@@ -315,7 +312,6 @@ test "Codegen for Simple Binary Test" {
       #|  ret i1 %7
       #|}
       #|
-
     ),
   )
 
@@ -336,7 +332,6 @@ test "Codegen for Simple Binary Test" {
       #|  ret i1 %7
       #|}
       #|
-
     ),
   )
 }
@@ -376,10 +371,10 @@ test "Codegen for Simple Let and LetMut Test - 2" {
       #|  ret i32 %6
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 test "Codegen Call Test" {
   let code =
@@ -411,10 +406,10 @@ test "Codegen Call Test" {
       #|  ret void 
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 test "Codegen Closure Test" {
   let code =
@@ -451,7 +446,6 @@ test "Codegen Closure Test" {
       #|  ret ptr %1
       #|}
       #|
-
     ),
   )
   let main_func = knf_prog.functions.get("main").unwrap()
@@ -469,7 +463,6 @@ test "Codegen Closure Test" {
       #|  ret void 
       #|}
       #|
-
     ),
   )
 }
@@ -875,7 +868,6 @@ test "Codegen for Empty Top Function Test" {
       #|  ret void
       #|}
       #|
-
     ),
   )
 
@@ -890,7 +882,6 @@ test "Codegen for Empty Top Function Test" {
       #|  ret void
       #|}
       #|
-
     ),
   )
 }
@@ -1013,7 +1004,6 @@ test "Codegen for If Test" {
       #|  ret i32 %9
       #|}
       #|
-
     ),
   )
 
@@ -1035,7 +1025,6 @@ test "Codegen for If Test" {
       #|  ret i32 %1
       #|}
       #|
-
     ),
   )
 }
@@ -1070,7 +1059,6 @@ test "Codegen for Simple Let and LetMut Test - 3" {
       #|  ret i32 %0
       #|}
       #|
-
     ),
   )
 
@@ -1088,10 +1076,10 @@ test "Codegen for Simple Let and LetMut Test - 3" {
       #|  ret i32 %3
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 /// ================================================================================
 /// # LLVM Codegen: 生成带返回值的函数
@@ -1161,7 +1149,6 @@ test "Codegen for Simple Top Function Test" {
       #|  ret i32 42
       #|}
       #|
-
     ),
   )
 
@@ -1176,7 +1163,6 @@ test "Codegen for Simple Top Function Test" {
       #|  ret double 0x404F800000000000
       #|}
       #|
-
     ),
   )
 
@@ -1192,7 +1178,6 @@ test "Codegen for Simple Top Function Test" {
       #|  ret ptr %0
       #|}
       #|
-
     ),
   )
 }
@@ -1294,7 +1279,6 @@ test "Codegen for Struct Create, Access and Set Test" {
       #|  ret ptr %0
       #|}
       #|
-
     ),
   )
 
@@ -1317,10 +1301,10 @@ test "Codegen for Struct Create, Access and Set Test" {
       #|  ret void
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 /// ================================================================================
 /// # LLVM Codegen: 元组 (Tuples)
@@ -1398,7 +1382,6 @@ test "Codegen for Struct Create And Set Test" {
       #|  ret i32 %2
       #|}
       #|
-
     ),
   )
   let combine = knf_prog.functions.get("combine").unwrap()
@@ -1418,10 +1401,10 @@ test "Codegen for Struct Create And Set Test" {
       #|  ret ptr %3
       #|}
       #|
-
     ),
   )
 }
+
 ///|
 /// ================================================================================
 /// # LLVM Codegen: 一元运算
@@ -1508,7 +1491,6 @@ test "Codegen for Simple Unary Test" {
       #|  ret i32 %1
       #|}
       #|
-
     ),
   )
 
@@ -1524,7 +1506,6 @@ test "Codegen for Simple Unary Test" {
       #|  ret double %1
       #|}
       #|
-
     ),
   )
 
@@ -1540,7 +1521,6 @@ test "Codegen for Simple Unary Test" {
       #|  ret i1 %1
       #|}
       #|
-
     ),
   )
 }

@@ -37,7 +37,7 @@ fn Context::from_parser_pattern(
       let tag = match tag {
         Some(t) => t
         None => {
-          let enum_defs =  self.find_enum_def_by_variant_name(variant_name)
+          let enum_defs = self.find_enum_def_by_variant_name(variant_name)
           guard enum_defs.length() == 1 else {
             raise TypeCheckError(
               "Ambiguous enum variant name `\{variant_name}` found in multiple enum definitions",
@@ -46,9 +46,7 @@ fn Context::from_parser_pattern(
           enum_defs[0].name
         }
       }
-      Pattern::{
-        kind: PatternKind::EnumVariant(tag, variant_name, patterns)
-      }
+      Pattern::{ kind: PatternKind::EnumVariant(tag, variant_name, patterns) }
     }
   }
 }
@@ -89,7 +87,9 @@ fn Context::bind_pattern_type(
     }
     EnumVariant(tag, variant_name, sub_pattern) => {
       guard ty_kind is Enum(enum_name) else {
-        raise TypeCheckError("Pattern is an enum variant but type is not an enum")
+        raise TypeCheckError(
+          "Pattern is an enum variant but type is not an enum",
+        )
       }
       guard enum_name == tag else {
         raise TypeCheckError(
@@ -97,7 +97,9 @@ fn Context::bind_pattern_type(
         )
       }
       guard self.enum_defs.get(enum_name) is Some(enum_def) else {
-        raise TypeCheckError("Enum `\{enum_name}` not found in type environment")
+        raise TypeCheckError(
+          "Enum `\{enum_name}` not found in type environment",
+        )
       }
       guard enum_def.get_field(variant_name) is Some(enum_fields) else {
         raise TypeCheckError(
@@ -106,8 +108,10 @@ fn Context::bind_pattern_type(
       }
       if enum_fields.types.length() != sub_pattern.length() {
         // for pattern like `Color(_)`, it's valid, even though Color has multiple fields
-        if sub_pattern is [pat] && pat.kind is Wildcard && enum_fields.types.length() > 1 {
-          return 
+        if sub_pattern is [pat] &&
+          pat.kind is Wildcard &&
+          enum_fields.types.length() > 1 {
+          return
         }
         raise TypeCheckError(
           "Enum variant pattern length does not match enum variant field length",

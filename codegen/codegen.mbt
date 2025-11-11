@@ -1,6 +1,9 @@
 ///|
 #alias(codegen_all)
-pub fn compile(code : String, source_file~: String="demo") -> @llvm.Module raise {
+pub fn compile(
+  code : String,
+  source_file? : String = "demo",
+) -> @llvm.Module raise {
   let tokens = @lexer.tokenize(code, source_file~)
   let ast = @parser.parse(tokens)
   let typed_ast = @typecheck.typecheck(ast)
@@ -10,7 +13,10 @@ pub fn compile(code : String, source_file~: String="demo") -> @llvm.Module raise
 }
 
 ///|
-pub fn codegen(knf_prog : @knf.KnfProgram, souce_file~: String = "demo") -> @llvm.Module raise {
+pub fn codegen(
+  knf_prog : @knf.KnfProgram,
+  souce_file? : String = "demo",
+) -> @llvm.Module raise {
   let codegen_ctx = Context::new(souce_file)
   codegen_ctx.collect_struct_types(knf_prog.struct_defs)
   codegen_ctx.generate_global_stmts(knf_prog.global_stmts)

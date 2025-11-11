@@ -62,9 +62,7 @@ pub fn Context::check_parser_typekind(
     }
     Defined(name) if self.struct_defs.contains(name) => Struct(name)
     Defined(name) if self.enum_defs.contains(name) => Enum(name)
-    Defined(name) => {
-      raise TypeCheckError("Unknown type: \{name}")
-    }
+    Defined(name) => raise TypeCheckError("Unknown type: \{name}")
   }
 }
 
@@ -190,10 +188,7 @@ fn Context::set_var_type_to_typekind(
 }
 
 ///|
-fn Context::ensure_type(
-  self : Context,
-  ty : TypeKind,
-) -> TypeKind {
+fn Context::ensure_type(self : Context, ty : TypeKind) -> TypeKind {
   match ty {
     TypeVar(id) => {
       guard self.type_vars.get(id) is Some(bound_ty) else {

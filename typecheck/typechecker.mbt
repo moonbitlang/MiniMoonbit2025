@@ -125,7 +125,11 @@ pub fn Context::substitute_apply_expr_type_var(
             ty: callee_type_kind,
             toks: a.toks,
           }
-          ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind, toks: callee_atom_expr.toks }
+          ApplyExpr::{
+            kind: AtomExpr(callee_atom_expr),
+            ty: callee_type_kind,
+            toks: callee_atom_expr.toks,
+          }
         } else if a.kind is Ident("print") {
           let arg_ty = new_arg_exprs[0].ty
           let (new_callee_name, new_callee_arg_ty) = match arg_ty {
@@ -148,7 +152,11 @@ pub fn Context::substitute_apply_expr_type_var(
             ty: callee_type_kind,
             toks: a.toks,
           }
-          ApplyExpr::{ kind: AtomExpr(callee_atom_expr), ty: callee_type_kind, toks: callee_atom_expr.toks }
+          ApplyExpr::{
+            kind: AtomExpr(callee_atom_expr),
+            ty: callee_type_kind,
+            toks: callee_atom_expr.toks,
+          }
         } else {
           new_callee_expr
         }
@@ -158,7 +166,11 @@ pub fn Context::substitute_apply_expr_type_var(
       ApplyExprKind::Call(new_callee_expr, new_arg_exprs)
     }
   }
-  ApplyExpr::{ kind: new_apply_expr_kind, ty: new_ty_kind, toks: apply_expr.toks }
+  ApplyExpr::{
+    kind: new_apply_expr_kind,
+    ty: new_ty_kind,
+    toks: apply_expr.toks,
+  }
 }
 
 ///|
@@ -218,9 +230,10 @@ pub fn Context::substitute_atom_expr_type_var(
       let new_expr = self.substitute_expr_type_var(expr)
       AtomExprKind::BitCast(new_target_ty, new_expr)
     }
-    AtomExprKind::EnumConstruct(_) => {
-      raise TypeCheckError("EnumConstruct is not supported yet in type variable substitution.")
-    }
+    AtomExprKind::EnumConstruct(_) =>
+      raise TypeCheckError(
+        "EnumConstruct is not supported yet in type variable substitution.",
+      )
   }
   AtomExpr::{ kind: new_atom_expr_kind, ty: new_ty_kind, toks: atom_expr.toks }
 }
@@ -236,7 +249,11 @@ pub fn Context::substitute_struct_construct_expr_type_var(
     let new_field_expr = self.substitute_expr_type_var(field_expr)
     new_fields.push((field_name, new_field_expr))
   }
-  StructConstructExpr::{ name: sc_expr.name, fields: new_fields, toks: sc_expr.toks }
+  StructConstructExpr::{
+    name: sc_expr.name,
+    fields: new_fields,
+    toks: sc_expr.toks,
+  }
 }
 
 ///|
@@ -383,6 +400,7 @@ pub fn Context::substitute_if_expr_type_var(
   }
 }
 
+///|
 pub fn Context::substitute_match_expr_type_var(
   self : Context,
   match_expr : MatchExpr,
@@ -400,14 +418,10 @@ pub fn Context::substitute_match_expr_type_var(
       None => None
     }
     let body = self.substitute_expr_type_var(body)
-    let new_arm = MatchArm::{ pattern: pattern, match_guard: match_body, body: body }
+    let new_arm = MatchArm::{ pattern, match_guard: match_body, body }
     new_arms.push(new_arm)
   }
-  MatchExpr::{
-    cond: new_cond_expr,
-    arms: new_arms,
-    ty: new_ty_kind,
-  }
+  MatchExpr::{ cond: new_cond_expr, arms: new_arms, ty: new_ty_kind }
 }
 
 ///|
@@ -439,7 +453,12 @@ pub fn Context::substitute_for_stmt_type_var(
     new_steps.push((name, op, new_expr))
   }
   let new_body = self.substitute_block_expr_type_var(for_stmt.body)
-  ForStmt::{ inits: new_inits, cond: new_cond, steps: new_steps, body: new_body }
+  ForStmt::{
+    inits: new_inits,
+    cond: new_cond,
+    steps: new_steps,
+    body: new_body,
+  }
 }
 
 ///|

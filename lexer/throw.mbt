@@ -1,6 +1,5 @@
-
-
-pub fn throw_(tok: Token, msg: String, level: ThrowLevel) -> Unit {
+///|
+pub fn throw_(tok : Token, msg : String, level : ThrowLevel) -> Unit {
   let { line, col, code, file, .. } = tok
   let str_builder = StringBuilder::new()
   let color = match level {
@@ -9,10 +8,7 @@ pub fn throw_(tok: Token, msg: String, level: ThrowLevel) -> Unit {
   }
 
   // 第一行：文件名、行号和列号
-  let head_line = @color.taint(
-    "[\{file}:\{line}:\{col}] \{level}:",
-    Magenta,
-  )
+  let head_line = @color.taint("[\{file}:\{line}:\{col}] \{level}:", Magenta)
   str_builder.write_string("\{head_line}\n")
 
   // 第二行：空行
@@ -30,7 +26,7 @@ pub fn throw_(tok: Token, msg: String, level: ThrowLevel) -> Unit {
 
   // 第四行：在column位置打印`^`，然后打印msg
   let mut indent = "" // 与代码行的缩进保持一致
-  for _ in 1..<col{
+  for _ in 1..<col {
     indent += " "
   }
   let msg = @color.taint("^ \{msg}", color)
@@ -39,12 +35,14 @@ pub fn throw_(tok: Token, msg: String, level: ThrowLevel) -> Unit {
   println(w)
 }
 
+///|
 pub(all) enum ThrowLevel {
   Error
   Warning
 } derive(Show)
 
-fn get_code_line(code: String, line : Int) -> String {
+///|
+fn get_code_line(code : String, line : Int) -> String {
   let mut lineno = line
   let sb = StringBuilder::new()
   for c in code {

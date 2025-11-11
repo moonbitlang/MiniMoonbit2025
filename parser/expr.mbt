@@ -2,7 +2,89 @@
 pub(all) struct Expr {
   kind : ExprKind
   toks : ArrayView[Token]
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for Expr with output(self, logger) {
+  let s = self.to_string(color=true)
+  logger.write_string(s)
+}
+
+///|
+pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
+  match self.kind {
+    ApplyExpr(apply_expr) => apply_expr.to_string(color~)
+    NotExpr(expr) => {
+      let prefix = "unary operator !"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      let inner_str = expr.to_string(color~)
+      let lines = inner_str
+        .split("\n")
+        .map(fn(sv) { sv.to_string() })
+        .to_array()
+      let formatted = format_lines(lines)
+      "\{prefix}\n\{formatted}"
+    }
+    NegExpr(expr) => {
+      let prefix = "unary operator -"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      let inner_str = expr.to_string(color~)
+      let lines = inner_str
+        .split("\n")
+        .map(fn(sv) { sv.to_string() })
+        .to_array()
+      let formatted = format_lines(lines)
+      "\{prefix}\n\{formatted}"
+    }
+    BinaryExpr(op, left, right) => {
+      let op_str = match op {
+        Add => "+"
+        Sub => "-"
+        Mul => "*"
+        Div => "/"
+        Mod => "%"
+        ShiftLeft => "<<"
+        ShiftRight => ">>"
+        Eq => "=="
+        NE => "!="
+        LT => "<"
+        GT => ">"
+        LE => "<="
+        GE => ">="
+        And => "&&"
+        Or => "||"
+        BitAnd => "&"
+        BitOr => "|"
+      }
+      let prefix = "binary expr: \{op_str}"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      let left_str = left.to_string(color~)
+      let right_str = right.to_string(color~)
+      let left_lines = left_str
+        .split("\n")
+        .map(fn(sv) { sv.to_string() })
+        .to_array()
+      let right_lines = right_str
+        .split("\n")
+        .map(fn(sv) { sv.to_string() })
+        .to_array()
+      let left_formatted = format_lines(
+        left_lines,
+        head_with="├-",
+        continue_with="│ ",
+      )
+      let right_formatted = format_lines(
+        right_lines,
+        head_with="└-",
+        continue_with="  ",
+      )
+      "\{prefix}\n\{left_formatted}\n\{right_formatted}"
+    }
+    BlockExpr(block_expr) => block_expr.to_string(color~)
+    IfExpr(if_expr) => if_expr.to_string(color~)
+    MatchExpr(match_expr) => match_expr.to_string(color~)
+  }
+}
 
 ///|
 pub(all) enum ExprKind {
@@ -13,8 +95,23 @@ pub(all) enum ExprKind {
   BinaryExpr(BinaryOp, Expr, Expr)
   IfExpr(IfExpr)
   MatchExpr(MatchExpr)
-} derive(Show, Eq)
+} derive(Eq)
 
+///|
+pub impl Show for ExprKind with output(self, logger) {
+  let s = match self {
+    ApplyExpr(apply_expr) => apply_expr.to_string()
+    NotExpr(expr) => "!\{expr}"
+    NegExpr(expr) => "-\{expr}"
+    BinaryExpr(op, left, right) => "\{left} \{op} \{right}"
+    BlockExpr(_) => "<block>"
+    IfExpr(_) => "<if>"
+    MatchExpr(_) => "<match>"
+  }
+  logger.write_string(s)
+}
+
+///|
 fn Expr::unit() -> Expr {
   let apply_unit = ApplyExpr::unit()
   Expr::{ kind: ApplyExpr(apply_unit), toks: apply_unit.toks }
@@ -31,6 +128,7 @@ pub fn Expr::new(
   Expr::{ kind, toks }
 }
 
+///|
 pub fn Expr::new_binary(
   bop : BinaryOp,
   init_tokens : ArrayView[Token],
@@ -41,7 +139,7 @@ pub fn Expr::new_binary(
   let lhs_offset = left.toks.start_offset()
   let total_len = left.toks.length() + right.toks.length()
   let lhs_init_offset = lhs_offset - init_offset
-  let toks = init_tokens[lhs_init_offset:(lhs_init_offset + total_len)]
+  let toks = init_tokens[lhs_init_offset:lhs_init_offset + total_len]
   Expr::{ kind: ExprKind::BinaryExpr(bop, left, right), toks }
 }
 
@@ -64,7 +162,31 @@ pub(all) enum BinaryOp {
   Or // ||
   BitAnd // &
   BitOr // |
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for BinaryOp with output(self, logger) {
+  let s = match self {
+    Add => "+"
+    Sub => "-"
+    Mul => "*"
+    Div => "/"
+    Mod => "%"
+    ShiftLeft => "<<"
+    ShiftRight => ">>"
+    Eq => "=="
+    NE => "!="
+    LT => "<"
+    GT => ">"
+    LE => "<="
+    GE => ">="
+    And => "&&"
+    Or => "||"
+    BitAnd => "&"
+    BitOr => "|"
+  }
+  logger.write_string(s)
+}
 
 ///|
 pub fn BinaryOp::from_tok_binary_op(tok_bin_op : @lexer.BinaryOp) -> BinaryOp {
@@ -148,7 +270,7 @@ pub fn parse_expr(
     // Parse unary expression or apply expression after binary operator
     let (next_expr, rest) = match rest {
       [{ kind: Not, .. }, .. rest] as tokens => {
-      let init_tokens = rest
+        let init_tokens = rest
         let (apply_expr, rest) = parse_apply_expr(rest)
         let expr = Expr::new(ExprKind::ApplyExpr(apply_expr), init_tokens, rest)
         let not_expr = Expr::new(ExprKind::NotExpr(expr), tokens, rest)
@@ -232,4 +354,363 @@ fn parse_expr_list(
     }
   }
   (exprs, tokens)
+}
+
+///|
+test "Expr to_string Test - Basic" {
+  let color = false
+  let code =
+    #|42 ; x ; !y ; -z
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `42` (ApplyExpr - Int literal)
+  let (expr, rest) = parse_expr(tokens)
+  inspect(expr.to_string(color~), content="int literal 42")
+
+  // Skip semicolon and parse `x` (ApplyExpr - Ident)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(expr.to_string(color~), content="variable x")
+
+  // Skip semicolon and parse `!y` (NotExpr)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator !
+      #|└-variable y
+    ),
+  )
+
+  // Skip semicolon and parse `-z` (NegExpr)
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator -
+      #|└-variable z
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - Binary" {
+  let color = false
+  let code =
+    #|1 + 2 ; a * b ; x - y ; p / q ; m % n
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `1 + 2` (BinaryExpr Add)
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: +
+      #|├-int literal 1
+      #|└-int literal 2
+    ),
+  )
+
+  // Skip semicolon and parse `a * b` (BinaryExpr Mul)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: *
+      #|├-variable a
+      #|└-variable b
+    ),
+  )
+
+  // Skip semicolon and parse `x - y` (BinaryExpr Sub)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: -
+      #|├-variable x
+      #|└-variable y
+    ),
+  )
+
+  // Skip semicolon and parse `p / q` (BinaryExpr Div)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: /
+      #|├-variable p
+      #|└-variable q
+    ),
+  )
+
+  // Skip semicolon and parse `m % n` (BinaryExpr Mod)
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: %
+      #|├-variable m
+      #|└-variable n
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - Complex Binary" {
+  let color = false
+  let code =
+    #|1 + 2 * 3 ; a && b || c ; x == y ; p < q ; m >= n
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `1 + 2 * 3` (nested binary expr with precedence)
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: +
+      #|├-int literal 1
+      #|└-binary expr: *
+      #|  ├-int literal 2
+      #|  └-int literal 3
+    ),
+  )
+
+  // Skip semicolon and parse `a && b || c` (nested logical)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: ||
+      #|├-binary expr: &&
+      #|│ ├-variable a
+      #|│ └-variable b
+      #|└-variable c
+    ),
+  )
+
+  // Skip semicolon and parse `x == y` (comparison)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: ==
+      #|├-variable x
+      #|└-variable y
+    ),
+  )
+
+  // Skip semicolon and parse `p < q`
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: <
+      #|├-variable p
+      #|└-variable q
+    ),
+  )
+
+  // Skip semicolon and parse `m >= n`
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|binary expr: >=
+      #|├-variable m
+      #|└-variable n
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - Nested Unary" {
+  let color = false
+  let code =
+    #|!x ; -y ; !(a + b) ; -(x * y)
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `!x` (not)
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator !
+      #|└-variable x
+    ),
+  )
+
+  // Skip semicolon and parse `-y` (neg)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator -
+      #|└-variable y
+    ),
+  )
+
+  // Skip semicolon and parse `!(a + b)` (not with binary)
+  let rest = skip_semicolon(rest)
+  let (expr, rest) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator !
+      #|└-binary expr: +
+      #|  ├-variable a
+      #|  └-variable b
+    ),
+  )
+
+  // Skip semicolon and parse `-(x * y)` (neg with binary)
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|unary operator -
+      #|└-binary expr: *
+      #|  ├-variable x
+      #|  └-variable y
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - Block" {
+  let color = false
+  let code =
+    #|{ let x = 42 ; x + 1 } ; { return 10 ; }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `{ let x = 42 ; x + 1 }`
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|block
+      #|├-let statement
+      #|│ ├-pattern: ident pattern x
+      #|│ └-expr: int literal 42
+      #|└-expr statement
+      #|  └-binary expr: +
+      #|    ├-variable x
+      #|    └-int literal 1
+      #|
+
+    ),
+  )
+
+  // Skip semicolon and parse `{ return 10 ; }`
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|block
+      #|└-return statement
+      #|  └-int literal 10
+      #|
+
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - If" {
+  let color = false
+  let code =
+    #|if x { return 1 ; } ; if x > 0 { return 1 ; } else { return 0 ; }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `if x { return 1 ; }`
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|if expression
+      #|├-cond: variable x
+      #|└-then: block
+      #|        └-return statement
+      #|          └-int literal 1
+      #|        
+
+    ),
+  )
+
+  // Skip semicolon and parse `if x > 0 { return 1 ; } else { return 0 ; }`
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|if expression
+      #|├-cond: binary expr: >
+      #|│       ├-variable x
+      #|│       └-int literal 0
+      #|├-then: block
+      #|│       └-return statement
+      #|│         └-int literal 1
+      #|│       
+      #|└-else: block
+      #|        └-return statement
+      #|          └-int literal 0
+      #|        
+
+    ),
+  )
+}
+
+///|
+test "Expr to_string Test - Match" {
+  let color = false
+  let code =
+    #|match x { 0 => 1 ; _ => 2 } ; match opt { Some(n) => n ; None => 0 }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse `match x { 0 => 1 ; _ => 2 }`
+  let (expr, rest) = parse_expr(tokens)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|match expression
+      #|├-cond: variable x
+      #|├-match arm
+      #|│ ├-pattern: int pattern 0
+      #|│ └-body: int literal 1
+      #|└-match arm
+      #|  ├-pattern: _
+      #|  └-body: int literal 2
+    ),
+  )
+
+  // Skip semicolon and parse `match opt { Some(n) => n ; None => 0 }`
+  let rest = skip_semicolon(rest)
+  let (expr, _) = parse_expr(rest)
+  inspect(
+    expr.to_string(color~),
+    content=(
+      #|match expression
+      #|├-cond: variable opt
+      #|├-match arm
+      #|│ ├-pattern: enum pattern Some
+      #|│ │          └-ident pattern n
+      #|│ └-body: variable n
+      #|└-match arm
+      #|  ├-pattern: enum pattern None
+      #|  └-body: int literal 0
+    ),
+  )
 }

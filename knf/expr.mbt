@@ -209,23 +209,24 @@ pub fn Context::expr_to_knf(
           tmp_name
         }
       }
-      
+
       // Handle String concatenation
       if bin_op is Add && left_expr.ty is String {
         let concat_func = Name::{ id: "__builtin_string_concat", slot: 0 }
         return (stmts, Call(concat_func, [lhs_name, rhs_name]))
       }
-      
+
       // Handle String comparison
       if bin_op is Eq && left_expr.ty is String {
         let strcmp_func = Name::{ id: "moonbit_string_eq", slot: 0 }
         return (stmts, Call(strcmp_func, [lhs_name, rhs_name]))
       }
-      
       let rhs_name_adjusted = if bin_op is (ShiftLeft | ShiftRight) {
         match (left_ty, right_ty) {
-          (Type::Int, Type::Int) | (Type::Int64, Type::Int64) | (Type::UInt, Type::UInt) | (Type::UInt64, Type::UInt64) => 
-            rhs_name
+          (Type::Int, Type::Int)
+          | (Type::Int64, Type::Int64)
+          | (Type::UInt, Type::UInt)
+          | (Type::UInt64, Type::UInt64) => rhs_name
           (Type::Int64, Type::Int) => {
             let cast_tmp = self.add_temp(Type::Int64)
             let cast_expr = Cast(Type::Int64, rhs_name)
@@ -233,8 +234,7 @@ pub fn Context::expr_to_knf(
             stmts.push(knf_let)
             cast_tmp
           }
-          (Type::UInt, Type::Int) => 
-            rhs_name
+          (Type::UInt, Type::Int) => rhs_name
           (Type::UInt64, Type::Int) => {
             let cast_tmp = self.add_temp(Type::Int64)
             let cast_expr = Cast(Type::Int64, rhs_name)
@@ -242,13 +242,11 @@ pub fn Context::expr_to_knf(
             stmts.push(knf_let)
             cast_tmp
           }
-          _ => 
-            rhs_name
+          _ => rhs_name
         }
       } else {
         rhs_name
       }
-      
       let bin_op = binop_to_knf(bin_op)
       (stmts, Binary(bin_op, lhs_name, rhs_name_adjusted))
     }

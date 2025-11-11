@@ -47,7 +47,9 @@ pub fn Context::new(mod_name : String) -> Context {
   let make_double_array_ty = try! llvm_ctx.getFunctionType(ptrty, [
       i32ty, doublety,
     ])
-  let make_float_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, floatty])
+  let make_float_array_ty = try! llvm_ctx.getFunctionType(ptrty, [
+      i32ty, floatty,
+    ])
   let make_bool_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, boolty])
   let make_char_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, i8ty])
   let make_ptr_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, ptrty])
@@ -55,22 +57,25 @@ pub fn Context::new(mod_name : String) -> Context {
   let array_int_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
       ptrty, i32ty,
     ])
-  let array_int64_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
-      ptrty, i64ty,
-    ])
+  let array_int64_push_ty = try! llvm_ctx.getFunctionType(
+      llvm_ctx.getVoidTy(),
+      [ptrty, i64ty],
+    )
   let array_uint_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
       ptrty, i32ty,
     ])
-  let array_uint64_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
-      ptrty, i64ty,
-    ])
+  let array_uint64_push_ty = try! llvm_ctx.getFunctionType(
+      llvm_ctx.getVoidTy(),
+      [ptrty, i64ty],
+    )
   let array_double_push_ty = try! llvm_ctx.getFunctionType(
       llvm_ctx.getVoidTy(),
       [ptrty, doublety],
     )
-  let array_float_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
-      ptrty, floatty,
-    ])
+  let array_float_push_ty = try! llvm_ctx.getFunctionType(
+      llvm_ctx.getVoidTy(),
+      [ptrty, floatty],
+    )
   let array_bool_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
       ptrty, boolty,
     ])
@@ -142,17 +147,29 @@ pub fn Context::new(mod_name : String) -> Context {
   let builtin_println_string_ty = try! llvm_ctx.getFunctionType(voidty, [ptrty])
   // String related functions
   let builtin_create_string_ty = try! llvm_ctx.getFunctionType(ptrty, [ptrty])
-  let builtin_get_string_length_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty])
-  let builtin_string_concat_ty = try! llvm_ctx.getFunctionType(ptrty, [ptrty, ptrty])
-  let builtin_get_char_in_string_ty = try! llvm_ctx.getFunctionType(i8ty, [ptrty, i32ty])
-  let moonbit_string_eq_ty = try! llvm_ctx.getFunctionType(boolty, [ptrty, ptrty])
+  let builtin_get_string_length_ty = try! llvm_ctx.getFunctionType(i32ty, [
+      ptrty,
+    ])
+  let builtin_string_concat_ty = try! llvm_ctx.getFunctionType(ptrty, [
+      ptrty, ptrty,
+    ])
+  let builtin_get_char_in_string_ty = try! llvm_ctx.getFunctionType(i8ty, [
+      ptrty, i32ty,
+    ])
+  let moonbit_string_eq_ty = try! llvm_ctx.getFunctionType(boolty, [
+      ptrty, ptrty,
+    ])
   // Type conversion to string functions
   let builtin_int_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty])
   let builtin_int64_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i64ty])
   let builtin_uint_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty])
   let builtin_uint64_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i64ty])
-  let builtin_float_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [floatty])
-  let builtin_double_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [doublety])
+  let builtin_float_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [
+      floatty,
+    ])
+  let builtin_double_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [
+      doublety,
+    ])
   let builtin_char_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i8ty])
   let builtin_func_tys = {
     "moonbit_malloc": moonbit_malloc_ty,

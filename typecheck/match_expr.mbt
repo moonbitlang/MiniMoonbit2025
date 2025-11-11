@@ -1,25 +1,32 @@
+///|
 pub struct MatchExpr {
-  cond: Expr
-  arms: Array[MatchArm]
-  ty: TypeKind
+  cond : Expr
+  arms : Array[MatchArm]
+  ty : TypeKind
 } derive(Show)
 
+///|
 pub struct MatchArm {
-  pattern: Pattern
-  match_guard: Expr?
-  body: Expr
+  pattern : Pattern
+  match_guard : Expr?
+  body : Expr
 } derive(Show)
 
+///|
 pub fn Context::check_match_expr(
   self : Context,
   match_expr : @parser.MatchExpr,
 ) -> MatchExpr {
   let checked_cond = self.check_expr(match_expr.cond)
   let checked_cond_ty = self.ensure_type(checked_cond.ty)
-  if (checked_cond_ty is TypeVar(_)) {
-    self.throw_(match_expr.cond.toks[0], "Cannot match on expression with unresolved type variable", Error)
+  if checked_cond_ty is TypeVar(_) {
+    self.throw_(
+      match_expr.cond.toks[0],
+      "Cannot match on expression with unresolved type variable",
+      Error,
+    )
   }
-  let checked_arms: Array[MatchArm] = Array::new()
+  let checked_arms : Array[MatchArm] = Array::new()
   for arm in match_expr.arms {
     let pattern = try self.from_parser_pattern(arm.pattern) catch {
       err => {
@@ -33,14 +40,13 @@ pub fn Context::check_match_expr(
     } noraise {
       pat => pat
     }
-    try self.bind_pattern_type(pattern, checked_cond.ty) catch {
-      err => {
+    self.bind_pattern_type(pattern, checked_cond.ty) catch {
+      err =>
         self.throw_(
           arm.toks[0],
           "Pattern type binding error in match arm: \{err}",
           Error,
         )
-      }
     }
     let checked_guard = match arm.match_guard {
       Some(guard_expr) => {
@@ -82,10 +88,5 @@ pub fn Context::check_match_expr(
     }
     self.ensure_type(arm_types[0])
   }
-  MatchExpr::{
-    cond: checked_cond,
-    arms: checked_arms,
-    ty: tykind,
-  }
+  MatchExpr::{ cond: checked_cond, arms: checked_arms, ty: tykind }
 }
-

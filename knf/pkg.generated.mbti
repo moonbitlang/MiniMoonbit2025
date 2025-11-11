@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonbitlang/MiniMoonbit/knf"
+package "Kaida-Amethyst/MiniMoonBit/knf"
 
 import(
-  "moonbitlang/MiniMoonbit/typecheck"
+  "Kaida-Amethyst/MiniMoonBit/typecheck"
 )
 
 // Values
@@ -12,8 +12,6 @@ fn knf_transform(@typecheck.Program) -> KnfProgram raise KnfTransformError
 
 // Errors
 pub(all) suberror KnfTransformError String
-fn KnfTransformError::output(Self, &Logger) -> Unit // from trait `Show`
-fn KnfTransformError::to_string(Self) -> String // from trait `Show`
 impl Show for KnfTransformError
 
 // Types and methods
@@ -36,11 +34,6 @@ pub(all) enum BinaryOp {
   BitAnd
   BitOr
 }
-fn BinaryOp::equal(Self, Self) -> Bool // from trait `Eq`
-#deprecated
-fn BinaryOp::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn BinaryOp::output(Self, &Logger) -> Unit // from trait `Show`
-fn BinaryOp::to_string(Self) -> String // from trait `Show`
 impl Eq for BinaryOp
 impl Show for BinaryOp
 
@@ -59,12 +52,15 @@ fn Context::block_expr_to_knf(Self, @typecheck.BlockExpr) -> KnfBlock raise KnfT
 fn Context::enter_scope(Self) -> Unit
 fn Context::exit_scope(Self) -> Unit
 fn Context::expr_to_knf(Self, @typecheck.Expr) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError
+fn Context::extern_to_knf(Self, @typecheck.ExternFunction) -> KnfExtern raise KnfTransformError
+fn Context::for_stmt_to_knf(Self, @typecheck.ForStmt) -> Array[KnfStmt] raise KnfTransformError
 fn Context::if_expr_to_knf(Self, @typecheck.IfExpr) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError
 fn Context::left_value_to_knf(Self, @typecheck.LeftValue) -> (Array[KnfStmt], KnfLeftValue) raise KnfTransformError
 fn Context::let_mut_stmt_to_knf(Self, @typecheck.LetMutStmt) -> Array[KnfStmt] raise KnfTransformError
 fn Context::let_stmt_to_knf(Self, @typecheck.LetStmt) -> Array[KnfStmt] raise KnfTransformError
 fn Context::local_function_to_knf(Self, @typecheck.LocalFunction) -> KnfClosure raise KnfTransformError
 fn Context::lookup_name(Self, String) -> (Name, Type)?
+fn Context::match_expr_to_knf(Self, @typecheck.MatchExpr) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError
 fn Context::new() -> Self
 fn Context::program_to_knf(Self, @typecheck.Program) -> KnfProgram raise KnfTransformError
 fn Context::stmt_to_knf(Self, @typecheck.Stmt) -> Array[KnfStmt] raise KnfTransformError
@@ -91,7 +87,6 @@ pub(all) struct KnfBlock {
   ty : Type
 }
 fn KnfBlock::nested_to_string(Self) -> String
-fn KnfBlock::output(Self, &Logger) -> Unit // from trait `Show`
 fn KnfBlock::to_string(Self, Int) -> String
 impl Show for KnfBlock
 
@@ -107,8 +102,13 @@ fn KnfClosure::to_string(Self, ident? : Int) -> String
 pub(all) enum KnfExpr {
   Unit
   Int(Int)
+  Int64(Int64)
+  UInt(UInt)
+  UInt64(UInt64)
   Bool(Bool)
   Double(Double)
+  Float(Double)
+  Char(Char)
   String(String)
   Ident(Name)
   Not(Name)
@@ -124,10 +124,18 @@ pub(all) enum KnfExpr {
   ArrayLiteral(Type, Array[Name])
   ArrayMake(Name, Name)
   TupleLiteral(Array[Name])
+  Cast(Type, Name)
+  BitCast(Type, Name)
 }
-fn KnfExpr::output(Self, &Logger) -> Unit // from trait `Show`
 fn KnfExpr::to_string(Self, ident? : Int) -> String
 impl Show for KnfExpr
+
+pub(all) struct KnfExtern {
+  name : String
+  ret_ty : Type
+  params : Array[Type]
+  ffi_name : String
+}
 
 pub(all) struct KnfFunction {
   name : String
@@ -135,8 +143,6 @@ pub(all) struct KnfFunction {
   params : Array[(Name, Type)]
   body : KnfBlock
 }
-fn KnfFunction::output(Self, &Logger) -> Unit // from trait `Show`
-fn KnfFunction::to_string(Self) -> String // from trait `Show`
 impl Show for KnfFunction
 
 pub(all) enum KnfLeftValue {
@@ -147,13 +153,13 @@ pub(all) enum KnfLeftValue {
 fn KnfLeftValue::to_knf_expr(Self) -> KnfExpr
 
 pub(all) struct KnfProgram {
+  source_file : String
   struct_defs : Map[String, KnfStructDef]
   global_stmts : Array[KnfStmt]
   top_lets : Map[String, KnfTopLet]
   functions : Map[String, KnfFunction]
+  externs : Map[String, KnfExtern]
 }
-fn KnfProgram::output(Self, &Logger) -> Unit // from trait `Show`
-fn KnfProgram::to_string(Self) -> String // from trait `Show`
 impl Show for KnfProgram
 
 pub(all) enum KnfStmt {
@@ -168,7 +174,6 @@ pub(all) enum KnfStmt {
   ReturnUnit
   ClosureDef(KnfClosure)
 }
-fn KnfStmt::output(Self, &Logger) -> Unit // from trait `Show`
 fn KnfStmt::to_string(Self, ident? : Int) -> String
 impl Show for KnfStmt
 
@@ -177,8 +182,6 @@ pub(all) struct KnfStructDef {
   fields : Array[(String, Bool, Type)]
 }
 fn KnfStructDef::get_field_index(Self, String) -> Int?
-fn KnfStructDef::output(Self, &Logger) -> Unit // from trait `Show`
-fn KnfStructDef::to_string(Self) -> String // from trait `Show`
 impl Show for KnfStructDef
 
 pub(all) struct KnfTopLet {
@@ -186,21 +189,12 @@ pub(all) struct KnfTopLet {
   ty : Type
   expr : KnfExpr
 }
-fn KnfTopLet::output(Self, &Logger) -> Unit // from trait `Show`
-fn KnfTopLet::to_string(Self) -> String // from trait `Show`
 impl Show for KnfTopLet
 
 pub(all) struct Name {
   id : String
   slot : Int
 }
-fn Name::equal(Self, Self) -> Bool // from trait `Eq`
-fn Name::hash(Self) -> Int // from trait `Hash`
-fn Name::hash_combine(Self, Hasher) -> Unit // from trait `Hash`
-#deprecated
-fn Name::op_equal(Self, Self) -> Bool // from trait `Eq`
-fn Name::output(Self, &Logger) -> Unit // from trait `Show`
-fn Name::to_string(Self) -> String // from trait `Show`
 fn Name::wildcard() -> Self
 impl Eq for Name
 impl Hash for Name
@@ -209,16 +203,19 @@ impl Show for Name
 pub(all) enum Type {
   Unit
   Int
+  Int64
+  UInt
+  UInt64
   Bool
   Double
+  Float
+  Char
   String
   Array(Type)
   Struct(String)
   Tuple(Array[Type])
   Function(Array[Type], Type)
 }
-fn Type::output(Self, &Logger) -> Unit // from trait `Show`
-fn Type::to_string(Self) -> String // from trait `Show`
 impl Show for Type
 
 // Type aliases

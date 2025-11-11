@@ -13,7 +13,9 @@ pub fn Context::expr_codegen(
     Unit => None
     Int(i) => (self.llvm_ctx.getConstInt32(i) : &@llvm.Value) |> Some
     Int64(i) => self.llvm_ctx.getConstInt64(i) |> Some
-    UInt(i) => (self.llvm_ctx.getConstInt32(i.reinterpret_as_int()) : &@llvm.Value) |> Some
+    UInt(i) =>
+      (self.llvm_ctx.getConstInt32(i.reinterpret_as_int()) : &@llvm.Value)
+      |> Some
     UInt64(i) => self.llvm_ctx.getConstInt64(i.reinterpret_as_int64()) |> Some
     Bool(true) => self.llvm_ctx.getConstTrue() |> Some
     Bool(false) => self.llvm_ctx.getConstFalse() |> Some
@@ -26,10 +28,15 @@ pub fn Context::expr_codegen(
     Ident(name) => self.get_value_by_name_or_load(name) |> Some
     String(s) => {
       // Create global string constant
-      let str_ptr = self.builder.createGlobalString(s, name="str_lit_\{self.str_cnt}")
+      let str_ptr = self.builder.createGlobalString(
+        s,
+        name="str_lit_\{self.str_cnt}",
+      )
       self.str_cnt += 1
       // Call __builtin_create_string to create MoonBitStr
-      let create_string_func = self.get_builtin_function("__builtin_create_string")
+      let create_string_func = self.get_builtin_function(
+        "__builtin_create_string",
+      )
       let moonbit_str = self.builder.createCall(create_string_func, [str_ptr])
       Some(moonbit_str)
     }
@@ -37,13 +44,12 @@ pub fn Context::expr_codegen(
       let lhs_value = self.get_value_by_name_or_load(left_name)
       let rhs_value = self.get_value_by_name_or_load(right_name)
       let is_fp_ty = lhs_value.getType().isIEEELikeFPTy()
-      
+
       // For shift right, check if left operand is unsigned
       let is_unsigned = match self.name_types.get(left_name) {
         Some(UInt) | Some(UInt64) => true
         _ => false
       }
-      
       let v = match (bin_op, is_fp_ty) {
         (Add, false) => self.builder.createAdd(lhs_value, rhs_value)
         (Add, true) => self.builder.createFAdd(lhs_value, rhs_value)
@@ -51,77 +57,70 @@ pub fn Context::expr_codegen(
         (Sub, true) => self.builder.createFSub(lhs_value, rhs_value)
         (Mul, false) => self.builder.createMul(lhs_value, rhs_value)
         (Mul, true) => self.builder.createFMul(lhs_value, rhs_value)
-        (Div, false) => {
+        (Div, false) =>
           // Use unsigned division for unsigned types
           if is_unsigned {
             self.builder.createUDiv(lhs_value, rhs_value)
           } else {
             self.builder.createSDiv(lhs_value, rhs_value)
           }
-        }
         (Div, true) => self.builder.createFDiv(lhs_value, rhs_value)
-        (Mod, false) => {
+        (Mod, false) =>
           // Use unsigned remainder for unsigned types
           if is_unsigned {
             self.builder.createURem(lhs_value, rhs_value)
           } else {
             self.builder.createSRem(lhs_value, rhs_value)
           }
-        }
         (Mod, true) => self.builder.createFRem(lhs_value, rhs_value)
         (Eq, false) => self.builder.createICmpEQ(lhs_value, rhs_value)
         (Eq, true) => self.builder.createFCmpOEQ(lhs_value, rhs_value)
         (NE, false) => self.builder.createICmpNE(lhs_value, rhs_value)
         (NE, true) => self.builder.createFCmpONE(lhs_value, rhs_value)
-        (LT, false) => {
+        (LT, false) =>
           // Use unsigned comparison for unsigned types
           if is_unsigned {
             self.builder.createICmpULT(lhs_value, rhs_value)
           } else {
             self.builder.createICmpSLT(lhs_value, rhs_value)
           }
-        }
         (LT, true) => self.builder.createFCmpOLT(lhs_value, rhs_value)
-        (LE, false) => {
+        (LE, false) =>
           // Use unsigned comparison for unsigned types
           if is_unsigned {
             self.builder.createICmpULE(lhs_value, rhs_value)
           } else {
             self.builder.createICmpSLE(lhs_value, rhs_value)
           }
-        }
         (LE, true) => self.builder.createFCmpOLE(lhs_value, rhs_value)
-        (GT, false) => {
+        (GT, false) =>
           // Use unsigned comparison for unsigned types
           if is_unsigned {
             self.builder.createICmpUGT(lhs_value, rhs_value)
           } else {
             self.builder.createICmpSGT(lhs_value, rhs_value)
           }
-        }
         (GT, true) => self.builder.createFCmpOGT(lhs_value, rhs_value)
-        (GE, false) => {
+        (GE, false) =>
           // Use unsigned comparison for unsigned types
           if is_unsigned {
             self.builder.createICmpUGE(lhs_value, rhs_value)
           } else {
             self.builder.createICmpSGE(lhs_value, rhs_value)
           }
-        }
         (GE, true) => self.builder.createFCmpOGE(lhs_value, rhs_value)
         (And, false) => self.builder.createAnd(lhs_value, rhs_value)
         (Or, false) => self.builder.createOr(lhs_value, rhs_value)
         (BitAnd, false) => self.builder.createAnd(lhs_value, rhs_value)
         (BitOr, false) => self.builder.createOr(lhs_value, rhs_value)
         (ShiftLeft, false) => self.builder.createShl(lhs_value, rhs_value)
-        (ShiftRight, false) => {
+        (ShiftRight, false) =>
           // Use logical shift for unsigned types, arithmetic shift for signed types
           if is_unsigned {
             self.builder.createLShr(lhs_value, rhs_value)
           } else {
             self.builder.createAShr(lhs_value, rhs_value)
           }
-        }
         (op, _) =>
           raise CodegenError(
             "Unsupported binary operation \{op} in codegen, type is \{lhs_value.getType()}",
@@ -168,16 +167,26 @@ pub fn Context::expr_codegen(
           self.builder.createCall(make_int_array_func, [size_value, init_value])
         }
         Int64 => {
-          let make_int64_array_func = self.get_builtin_function("make_int64_array")
-          self.builder.createCall(make_int64_array_func, [size_value, init_value])
+          let make_int64_array_func = self.get_builtin_function(
+            "make_int64_array",
+          )
+          self.builder.createCall(make_int64_array_func, [
+            size_value, init_value,
+          ])
         }
         UInt => {
-          let make_uint_array_func = self.get_builtin_function("make_uint_array")
+          let make_uint_array_func = self.get_builtin_function(
+            "make_uint_array",
+          )
           self.builder.createCall(make_uint_array_func, [size_value, init_value])
         }
         UInt64 => {
-          let make_uint64_array_func = self.get_builtin_function("make_uint64_array")
-          self.builder.createCall(make_uint64_array_func, [size_value, init_value])
+          let make_uint64_array_func = self.get_builtin_function(
+            "make_uint64_array",
+          )
+          self.builder.createCall(make_uint64_array_func, [
+            size_value, init_value,
+          ])
         }
         Bool => {
           let make_bool_array_func = self.get_builtin_function(
@@ -194,11 +203,17 @@ pub fn Context::expr_codegen(
           ])
         }
         Float => {
-          let make_float_array_func = self.get_builtin_function("make_float_array")
-          self.builder.createCall(make_float_array_func, [size_value, init_value])
+          let make_float_array_func = self.get_builtin_function(
+            "make_float_array",
+          )
+          self.builder.createCall(make_float_array_func, [
+            size_value, init_value,
+          ])
         }
         Char => {
-          let make_char_array_func = self.get_builtin_function("make_char_array")
+          let make_char_array_func = self.get_builtin_function(
+            "make_char_array",
+          )
           self.builder.createCall(make_char_array_func, [size_value, init_value])
         }
         _ => {
@@ -283,7 +298,9 @@ pub fn Context::expr_codegen(
         }
         String => {
           // String array access returns Char
-          let get_char_func = self.get_builtin_function("__builtin_get_char_in_string")
+          let get_char_func = self.get_builtin_function(
+            "__builtin_get_char_in_string",
+          )
           let v = self.builder.createCall(get_char_func, [
             array_value, index_value,
           ])
@@ -388,7 +405,9 @@ pub fn Context::expr_codegen(
     ArrayLiteral(UInt64, elements) => {
       let elem_values = elements.map(e => self.get_value_by_name_or_load(e))
       let array_size = self.llvm_ctx.getConstInt32(elem_values.length())
-      let make_uint64_array_func = self.get_builtin_function("make_uint64_array")
+      let make_uint64_array_func = self.get_builtin_function(
+        "make_uint64_array",
+      )
       let init_value = self.llvm_ctx.getConstInt64(0L)
       let v = self.builder.createCall(make_uint64_array_func, [
         array_size, init_value,
@@ -629,7 +648,9 @@ pub fn Context::expr_codegen(
     Cast(target_ty, source_name) => {
       let source_value = self.get_value_by_name_or_load(source_name)
       guard self.get_knf_type_by_name(source_name) is Some(source_ty) else {
-        raise CodegenError("Failed to get KNF type for cast source: \{source_name}")
+        raise CodegenError(
+          "Failed to get KNF type for cast source: \{source_name}",
+        )
       }
       let v = match (source_ty, target_ty) {
         // Int conversions
@@ -748,7 +769,10 @@ pub fn Context::expr_codegen(
           let float_ty = self.llvm_ctx.getFloatTy()
           self.builder.createFPTrunc(source_value, float_ty)
         }
-        _ => raise CodegenError("Unsupported cast from \{source_ty} to \{target_ty}")
+        _ =>
+          raise CodegenError(
+            "Unsupported cast from \{source_ty} to \{target_ty}",
+          )
       }
       Some(v)
     }

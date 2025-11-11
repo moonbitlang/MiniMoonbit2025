@@ -1,5 +1,5 @@
 ///|
-typealias @either.Either
+using @either {type Either}
 
 ///|
-typealias @lexer.Token
+using @lexer {type Token}

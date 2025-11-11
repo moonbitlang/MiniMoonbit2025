@@ -1,6 +1,7 @@
 {
   "import": [
     "Kaida-Amethyst/MiniMoonBit/lexer",
-    "Kaida-Amethyst/either"
+    "Kaida-Amethyst/MiniMoonBit/color",
+    "Kaida-Amethyst/either",
   ]
 }

@@ -54,17 +54,25 @@ pub fn Context::new() -> Context {
   ctx
 }
 
+///|
 pub fn Context::set_error_happened(self : Context) -> Unit {
   self.error_happened = true
 }
 
-pub fn Context::throw_(self: Self, tok: Token, msg: String, level: @lexer.ThrowLevel) -> Unit {
+///|
+pub fn Context::throw_(
+  self : Self,
+  tok : Token,
+  msg : String,
+  level : @lexer.ThrowLevel,
+) -> Unit {
   @lexer.throw_(tok, msg, level)
   if level is Error {
     self.set_error_happened()
   }
 }
 
+///|
 pub fn Context::has_error_happened(self : Context) -> Bool {
   self.error_happened
 }
@@ -95,7 +103,7 @@ pub fn Context::lookup_type(self : Context, name : String) -> Type? {
   match self.type_env.get(name) {
     None => None
     Some({ kind, mutable }) => {
-      let t = self.ensure_type(kind) 
+      let t = self.ensure_type(kind)
       // catch { _ => return None }
       let t = Type::{ kind: t, mutable }
       self.type_env.set(name, t)
@@ -132,7 +140,7 @@ pub fn Context::add_type_var(self : Context) -> TypeKind {
 
 ///|
 pub(all) struct Program {
-  source_file: String
+  source_file : String
   top_lets : Map[String, TopLet]
   top_functions : Map[String, TopFunction]
   extern_funcions : Map[String, ExternFunction]
@@ -173,7 +181,14 @@ pub fn Context::check_program(
     let checked_top_func = self.check_top_function(top_func)
     top_functions.set(name, checked_top_func)
   }
-  Program::{ source_file, top_lets, top_functions, extern_funcions, struct_defs, enum_defs }
+  Program::{
+    source_file,
+    top_lets,
+    top_functions,
+    extern_funcions,
+    struct_defs,
+    enum_defs,
+  }
 }
 
 ///|
@@ -182,7 +197,8 @@ pub fn Context::collect_struct_or_enum_names(
   program : @parser.Program,
 ) -> Unit raise TypeCheckError {
   for struct_def in program.struct_defs.values() {
-    if self.struct_defs.contains(struct_def.name) || self.enum_defs.contains(struct_def.name) {
+    if self.struct_defs.contains(struct_def.name) ||
+      self.enum_defs.contains(struct_def.name) {
       raise TypeCheckError("Duplicate struct name: \{struct_def.name}")
     } else {
       let struct_def = StructDef::{
@@ -194,13 +210,11 @@ pub fn Context::collect_struct_or_enum_names(
     }
   }
   for enum_def in program.enum_defs.values() {
-    if self.enum_defs.contains(enum_def.name) || self.struct_defs.contains(enum_def.name) {
+    if self.enum_defs.contains(enum_def.name) ||
+      self.struct_defs.contains(enum_def.name) {
       raise TypeCheckError("Duplicate enum name: \{enum_def.name}")
     } else {
-      let enum_def = EnumDef::{
-        name: enum_def.name,
-        enum_fields: Array::new(),
-      }
+      let enum_def = EnumDef::{ name: enum_def.name, enum_fields: Array::new() }
       self.enum_defs.set(enum_def.name, enum_def)
     }
   }
@@ -233,7 +247,9 @@ pub fn Context::collect_function_types(
   for func in program.top_functions.values() {
     let func_whole_name = func.whole_name()
     if self.func_types.contains(func_whole_name) {
-      raise TypeCheckError("Duplicate function name: \{func.typeTag}::\{func.fname}")
+      raise TypeCheckError(
+        "Duplicate function name: \{func.typeTag}::\{func.fname}",
+      )
     } else {
       let param_types = Array::new()
       for param in func.param_list {
@@ -249,9 +265,10 @@ pub fn Context::collect_function_types(
   }
 }
 
+///|
 pub fn Context::find_enum_def_by_variant_name(
-  self: Self,
-  variant_name: String
+  self : Self,
+  variant_name : String,
 ) -> Array[EnumDef] {
   let enum_defs = Array::new()
   for _, enum_def in self.enum_defs {

@@ -1,4 +1,3 @@
-
 ///|
 test "Tokenize Code - 1" {
   let code =
@@ -140,7 +139,7 @@ test "Tokenize Float Number" {
   assert_true(tokens[4].kind is Double(0.57721))
   assert_true(tokens[5].kind is Double(42.0))
   assert_true(tokens[6].kind is EOF)
-  
+
   // Test scientific notation
   let code2 =
     #|1.0e+01 2.5e-3 3.0e10 1.23e5 5.67E+2 9.81e0
@@ -221,12 +220,12 @@ test "Tokenize Hexadecimal Number" {
     #|0x1a 0xFF 0x0 0x7FFFFFFF 0XABCD 0x10L 0xDeadBeefL
   let tokens = tokenize(code)
   assert_true(tokens.length() is 8)
-  assert_true(tokens[0].kind is Int(26))           // 0x1a = 26
-  assert_true(tokens[1].kind is Int(255))          // 0xFF = 255
-  assert_true(tokens[2].kind is Int(0))            // 0x0 = 0
-  assert_true(tokens[3].kind is Int(2147483647))   // 0x7FFFFFFF = max Int
-  assert_true(tokens[4].kind is Int(43981))        // 0XABCD = 43981
-  assert_true(tokens[5].kind is Int64(16L))        // 0x10L = 16L
+  assert_true(tokens[0].kind is Int(26)) // 0x1a = 26
+  assert_true(tokens[1].kind is Int(255)) // 0xFF = 255
+  assert_true(tokens[2].kind is Int(0)) // 0x0 = 0
+  assert_true(tokens[3].kind is Int(2147483647)) // 0x7FFFFFFF = max Int
+  assert_true(tokens[4].kind is Int(43981)) // 0XABCD = 43981
+  assert_true(tokens[5].kind is Int64(16L)) // 0x10L = 16L
   assert_true(tokens[6].kind is Int64(3735928559L)) // 0xDeadBeefL = 3735928559L
   assert_true(tokens[7].kind is EOF)
 }
@@ -364,10 +363,10 @@ test "Tokenize Hexadecimal Unsigned Numbers" {
     #|0x1aU 0xFFU 0xFFFFFFFFU 0x10UL 0xDeadBeefUL
   let tokens = tokenize(code)
   assert_true(tokens.length() is 6)
-  assert_true(tokens[0].kind is UInt(26U))            // 0x1aU = 26U
-  assert_true(tokens[1].kind is UInt(255U))           // 0xFFU = 255U
-  assert_true(tokens[2].kind is UInt(4294967295U))    // 0xFFFFFFFFU = max UInt
-  assert_true(tokens[3].kind is UInt64(16UL))         // 0x10UL = 16UL
+  assert_true(tokens[0].kind is UInt(26U)) // 0x1aU = 26U
+  assert_true(tokens[1].kind is UInt(255U)) // 0xFFU = 255U
+  assert_true(tokens[2].kind is UInt(4294967295U)) // 0xFFFFFFFFU = max UInt
+  assert_true(tokens[3].kind is UInt64(16UL)) // 0x10UL = 16UL
   assert_true(tokens[4].kind is UInt64(3735928559UL)) // 0xDeadBeefUL = 3735928559UL
   assert_true(tokens[5].kind is EOF)
 }

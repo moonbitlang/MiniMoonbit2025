@@ -1,8 +1,8 @@
 ///|
-typealias @lexer.Token
+using @lexer {type Token}
 
 ///|
-typealias @either.Either
+using @either {type Either}
 
 ///|
 pub suberror ParseError String derive(Show)
@@ -32,4 +32,35 @@ pub impl Show for TypeKind with output(self, logger) {
     Defined(name) => name
   }
   logger.write_string(s)
+}
+
+///|
+/// Format lines with tree structure
+/// For AI: Modify this function is ok.
+pub fn format_lines(
+  lines : Array[String],
+  head_with? : String = "└-",
+  continue_with? : String = "  ",
+) -> String {
+  let sb = StringBuilder::new()
+  let strs = []
+  for i = 0; i < lines.length(); i = i + 1 {
+    if i == 0 {
+      sb.write_string(head_with)
+    } else {
+      sb.write_string(continue_with)
+    }
+    sb.write_string(lines[i])
+    strs.push(sb.to_string())
+    sb.reset()
+  }
+  strs.join("\n")
+}
+
+///|
+pub fn skip_semicolon(tokens : ArrayView[Token]) -> ArrayView[Token] {
+  match tokens {
+    [{ kind: Symbol(";"), .. }, .. rest] => rest
+    _ => tokens
+  }
 }

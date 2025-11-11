@@ -356,6 +356,7 @@ test "Block Expr Parsing" {
   assert_true(block.stmts[3].kind is LetStmt(_))
   assert_true(block.stmts[4].kind is AssignStmt(_))
 }
+
 ///|
 test "Complex Apply Expr Parsing Test" {
   let code =

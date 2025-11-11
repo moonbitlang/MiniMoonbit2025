@@ -2,7 +2,7 @@
 pub(all) struct StructConstructExpr {
   name : String
   fields : Array[(String, Expr)]
-  toks: ArrayView[Token]
+  toks : ArrayView[Token]
 } derive(Show)
 
 ///|
@@ -18,8 +18,7 @@ pub fn Context::check_struct_construct_expr(
     }
   }
   if sc_expr.fields.length() != struct_def.fields.length() {
-    let msg = 
-      "Struct \{sc_expr.name} requires \{struct_def.fields.length()} fields,"+
+    let msg = "Struct \{sc_expr.name} requires \{struct_def.fields.length()} fields," +
       " but \{sc_expr.fields.length()} were provided"
     self.throw_(sc_expr.toks[0], msg, Error)
   }
@@ -40,8 +39,7 @@ pub fn Context::check_struct_construct_expr(
     }
     let checked_expr = self.check_expr(field_expr)
     if self.is_type_compatible(checked_expr.ty, field_type.kind) is false {
-      let msg = 
-        "Field \{field_name} expects type \{field_type.kind.to_string()}, "+
+      let msg = "Field \{field_name} expects type \{field_type.kind.to_string()}, " +
         "but got \{checked_expr.ty.to_string()}"
       self.throw_(sc_expr.toks[0], msg, Error)
     }

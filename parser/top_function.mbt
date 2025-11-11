@@ -2,17 +2,89 @@
 pub(all) struct Param {
   name : String
   ty : Type
-} derive(Show, Eq)
+} derive(Eq)
+
+///|
+pub impl Show for Param with output(self, logger) {
+  let s = self.to_string(color=true)
+  logger.write_string(s)
+}
+
+///|
+pub fn Param::to_string(self : Self, color? : Bool = true) -> String {
+  "\{self.name}: \{self.ty.to_string(color~)}"
+}
 
 ///|
 pub(all) struct TopFunction {
-  typeTag: String
+  typeTag : String
   fname : String
   param_list : Array[Param]
   ret_ty : Type
   body : BlockExpr
-} derive(Show, Eq)
+} derive(Eq)
 
+///|
+pub impl Show for TopFunction with output(self, logger) {
+  let s = self.to_string(color=true)
+  logger.write_string(s)
+}
+
+///|
+pub fn TopFunction::to_string(self : Self, color? : Bool = true) -> String {
+  let full_name = if self.typeTag == "" {
+    "Top function: \{self.fname}"
+  } else {
+    "Top function: \{self.typeTag}::\{self.fname}"
+  }
+  let prefix = if color { @color.taint(full_name, Magenta) } else { full_name }
+  let mut result = prefix
+
+  // Format parameters
+  if self.param_list.length() > 0 {
+    let params_prefix = "params:"
+    let params_prefix = if color {
+      @color.taint(params_prefix, Blue)
+    } else {
+      params_prefix
+    }
+    result = "\{result}\n├-\{params_prefix}"
+    for i = 0; i < self.param_list.length(); i = i + 1 {
+      let param = self.param_list[i]
+      let param_text = param.to_string(color~)
+      let is_last_param = i == self.param_list.length() - 1
+      let param_formatted = if is_last_param {
+        format_lines([param_text], head_with="└-", continue_with="  ")
+      } else {
+        format_lines([param_text], head_with="├-", continue_with="│ ")
+      }
+      result = "\{result}\n│ \{param_formatted}"
+    }
+  }
+
+  // Format return type
+  let ret_text = "return: \{self.ret_ty.to_string(color~)}"
+  let ret_formatted = format_lines(
+    [ret_text],
+    head_with="├-",
+    continue_with="│ ",
+  )
+  result = "\{result}\n\{ret_formatted}"
+
+  // Format body
+  let body_str = self.body.to_string(color~)
+  let body_lines = body_str
+    .split("\n")
+    .map(fn(sv) { sv.to_string() })
+    .to_array()
+  let body_formatted = format_lines(
+    body_lines,
+  )
+  result = "\{result}\n\{body_formatted}\n"
+  result
+}
+
+///|
 pub fn TopFunction::whole_name(self : TopFunction) -> String {
   if self.typeTag == "" {
     self.fname
@@ -101,6 +173,87 @@ pub fn parse_top_function(
     (Array::new(), ret_type, tokens)
   }
   let (body, tokens) = parse_block_expr(tokens)
-  let top_function = TopFunction::{ typeTag,  fname, param_list, ret_ty, body }
+  let top_function = TopFunction::{ typeTag, fname, param_list, ret_ty, body }
   (top_function, tokens)
+}
+
+///|
+test "TopFunction to_string Test - Simple" {
+  let color = false
+  let code =
+    #|fn add(x: Int, y: Int) -> Int { return x + y ; }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse simple top function
+  let (top_fn, _) = parse_top_function(tokens)
+  inspect(
+    top_fn.to_string(color~),
+    content=(
+      #|Top function: add
+      #|├-params:
+      #|│ ├-x: Int
+      #|│ └-y: Int
+      #|├-return: Int
+      #|└-block
+      #|  └-return statement
+      #|    └-binary expr: +
+      #|      ├-variable x
+      #|      └-variable y
+      #|  
+      #|
+
+    ),
+  )
+}
+
+///|
+test "TopFunction to_string Test - With Type Tag" {
+  let color = false
+  let code =
+    #|fn Point::distance(x: Int, y: Int) -> Double { return 0.0 ; }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse top function with type tag
+  let (top_fn, _) = parse_top_function(tokens)
+  inspect(
+    top_fn.to_string(color~),
+    content=(
+      #|Top function: Point::distance
+      #|├-params:
+      #|│ ├-x: Int
+      #|│ └-y: Int
+      #|├-return: Double
+      #|└-block
+      #|  └-return statement
+      #|    └-double literal 0
+      #|  
+      #|
+
+    ),
+  )
+}
+
+///|
+test "TopFunction to_string Test - Main" {
+  let color = false
+  let code =
+    #|fn main { let x = 42 ; }
+  let tokens = @lexer.tokenize(code, source_file="test")
+
+  // Parse main function
+  let (top_fn, _) = parse_top_function(tokens)
+  inspect(
+    top_fn.to_string(color~),
+    content=(
+      #|Top function: main
+      #|├-return: Unit
+      #|└-block
+      #|  └-let statement
+      #|    ├-pattern: ident pattern x
+      #|    └-expr: int literal 42
+      #|  
+      #|
+
+    ),
+  )
 }

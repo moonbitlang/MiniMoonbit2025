@@ -2,7 +2,7 @@
 pub(all) struct ApplyExpr {
   kind : ApplyExprKind
   ty : TypeKind
-  toks: ArrayView[Token]
+  toks : ArrayView[Token]
 } derive(Show)
 
 ///|
@@ -40,14 +40,16 @@ pub fn Context::check_apply_expr(
       // Handle String indexing (returns Char)
       if checked_array_expr.ty is String {
         ApplyExpr::{
-          kind: ApplyExprKind::ArrayAccess(checked_array_expr, checked_index_expr),
+          kind: ApplyExprKind::ArrayAccess(
+            checked_array_expr, checked_index_expr,
+          ),
           ty: Char,
           toks: apply_expr.toks,
         }
       } else {
         // Ensure the array expression is of array type
         match checked_array_expr.ty {
-          Array(element_type) => {
+          Array(element_type) =>
             ApplyExpr::{
               kind: ApplyExprKind::ArrayAccess(
                 checked_array_expr, checked_index_expr,
@@ -55,7 +57,6 @@ pub fn Context::check_apply_expr(
               ty: element_type,
               toks: apply_expr.toks,
             }
-          }
           _ => {
             let msg = "Attempted to index a non-array/non-string type"
             self.throw_(checked_array_expr.toks[0], msg, Error)
@@ -71,9 +72,10 @@ pub fn Context::check_apply_expr(
       }
     }
     // 专门处理 method call 模式: obj.method(args)
-    Call(callee, arg_exprs) if callee.kind is FieldAccess(base_expr, method_name) => {
+    Call(callee, arg_exprs) if callee.kind
+      is FieldAccess(base_expr, method_name) => {
       let checked_base_expr = self.check_apply_expr(base_expr)
-      
+
       // Handle Array.length()
       if checked_base_expr.ty is Array(_) && method_name == "length" {
         if arg_exprs.length() != 0 {
@@ -82,16 +84,16 @@ pub fn Context::check_apply_expr(
         }
         // 直接转换为对 get_array_length 的调用
         let length_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("get_array_length"), 
+          kind: AtomExpr(AtomExpr::{
+            kind: AtomExprKind::Ident("get_array_length"),
             ty: Function([checked_base_expr.ty], TypeKind::Int),
             toks: apply_expr.toks,
           }),
           ty: Function([checked_base_expr.ty], TypeKind::Int),
           toks: apply_expr.toks,
         }
-        let base_as_expr = Expr::{ 
-          kind: ExprKind::ApplyExpr(checked_base_expr), 
+        let base_as_expr = Expr::{
+          kind: ExprKind::ApplyExpr(checked_base_expr),
           ty: checked_base_expr.ty,
           toks: checked_base_expr.toks,
         }
@@ -101,7 +103,7 @@ pub fn Context::check_apply_expr(
           toks: apply_expr.toks,
         }
       }
-      
+
       // Handle Array.push(value)
       if checked_base_expr.ty is Array(element_type) && method_name == "push" {
         if arg_exprs.length() != 1 {
@@ -124,16 +126,16 @@ pub fn Context::check_apply_expr(
           _ => "array_ptr_push"
         }
         let push_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident(push_func_name), 
+          kind: AtomExpr(AtomExpr::{
+            kind: AtomExprKind::Ident(push_func_name),
             ty: Function([checked_base_expr.ty, element_type], TypeKind::Unit),
             toks: apply_expr.toks,
           }),
           ty: Function([checked_base_expr.ty, element_type], TypeKind::Unit),
           toks: apply_expr.toks,
         }
-        let base_as_expr = Expr::{ 
-          kind: ExprKind::ApplyExpr(checked_base_expr), 
+        let base_as_expr = Expr::{
+          kind: ExprKind::ApplyExpr(checked_base_expr),
           ty: checked_base_expr.ty,
           toks: checked_base_expr.toks,
         }
@@ -143,7 +145,7 @@ pub fn Context::check_apply_expr(
           toks: apply_expr.toks,
         }
       }
-      
+
       // Handle String.length()
       if checked_base_expr.ty is String && method_name == "length" {
         if arg_exprs.length() != 0 {
@@ -151,16 +153,16 @@ pub fn Context::check_apply_expr(
           self.throw_(apply_expr.toks[0], msg, Error)
         }
         let length_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_get_string_length"), 
+          kind: AtomExpr(AtomExpr::{
+            kind: AtomExprKind::Ident("__builtin_get_string_length"),
             ty: Function([TypeKind::String], TypeKind::Int),
             toks: apply_expr.toks,
           }),
           ty: Function([TypeKind::String], TypeKind::Int),
           toks: apply_expr.toks,
         }
-        let base_as_expr = Expr::{ 
-          kind: ExprKind::ApplyExpr(checked_base_expr), 
+        let base_as_expr = Expr::{
+          kind: ExprKind::ApplyExpr(checked_base_expr),
           ty: checked_base_expr.ty,
           toks: checked_base_expr.toks,
         }
@@ -170,19 +172,20 @@ pub fn Context::check_apply_expr(
           toks: apply_expr.toks,
         }
       }
-      
+
       // Handle primitive type conversion methods
-      match handle_primitive_method_call(
-        self,
-        checked_base_expr,
-        method_name,
-        arg_exprs,
-        apply_expr.toks,
-      ) {
+      match
+        handle_primitive_method_call(
+          self,
+          checked_base_expr,
+          method_name,
+          arg_exprs,
+          apply_expr.toks,
+        ) {
         Some(result) => return result
         None => ()
       }
-      
+
       // Handle struct method calls
       if checked_base_expr.ty is Struct(struct_name) {
         guard self.struct_defs.get(struct_name) is Some(struct_def) else {
@@ -190,68 +193,66 @@ pub fn Context::check_apply_expr(
           self.throw_(apply_expr.toks[0], msg, Error)
           return ApplyExpr::{
             kind: Call(
-              ApplyExpr::{ 
-                kind: FieldAccess(checked_base_expr, method_name), 
+              ApplyExpr::{
+                kind: FieldAccess(checked_base_expr, method_name),
                 ty: TypeKind::Unit,
                 toks: apply_expr.toks,
               },
-              arg_exprs.map(e => self.check_expr(e))
+              arg_exprs.map(e => self.check_expr(e)),
             ),
             ty: TypeKind::Unit,
             toks: apply_expr.toks,
           }
         }
-        
         guard struct_def.methods.get(method_name) is Some(method_ty) else {
           let msg = "Struct \{struct_name} does not have method: \{method_name}"
           self.throw_(apply_expr.toks[0], msg, Error)
           return ApplyExpr::{
             kind: Call(
-              ApplyExpr::{ 
-                kind: FieldAccess(checked_base_expr, method_name), 
+              ApplyExpr::{
+                kind: FieldAccess(checked_base_expr, method_name),
                 ty: TypeKind::Unit,
                 toks: apply_expr.toks,
               },
-              arg_exprs.map(e => self.check_expr(e))
+              arg_exprs.map(e => self.check_expr(e)),
             ),
             ty: TypeKind::Unit,
             toks: apply_expr.toks,
           }
         }
-        
+
         // method_ty should be Function([Struct(...), ...], ret_ty)
         guard method_ty is Function(method_param_tys, method_ret_ty) else {
           let msg = "Invalid method type for \{struct_name}::\{method_name}"
           self.throw_(apply_expr.toks[0], msg, Error)
           return ApplyExpr::{
             kind: Call(
-              ApplyExpr::{ 
-                kind: FieldAccess(checked_base_expr, method_name), 
+              ApplyExpr::{
+                kind: FieldAccess(checked_base_expr, method_name),
                 ty: TypeKind::Unit,
                 toks: apply_expr.toks,
               },
-              arg_exprs.map(e => self.check_expr(e))
+              arg_exprs.map(e => self.check_expr(e)),
             ),
             ty: TypeKind::Unit,
             toks: apply_expr.toks,
           }
         }
-        
+
         // Check argument count (excluding self parameter)
         if arg_exprs.length() + 1 != method_param_tys.length() {
           let msg = "Method \{struct_name}::\{method_name} expects \{method_param_tys.length() - 1} arguments, got \{arg_exprs.length()}"
           self.throw_(apply_expr.toks[0], msg, Error)
         }
-        
+
         // Check and collect all arguments (self + user provided args)
         let all_args = Array::new()
-        let base_as_expr = Expr::{ 
-          kind: ExprKind::ApplyExpr(checked_base_expr), 
+        let base_as_expr = Expr::{
+          kind: ExprKind::ApplyExpr(checked_base_expr),
           ty: checked_base_expr.ty,
           toks: checked_base_expr.toks,
         }
         all_args.push(base_as_expr)
-        
         for i in 0..<arg_exprs.length() {
           let arg_expr = self.check_expr(arg_exprs[i])
           if i + 1 < method_param_tys.length() {
@@ -263,37 +264,36 @@ pub fn Context::check_apply_expr(
           }
           all_args.push(arg_expr)
         }
-        
+
         // Create call to StructName$$method_name
         let mangled_name = "\{struct_name}$$\{method_name}"
         let method_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident(mangled_name), 
+          kind: AtomExpr(AtomExpr::{
+            kind: AtomExprKind::Ident(mangled_name),
             ty: method_ty,
             toks: apply_expr.toks,
           }),
           ty: method_ty,
           toks: apply_expr.toks,
         }
-        
         return ApplyExpr::{
           kind: Call(method_func, all_args),
           ty: method_ret_ty,
           toks: apply_expr.toks,
         }
       }
-      
+
       // 如果不是已知的 method call，报错
       let msg = "Unknown method: \{method_name} for type: \{checked_base_expr.ty}"
       self.throw_(apply_expr.toks[0], msg, Error)
       return ApplyExpr::{
         kind: Call(
-          ApplyExpr::{ 
-            kind: FieldAccess(checked_base_expr, method_name), 
+          ApplyExpr::{
+            kind: FieldAccess(checked_base_expr, method_name),
             ty: TypeKind::Unit,
             toks: apply_expr.toks,
           },
-          arg_exprs.map(e => self.check_expr(e))
+          arg_exprs.map(e => self.check_expr(e)),
         ),
         ty: TypeKind::Unit,
         toks: apply_expr.toks,
@@ -330,7 +330,11 @@ pub fn Context::check_apply_expr(
         self.throw_(struct_expr.toks[0], msg, Error)
         Unit
       }
-      ApplyExpr::{ kind: FieldAccess(struct_expr, field_name), ty, toks: apply_expr.toks}
+      ApplyExpr::{
+        kind: FieldAccess(struct_expr, field_name),
+        ty,
+        toks: apply_expr.toks,
+      }
     }
     Call(callee_expr, arg_exprs) => {
       let callee_expr = self.check_apply_expr(callee_expr)
@@ -359,12 +363,17 @@ pub fn Context::check_apply_expr(
         new_arg_exprs.push(arg_expr)
       }
       let ret_ty = self.ensure_type(ret_ty)
-      ApplyExpr::{ kind: Call(callee_expr, new_arg_exprs), ty: ret_ty, toks: apply_expr.toks}
+      ApplyExpr::{
+        kind: Call(callee_expr, new_arg_exprs),
+        ty: ret_ty,
+        toks: apply_expr.toks,
+      }
     }
   }
 }
 
-fn min(a: Int, b: Int) -> Int {
+///|
+fn min(a : Int, b : Int) -> Int {
   if a < b {
     a
   } else {
@@ -385,348 +394,352 @@ fn handle_primitive_method_call(
   // Check if this is a primitive type first; if not, return None
   // to let the caller handle struct methods
   let is_primitive = match base_expr.ty {
-    TypeKind::Int | TypeKind::Int64 | TypeKind::UInt | TypeKind::UInt64 | TypeKind::Float | TypeKind::Double | TypeKind::Char => true
+    TypeKind::Int
+    | TypeKind::Int64
+    | TypeKind::UInt
+    | TypeKind::UInt64
+    | TypeKind::Float
+    | TypeKind::Double
+    | TypeKind::Char => true
     _ => false
   }
-  
   if !is_primitive {
     return None
   }
-  
+
   // For primitive types, all conversion methods expect 0 arguments
   if arg_exprs.length() != 0 {
     let msg = "Conversion method \{method_name}() expects 0 arguments, got \{arg_exprs.length()}"
     ctx.throw_(toks[0], msg, Error)
     return None
   }
-  
-  let base_as_expr = Expr::{ 
-    kind: ExprKind::ApplyExpr(base_expr), 
+  let base_as_expr = Expr::{
+    kind: ExprKind::ApplyExpr(base_expr),
     ty: base_expr.ty,
     toks: base_expr.toks,
   }
-  
   match base_expr.ty {
     // Int methods
-    TypeKind::Int => match method_name {
-      "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
-        let target_ty = match method_name {
-          "to_int64" => TypeKind::Int64
-          "to_uint" => TypeKind::UInt
-          "to_uint64" => TypeKind::UInt64
-          "to_float" => TypeKind::Float
-          "to_double" => TypeKind::Double
-          _ => TypeKind::Int // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::Int =>
+      match method_name {
+        "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
+          let target_ty = match method_name {
+            "to_int64" => TypeKind::Int64
+            "to_uint" => TypeKind::UInt
+            "to_uint64" => TypeKind::UInt64
+            "to_float" => TypeKind::Float
+            "to_double" => TypeKind::Double
+            _ => TypeKind::Int // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_float" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Float, base_as_expr), 
+          })
+        }
+        "reinterpret_as_float" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Float, base_as_expr),
+              ty: TypeKind::Float,
+              toks,
+            }),
             ty: TypeKind::Float,
             toks,
-          }),
-          ty: TypeKind::Float,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_int_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_int_to_string"),
+              ty: Function([TypeKind::Int], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::Int], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::Int], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // UInt methods
-    TypeKind::UInt => match method_name {
-      "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" => {
-        let target_ty = match method_name {
-          "to_int" => TypeKind::Int
-          "to_int64" => TypeKind::Int64
-          "to_uint64" => TypeKind::UInt64
-          "to_float" => TypeKind::Float
-          "to_double" => TypeKind::Double
-          _ => TypeKind::UInt // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::UInt =>
+      match method_name {
+        "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" => {
+          let target_ty = match method_name {
+            "to_int" => TypeKind::Int
+            "to_int64" => TypeKind::Int64
+            "to_uint64" => TypeKind::UInt64
+            "to_float" => TypeKind::Float
+            "to_double" => TypeKind::Double
+            _ => TypeKind::UInt // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_float" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Float, base_as_expr), 
+          })
+        }
+        "reinterpret_as_float" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Float, base_as_expr),
+              ty: TypeKind::Float,
+              toks,
+            }),
             ty: TypeKind::Float,
             toks,
-          }),
-          ty: TypeKind::Float,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_uint_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_uint_to_string"),
+              ty: Function([TypeKind::UInt], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::UInt], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::UInt], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // Int64 methods
-    TypeKind::Int64 => match method_name {
-      "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
-        let target_ty = match method_name {
-          "to_int" => TypeKind::Int
-          "to_uint" => TypeKind::UInt
-          "to_uint64" => TypeKind::UInt64
-          "to_float" => TypeKind::Float
-          "to_double" => TypeKind::Double
-          _ => TypeKind::Int64 // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::Int64 =>
+      match method_name {
+        "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
+          let target_ty = match method_name {
+            "to_int" => TypeKind::Int
+            "to_uint" => TypeKind::UInt
+            "to_uint64" => TypeKind::UInt64
+            "to_float" => TypeKind::Float
+            "to_double" => TypeKind::Double
+            _ => TypeKind::Int64 // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_double" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Double, base_as_expr), 
+          })
+        }
+        "reinterpret_as_double" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Double, base_as_expr),
+              ty: TypeKind::Double,
+              toks,
+            }),
             ty: TypeKind::Double,
             toks,
-          }),
-          ty: TypeKind::Double,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_int64_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_int64_to_string"),
+              ty: Function([TypeKind::Int64], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::Int64], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::Int64], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // UInt64 methods
-    TypeKind::UInt64 => match method_name {
-      "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" => {
-        let target_ty = match method_name {
-          "to_int" => TypeKind::Int
-          "to_int64" => TypeKind::Int64
-          "to_uint" => TypeKind::UInt
-          "to_float" => TypeKind::Float
-          "to_double" => TypeKind::Double
-          _ => TypeKind::UInt64 // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::UInt64 =>
+      match method_name {
+        "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" => {
+          let target_ty = match method_name {
+            "to_int" => TypeKind::Int
+            "to_int64" => TypeKind::Int64
+            "to_uint" => TypeKind::UInt
+            "to_float" => TypeKind::Float
+            "to_double" => TypeKind::Double
+            _ => TypeKind::UInt64 // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_double" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Double, base_as_expr), 
+          })
+        }
+        "reinterpret_as_double" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Double, base_as_expr),
+              ty: TypeKind::Double,
+              toks,
+            }),
             ty: TypeKind::Double,
             toks,
-          }),
-          ty: TypeKind::Double,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_uint64_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_uint64_to_string"),
+              ty: Function([TypeKind::UInt64], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::UInt64], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::UInt64], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // Float methods
-    TypeKind::Float => match method_name {
-      "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_double" => {
-        let target_ty = match method_name {
-          "to_int" => TypeKind::Int
-          "to_int64" => TypeKind::Int64
-          "to_uint" => TypeKind::UInt
-          "to_uint64" => TypeKind::UInt64
-          "to_double" => TypeKind::Double
-          _ => TypeKind::Float // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::Float =>
+      match method_name {
+        "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_double" => {
+          let target_ty = match method_name {
+            "to_int" => TypeKind::Int
+            "to_int64" => TypeKind::Int64
+            "to_uint" => TypeKind::UInt
+            "to_uint64" => TypeKind::UInt64
+            "to_double" => TypeKind::Double
+            _ => TypeKind::Float // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_int" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Int, base_as_expr), 
+          })
+        }
+        "reinterpret_as_int" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Int, base_as_expr),
+              ty: TypeKind::Int,
+              toks,
+            }),
             ty: TypeKind::Int,
             toks,
-          }),
-          ty: TypeKind::Int,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_float_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_float_to_string"),
+              ty: Function([TypeKind::Float], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::Float], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::Float], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // Double methods
-    TypeKind::Double => match method_name {
-      "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_float" => {
-        let target_ty = match method_name {
-          "to_int" => TypeKind::Int
-          "to_int64" => TypeKind::Int64
-          "to_uint" => TypeKind::UInt
-          "to_uint64" => TypeKind::UInt64
-          "to_float" => TypeKind::Float
-          _ => TypeKind::Double // unreachable
-        }
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+    TypeKind::Double =>
+      match method_name {
+        "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_float" => {
+          let target_ty = match method_name {
+            "to_int" => TypeKind::Int
+            "to_int64" => TypeKind::Int64
+            "to_uint" => TypeKind::UInt
+            "to_uint64" => TypeKind::UInt64
+            "to_float" => TypeKind::Float
+            _ => TypeKind::Double // unreachable
+          }
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Cast(target_ty, base_as_expr),
+              ty: target_ty,
+              toks,
+            }),
             ty: target_ty,
             toks,
-          }),
-          ty: target_ty,
-          toks,
-        })
-      }
-      "reinterpret_as_int64" => {
-        Some(ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::BitCast(TypeKind::Int64, base_as_expr), 
+          })
+        }
+        "reinterpret_as_int64" =>
+          Some(ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::BitCast(TypeKind::Int64, base_as_expr),
+              ty: TypeKind::Int64,
+              toks,
+            }),
             ty: TypeKind::Int64,
             toks,
-          }),
-          ty: TypeKind::Int64,
-          toks,
-        })
-      }
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_double_to_string"), 
+          })
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_double_to_string"),
+              ty: Function([TypeKind::Double], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::Double], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::Double], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     // Char methods
-    TypeKind::Char => match method_name {
-      "to_string" => {
-        let to_string_func = ApplyExpr::{
-          kind: AtomExpr(AtomExpr::{ 
-            kind: AtomExprKind::Ident("__builtin_char_to_string"), 
+    TypeKind::Char =>
+      match method_name {
+        "to_string" => {
+          let to_string_func = ApplyExpr::{
+            kind: AtomExpr(AtomExpr::{
+              kind: AtomExprKind::Ident("__builtin_char_to_string"),
+              ty: Function([TypeKind::Char], TypeKind::String),
+              toks,
+            }),
             ty: Function([TypeKind::Char], TypeKind::String),
             toks,
-          }),
-          ty: Function([TypeKind::Char], TypeKind::String),
-          toks,
+          }
+          Some(ApplyExpr::{
+            kind: Call(to_string_func, [base_as_expr]),
+            ty: TypeKind::String,
+            toks,
+          })
         }
-        Some(ApplyExpr::{
-          kind: Call(to_string_func, [base_as_expr]),
-          ty: TypeKind::String,
-          toks,
-        })
+        _ => None
       }
-      _ => None
-    }
     _ => None
   }
 }
