@@ -143,6 +143,20 @@ pub fn Context::array_put_codegen(
       ])
 
     }
+    Array(UInt) => {
+      let array_uint_put = self.get_builtin_function("array_uint_put")
+      let _ = self.builder.createCall(array_uint_put, [
+        array_value, index_value, elem_value,
+      ])
+
+    }
+    Array(UInt64) => {
+      let array_uint64_put = self.get_builtin_function("array_uint64_put")
+      let _ = self.builder.createCall(array_uint64_put, [
+        array_value, index_value, elem_value,
+      ])
+
+    }
     Array(Bool) => {
       let array_bool_put = self.get_builtin_function("array_bool_put")
       let _ = self.builder.createCall(array_bool_put, [

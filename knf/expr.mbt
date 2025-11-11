@@ -3,6 +3,8 @@ pub(all) enum KnfExpr {
   Unit
   Int(Int)
   Int64(Int64)
+  UInt(UInt)
+  UInt64(UInt64)
   Bool(Bool)
   Double(Double)
   Float(Double)
@@ -32,6 +34,8 @@ pub fn KnfExpr::to_string(self : KnfExpr, ident? : Int = 0) -> String {
     Unit => "()"
     Int(i) => i.to_string()
     Int64(i) => "\{i}L"
+    UInt(i) => "\{i}U"
+    UInt64(i) => "\{i}UL"
     Bool(b) => b.to_string()
     Double(d) => d.to_string()
     Float(f) => "\{f}F"
@@ -218,25 +222,28 @@ pub fn Context::expr_to_knf(
         return (stmts, Call(strcmp_func, [lhs_name, rhs_name]))
       }
       
-      // Handle shift operations: right operand must match left operand type
       let rhs_name_adjusted = if bin_op is (ShiftLeft | ShiftRight) {
-        // Check if types are different and need casting
-        let need_cast = match (left_ty, right_ty) {
-          (Int, Int) => false
-          (Int64, Int64) => false
-          (Int64, Int) => true  // Cast Int to Int64
-          (Int, Int64) => true  // This shouldn't happen after typecheck, but handle it
-          _ => false
-        }
-        if need_cast {
-          // Cast right operand to left operand's type
-          let cast_tmp = self.add_temp(left_ty)
-          let cast_expr = Cast(left_ty, rhs_name)
-          let knf_let = KnfStmt::Let(cast_tmp, left_ty, cast_expr)
-          stmts.push(knf_let)
-          cast_tmp
-        } else {
-          rhs_name
+        match (left_ty, right_ty) {
+          (Type::Int, Type::Int) | (Type::Int64, Type::Int64) | (Type::UInt, Type::UInt) | (Type::UInt64, Type::UInt64) => 
+            rhs_name
+          (Type::Int64, Type::Int) => {
+            let cast_tmp = self.add_temp(Type::Int64)
+            let cast_expr = Cast(Type::Int64, rhs_name)
+            let knf_let = KnfStmt::Let(cast_tmp, Type::Int64, cast_expr)
+            stmts.push(knf_let)
+            cast_tmp
+          }
+          (Type::UInt, Type::Int) => 
+            rhs_name
+          (Type::UInt64, Type::Int) => {
+            let cast_tmp = self.add_temp(Type::Int64)
+            let cast_expr = Cast(Type::Int64, rhs_name)
+            let knf_let = KnfStmt::Let(cast_tmp, Type::Int64, cast_expr)
+            stmts.push(knf_let)
+            cast_tmp
+          }
+          _ => 
+            rhs_name
         }
       } else {
         rhs_name

@@ -10,6 +10,8 @@ pub(all) enum TypeKind {
   Bool
   Int
   Int64
+  UInt
+  UInt64
   Double
   Float
   Char
@@ -39,6 +41,8 @@ pub fn Context::check_parser_typekind(
     Bool => Bool
     Int => Int
     Int64 => Int64
+    UInt => UInt
+    UInt64 => UInt64
     Double => Double
     Float => Float
     Char => Char
@@ -85,6 +89,8 @@ pub fn Context::is_type_compatible(
     (Bool, Bool) => true
     (Int, Int) => true
     (Int64, Int64) => true
+    (UInt, UInt) => true
+    (UInt64, UInt64) => true
     (Double, Double) => true
     (Float, Float) => true
     (Char, Char) => true
@@ -222,6 +228,8 @@ pub impl Show for TypeKind with output(self, logger) {
     Bool => "Bool"
     Int => "Int"
     Int64 => "Int64"
+    UInt => "UInt"
+    UInt64 => "UInt64"
     Double => "Double"
     Float => "Float"
     Char => "Char"

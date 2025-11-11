@@ -13,6 +13,8 @@ pub fn Context::expr_codegen(
     Unit => None
     Int(i) => (self.llvm_ctx.getConstInt32(i) : &@llvm.Value) |> Some
     Int64(i) => self.llvm_ctx.getConstInt64(i) |> Some
+    UInt(i) => (self.llvm_ctx.getConstInt32(i.reinterpret_as_int()) : &@llvm.Value) |> Some
+    UInt64(i) => self.llvm_ctx.getConstInt64(i.reinterpret_as_int64()) |> Some
     Bool(true) => self.llvm_ctx.getConstTrue() |> Some
     Bool(false) => self.llvm_ctx.getConstFalse() |> Some
     Double(d) => self.llvm_ctx.getConstDouble(d) |> Some
@@ -35,6 +37,13 @@ pub fn Context::expr_codegen(
       let lhs_value = self.get_value_by_name_or_load(left_name)
       let rhs_value = self.get_value_by_name_or_load(right_name)
       let is_fp_ty = lhs_value.getType().isIEEELikeFPTy()
+      
+      // For shift right, check if left operand is unsigned
+      let is_unsigned = match self.name_types.get(left_name) {
+        Some(UInt) | Some(UInt64) => true
+        _ => false
+      }
+      
       let v = match (bin_op, is_fp_ty) {
         (Add, false) => self.builder.createAdd(lhs_value, rhs_value)
         (Add, true) => self.builder.createFAdd(lhs_value, rhs_value)
@@ -42,28 +51,77 @@ pub fn Context::expr_codegen(
         (Sub, true) => self.builder.createFSub(lhs_value, rhs_value)
         (Mul, false) => self.builder.createMul(lhs_value, rhs_value)
         (Mul, true) => self.builder.createFMul(lhs_value, rhs_value)
-        (Div, false) => self.builder.createSDiv(lhs_value, rhs_value)
+        (Div, false) => {
+          // Use unsigned division for unsigned types
+          if is_unsigned {
+            self.builder.createUDiv(lhs_value, rhs_value)
+          } else {
+            self.builder.createSDiv(lhs_value, rhs_value)
+          }
+        }
         (Div, true) => self.builder.createFDiv(lhs_value, rhs_value)
-        (Mod, false) => self.builder.createSRem(lhs_value, rhs_value)
+        (Mod, false) => {
+          // Use unsigned remainder for unsigned types
+          if is_unsigned {
+            self.builder.createURem(lhs_value, rhs_value)
+          } else {
+            self.builder.createSRem(lhs_value, rhs_value)
+          }
+        }
         (Mod, true) => self.builder.createFRem(lhs_value, rhs_value)
         (Eq, false) => self.builder.createICmpEQ(lhs_value, rhs_value)
         (Eq, true) => self.builder.createFCmpOEQ(lhs_value, rhs_value)
         (NE, false) => self.builder.createICmpNE(lhs_value, rhs_value)
         (NE, true) => self.builder.createFCmpONE(lhs_value, rhs_value)
-        (LT, false) => self.builder.createICmpSLT(lhs_value, rhs_value)
+        (LT, false) => {
+          // Use unsigned comparison for unsigned types
+          if is_unsigned {
+            self.builder.createICmpULT(lhs_value, rhs_value)
+          } else {
+            self.builder.createICmpSLT(lhs_value, rhs_value)
+          }
+        }
         (LT, true) => self.builder.createFCmpOLT(lhs_value, rhs_value)
-        (LE, false) => self.builder.createICmpSLE(lhs_value, rhs_value)
+        (LE, false) => {
+          // Use unsigned comparison for unsigned types
+          if is_unsigned {
+            self.builder.createICmpULE(lhs_value, rhs_value)
+          } else {
+            self.builder.createICmpSLE(lhs_value, rhs_value)
+          }
+        }
         (LE, true) => self.builder.createFCmpOLE(lhs_value, rhs_value)
-        (GT, false) => self.builder.createICmpSGT(lhs_value, rhs_value)
+        (GT, false) => {
+          // Use unsigned comparison for unsigned types
+          if is_unsigned {
+            self.builder.createICmpUGT(lhs_value, rhs_value)
+          } else {
+            self.builder.createICmpSGT(lhs_value, rhs_value)
+          }
+        }
         (GT, true) => self.builder.createFCmpOGT(lhs_value, rhs_value)
-        (GE, false) => self.builder.createICmpSGE(lhs_value, rhs_value)
+        (GE, false) => {
+          // Use unsigned comparison for unsigned types
+          if is_unsigned {
+            self.builder.createICmpUGE(lhs_value, rhs_value)
+          } else {
+            self.builder.createICmpSGE(lhs_value, rhs_value)
+          }
+        }
         (GE, true) => self.builder.createFCmpOGE(lhs_value, rhs_value)
         (And, false) => self.builder.createAnd(lhs_value, rhs_value)
         (Or, false) => self.builder.createOr(lhs_value, rhs_value)
         (BitAnd, false) => self.builder.createAnd(lhs_value, rhs_value)
         (BitOr, false) => self.builder.createOr(lhs_value, rhs_value)
         (ShiftLeft, false) => self.builder.createShl(lhs_value, rhs_value)
-        (ShiftRight, false) => self.builder.createAShr(lhs_value, rhs_value)
+        (ShiftRight, false) => {
+          // Use logical shift for unsigned types, arithmetic shift for signed types
+          if is_unsigned {
+            self.builder.createLShr(lhs_value, rhs_value)
+          } else {
+            self.builder.createAShr(lhs_value, rhs_value)
+          }
+        }
         (op, _) =>
           raise CodegenError(
             "Unsupported binary operation \{op} in codegen, type is \{lhs_value.getType()}",
@@ -109,6 +167,18 @@ pub fn Context::expr_codegen(
           let make_int_array_func = self.get_builtin_function("make_int_array")
           self.builder.createCall(make_int_array_func, [size_value, init_value])
         }
+        Int64 => {
+          let make_int64_array_func = self.get_builtin_function("make_int64_array")
+          self.builder.createCall(make_int64_array_func, [size_value, init_value])
+        }
+        UInt => {
+          let make_uint_array_func = self.get_builtin_function("make_uint_array")
+          self.builder.createCall(make_uint_array_func, [size_value, init_value])
+        }
+        UInt64 => {
+          let make_uint64_array_func = self.get_builtin_function("make_uint64_array")
+          self.builder.createCall(make_uint64_array_func, [size_value, init_value])
+        }
         Bool => {
           let make_bool_array_func = self.get_builtin_function(
             "make_bool_array",
@@ -122,6 +192,14 @@ pub fn Context::expr_codegen(
           self.builder.createCall(make_double_array_func, [
             size_value, init_value,
           ])
+        }
+        Float => {
+          let make_float_array_func = self.get_builtin_function("make_float_array")
+          self.builder.createCall(make_float_array_func, [size_value, init_value])
+        }
+        Char => {
+          let make_char_array_func = self.get_builtin_function("make_char_array")
+          self.builder.createCall(make_char_array_func, [size_value, init_value])
         }
         _ => {
           // For all other types (functions, structs, tuples, etc.), use make_ptr_array
@@ -150,6 +228,20 @@ pub fn Context::expr_codegen(
         Array(Int64) => {
           let array_int64_get = self.get_builtin_function("array_int64_get")
           let v = self.builder.createCall(array_int64_get, [
+            array_value, index_value,
+          ])
+          Some(v)
+        }
+        Array(UInt) => {
+          let array_uint_get = self.get_builtin_function("array_uint_get")
+          let v = self.builder.createCall(array_uint_get, [
+            array_value, index_value,
+          ])
+          Some(v)
+        }
+        Array(UInt64) => {
+          let array_uint64_get = self.get_builtin_function("array_uint64_get")
+          let v = self.builder.createCall(array_uint64_get, [
             array_value, index_value,
           ])
           Some(v)
@@ -268,6 +360,40 @@ pub fn Context::expr_codegen(
         array_size, init_value,
       ])
       let array_put = self.get_builtin_function("array_int64_put")
+      for i, elem_value in elem_values {
+        let index_value = self.llvm_ctx.getConstInt32(i)
+        let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
+
+      }
+      Some(v)
+    }
+    // use `make_uint_array`
+    ArrayLiteral(UInt, elements) => {
+      let elem_values = elements.map(e => self.get_value_by_name_or_load(e))
+      let array_size = self.llvm_ctx.getConstInt32(elem_values.length())
+      let make_uint_array_func = self.get_builtin_function("make_uint_array")
+      let init_value = self.llvm_ctx.getConstInt32(0)
+      let v = self.builder.createCall(make_uint_array_func, [
+        array_size, init_value,
+      ])
+      let array_put = self.get_builtin_function("array_uint_put")
+      for i, elem_value in elem_values {
+        let index_value = self.llvm_ctx.getConstInt32(i)
+        let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
+
+      }
+      Some(v)
+    }
+    // use `make_uint64_array`
+    ArrayLiteral(UInt64, elements) => {
+      let elem_values = elements.map(e => self.get_value_by_name_or_load(e))
+      let array_size = self.llvm_ctx.getConstInt32(elem_values.length())
+      let make_uint64_array_func = self.get_builtin_function("make_uint64_array")
+      let init_value = self.llvm_ctx.getConstInt64(0L)
+      let v = self.builder.createCall(make_uint64_array_func, [
+        array_size, init_value,
+      ])
+      let array_put = self.get_builtin_function("array_uint64_put")
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
@@ -532,6 +658,54 @@ pub fn Context::expr_codegen(
           let double_ty = self.llvm_ctx.getDoubleTy()
           self.builder.createSIToFP(source_value, double_ty)
         }
+        // UInt conversions
+        (UInt, Int) => source_value // Same bitwise representation
+        (UInt, Int64) => {
+          let int64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createZExt(source_value, int64_ty)
+        }
+        (UInt, UInt64) => {
+          let uint64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createZExt(source_value, uint64_ty)
+        }
+        (UInt, Float) => {
+          let float_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createUIToFP(source_value, float_ty)
+        }
+        (UInt, Double) => {
+          let double_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createUIToFP(source_value, double_ty)
+        }
+        // UInt64 conversions
+        (UInt64, Int) => {
+          let int_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createTrunc(source_value, int_ty)
+        }
+        (UInt64, Int64) => source_value // Same bitwise representation
+        (UInt64, UInt) => {
+          let uint_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createTrunc(source_value, uint_ty)
+        }
+        (UInt64, Float) => {
+          let float_ty = self.llvm_ctx.getFloatTy()
+          self.builder.createUIToFP(source_value, float_ty)
+        }
+        (UInt64, Double) => {
+          let double_ty = self.llvm_ctx.getDoubleTy()
+          self.builder.createUIToFP(source_value, double_ty)
+        }
+        // Conversions from Int to UInt/UInt64
+        (Int, UInt) => source_value // Same bitwise representation
+        (Int, UInt64) => {
+          let uint64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createSExt(source_value, uint64_ty)
+        }
+        // Conversions from Int64 to UInt/UInt64
+        (Int64, UInt) => {
+          let uint_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createTrunc(source_value, uint_ty)
+        }
+        (Int64, UInt64) => source_value // Same bitwise representation
         // Float conversions
         (Float, Int) => {
           let int_ty = self.llvm_ctx.getInt32Ty()
@@ -540,6 +714,14 @@ pub fn Context::expr_codegen(
         (Float, Int64) => {
           let int64_ty = self.llvm_ctx.getInt64Ty()
           self.builder.createFPToSI(source_value, int64_ty)
+        }
+        (Float, UInt) => {
+          let uint_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createFPToUI(source_value, uint_ty)
+        }
+        (Float, UInt64) => {
+          let uint64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createFPToUI(source_value, uint64_ty)
         }
         (Float, Double) => {
           let double_ty = self.llvm_ctx.getDoubleTy()
@@ -553,6 +735,14 @@ pub fn Context::expr_codegen(
         (Double, Int64) => {
           let int64_ty = self.llvm_ctx.getInt64Ty()
           self.builder.createFPToSI(source_value, int64_ty)
+        }
+        (Double, UInt) => {
+          let uint_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createFPToUI(source_value, uint_ty)
+        }
+        (Double, UInt64) => {
+          let uint64_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createFPToUI(source_value, uint64_ty)
         }
         (Double, Float) => {
           let float_ty = self.llvm_ctx.getFloatTy()
@@ -570,6 +760,14 @@ pub fn Context::expr_codegen(
           self.builder.createBitCast(source_value, target_llvm_ty)
         }
         Int64 => {
+          let target_llvm_ty = self.llvm_ctx.getInt64Ty()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        UInt => {
+          let target_llvm_ty = self.llvm_ctx.getInt32Ty()
+          self.builder.createBitCast(source_value, target_llvm_ty)
+        }
+        UInt64 => {
           let target_llvm_ty = self.llvm_ctx.getInt64Ty()
           self.builder.createBitCast(source_value, target_llvm_ty)
         }

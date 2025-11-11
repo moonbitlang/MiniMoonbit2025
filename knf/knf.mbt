@@ -87,6 +87,8 @@ pub fn knf_transform(
   // Builtin print functions
   context.globals.set("__builtin_println_int", Function([Int], Unit))
   context.globals.set("__builtin_println_int64", Function([Int64], Unit))
+  context.globals.set("__builtin_println_uint", Function([UInt], Unit))
+  context.globals.set("__builtin_println_uint64", Function([UInt64], Unit))
   context.globals.set("__builtin_println_string", Function([String], Unit))
   context.globals.set("__builtin_println_bool", Function([Bool], Unit))
   context.globals.set("__builtin_println_double", Function([Double], Unit))
@@ -94,6 +96,8 @@ pub fn knf_transform(
   context.globals.set("__builtin_println_char", Function([Char], Unit))
   context.globals.set("__builtin_print_int", Function([Int], Unit))
   context.globals.set("__builtin_print_int64", Function([Int64], Unit))
+  context.globals.set("__builtin_print_uint", Function([UInt], Unit))
+  context.globals.set("__builtin_print_uint64", Function([UInt64], Unit))
   context.globals.set("__builtin_print_string", Function([String], Unit))
   context.globals.set("__builtin_print_bool", Function([Bool], Unit))
   context.globals.set("__builtin_print_double", Function([Double], Unit))
@@ -109,6 +113,8 @@ pub fn knf_transform(
   // Array push methods
   context.globals.set("array_int_push", Function([Int, Int], Unit))
   context.globals.set("array_int64_push", Function([Int64, Int64], Unit))
+  context.globals.set("array_uint_push", Function([UInt, UInt], Unit))
+  context.globals.set("array_uint64_push", Function([UInt64, UInt64], Unit))
   context.globals.set("array_double_push", Function([Double, Double], Unit))
   context.globals.set("array_float_push", Function([Float, Float], Unit))
   context.globals.set("array_bool_push", Function([Bool, Bool], Unit))
@@ -118,6 +124,8 @@ pub fn knf_transform(
   // Type conversion to_string functions
   context.globals.set("__builtin_int_to_string", Function([Int], String))
   context.globals.set("__builtin_int64_to_string", Function([Int64], String))
+  context.globals.set("__builtin_uint_to_string", Function([UInt], String))
+  context.globals.set("__builtin_uint64_to_string", Function([UInt64], String))
   context.globals.set("__builtin_float_to_string", Function([Float], String))
   context.globals.set("__builtin_double_to_string", Function([Double], String))
   context.globals.set("__builtin_char_to_string", Function([Char], String))

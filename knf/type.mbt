@@ -3,6 +3,8 @@ pub(all) enum Type {
   Unit
   Int
   Int64
+  UInt
+  UInt64
   Bool
   Double
   Float
@@ -20,6 +22,8 @@ pub impl Show for Type with output(self, logger) {
     Unit => "Unit"
     Int => "Int"
     Int64 => "Int64"
+    UInt => "UInt"
+    UInt64 => "UInt64"
     Bool => "Bool"
     Double => "Double"
     Float => "Float"
@@ -48,6 +52,8 @@ pub fn Context::typekind_to_knf(
     Unit => Unit
     Int => Int
     Int64 => Int64
+    UInt => UInt
+    UInt64 => UInt64
     Bool => Bool
     Double => Double
     Float => Float

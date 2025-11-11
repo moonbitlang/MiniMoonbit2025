@@ -105,11 +105,45 @@ fn test_complex_conversions() -> Unit {
   println(fib10_int);
 }
 
+fn test_uint_conversions() -> Unit {
+  let u: UInt = 50U;
+  
+  // UInt to other types
+  let n: Int = u.to_int();
+  let n64: Int64 = u.to_int64();
+  let u64: UInt64 = u.to_uint64();
+  let d: Double = u.to_double();
+  
+  println(u);
+  println(n);
+  println(n64);
+  println(u64);
+  println(d);
+}
+
+fn test_uint64_conversions() -> Unit {
+  let u64: UInt64 = 200UL;
+  
+  // UInt64 to other types
+  let n: Int = u64.to_int();
+  let n64: Int64 = u64.to_int64();
+  let u: UInt = u64.to_uint();
+  let d: Double = u64.to_double();
+  
+  println(u64);
+  println(n);
+  println(n64);
+  println(u);
+  println(d);
+}
+
 fn main {
   test_int_conversions();
   test_int64_conversions();
   test_float_conversions();
   test_double_conversions();
   test_complex_conversions();
+  test_uint_conversions();
+  test_uint64_conversions();
 }
 

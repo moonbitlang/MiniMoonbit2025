@@ -385,7 +385,7 @@ fn handle_primitive_method_call(
   // Check if this is a primitive type first; if not, return None
   // to let the caller handle struct methods
   let is_primitive = match base_expr.ty {
-    TypeKind::Int | TypeKind::Int64 | TypeKind::Float | TypeKind::Double | TypeKind::Char => true
+    TypeKind::Int | TypeKind::Int64 | TypeKind::UInt | TypeKind::UInt64 | TypeKind::Float | TypeKind::Double | TypeKind::Char => true
     _ => false
   }
   
@@ -409,9 +409,11 @@ fn handle_primitive_method_call(
   match base_expr.ty {
     // Int methods
     TypeKind::Int => match method_name {
-      "to_int64" | "to_float" | "to_double" => {
+      "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
         let target_ty = match method_name {
           "to_int64" => TypeKind::Int64
+          "to_uint" => TypeKind::UInt
+          "to_uint64" => TypeKind::UInt64
           "to_float" => TypeKind::Float
           "to_double" => TypeKind::Double
           _ => TypeKind::Int // unreachable
@@ -455,11 +457,63 @@ fn handle_primitive_method_call(
       }
       _ => None
     }
-    // Int64 methods
-    TypeKind::Int64 => match method_name {
-      "to_int" | "to_float" | "to_double" => {
+    // UInt methods
+    TypeKind::UInt => match method_name {
+      "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" => {
         let target_ty = match method_name {
           "to_int" => TypeKind::Int
+          "to_int64" => TypeKind::Int64
+          "to_uint64" => TypeKind::UInt64
+          "to_float" => TypeKind::Float
+          "to_double" => TypeKind::Double
+          _ => TypeKind::UInt // unreachable
+        }
+        Some(ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+            ty: target_ty,
+            toks,
+          }),
+          ty: target_ty,
+          toks,
+        })
+      }
+      "reinterpret_as_float" => {
+        Some(ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::BitCast(TypeKind::Float, base_as_expr), 
+            ty: TypeKind::Float,
+            toks,
+          }),
+          ty: TypeKind::Float,
+          toks,
+        })
+      }
+      "to_string" => {
+        let to_string_func = ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::Ident("__builtin_uint_to_string"), 
+            ty: Function([TypeKind::UInt], TypeKind::String),
+            toks,
+          }),
+          ty: Function([TypeKind::UInt], TypeKind::String),
+          toks,
+        }
+        Some(ApplyExpr::{
+          kind: Call(to_string_func, [base_as_expr]),
+          ty: TypeKind::String,
+          toks,
+        })
+      }
+      _ => None
+    }
+    // Int64 methods
+    TypeKind::Int64 => match method_name {
+      "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
+        let target_ty = match method_name {
+          "to_int" => TypeKind::Int
+          "to_uint" => TypeKind::UInt
+          "to_uint64" => TypeKind::UInt64
           "to_float" => TypeKind::Float
           "to_double" => TypeKind::Double
           _ => TypeKind::Int64 // unreachable
@@ -503,12 +557,64 @@ fn handle_primitive_method_call(
       }
       _ => None
     }
-    // Float methods
-    TypeKind::Float => match method_name {
-      "to_int" | "to_int64" | "to_double" => {
+    // UInt64 methods
+    TypeKind::UInt64 => match method_name {
+      "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" => {
         let target_ty = match method_name {
           "to_int" => TypeKind::Int
           "to_int64" => TypeKind::Int64
+          "to_uint" => TypeKind::UInt
+          "to_float" => TypeKind::Float
+          "to_double" => TypeKind::Double
+          _ => TypeKind::UInt64 // unreachable
+        }
+        Some(ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::Cast(target_ty, base_as_expr), 
+            ty: target_ty,
+            toks,
+          }),
+          ty: target_ty,
+          toks,
+        })
+      }
+      "reinterpret_as_double" => {
+        Some(ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::BitCast(TypeKind::Double, base_as_expr), 
+            ty: TypeKind::Double,
+            toks,
+          }),
+          ty: TypeKind::Double,
+          toks,
+        })
+      }
+      "to_string" => {
+        let to_string_func = ApplyExpr::{
+          kind: AtomExpr(AtomExpr::{ 
+            kind: AtomExprKind::Ident("__builtin_uint64_to_string"), 
+            ty: Function([TypeKind::UInt64], TypeKind::String),
+            toks,
+          }),
+          ty: Function([TypeKind::UInt64], TypeKind::String),
+          toks,
+        }
+        Some(ApplyExpr::{
+          kind: Call(to_string_func, [base_as_expr]),
+          ty: TypeKind::String,
+          toks,
+        })
+      }
+      _ => None
+    }
+    // Float methods
+    TypeKind::Float => match method_name {
+      "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_double" => {
+        let target_ty = match method_name {
+          "to_int" => TypeKind::Int
+          "to_int64" => TypeKind::Int64
+          "to_uint" => TypeKind::UInt
+          "to_uint64" => TypeKind::UInt64
           "to_double" => TypeKind::Double
           _ => TypeKind::Float // unreachable
         }
@@ -553,10 +659,12 @@ fn handle_primitive_method_call(
     }
     // Double methods
     TypeKind::Double => match method_name {
-      "to_int" | "to_int64" | "to_float" => {
+      "to_int" | "to_int64" | "to_uint" | "to_uint64" | "to_float" => {
         let target_ty = match method_name {
           "to_int" => TypeKind::Int
           "to_int64" => TypeKind::Int64
+          "to_uint" => TypeKind::UInt
+          "to_uint64" => TypeKind::UInt64
           "to_float" => TypeKind::Float
           _ => TypeKind::Double // unreachable
         }

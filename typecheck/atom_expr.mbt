@@ -9,6 +9,8 @@ pub(all) struct AtomExpr {
 pub(all) enum AtomExprKind {
   Int(Int) // 1, 42, etc
   Int64(Int64) // 1L, 42L, etc
+  UInt(UInt) // 1U, 42U, etc
+  UInt64(UInt64) // 1UL, 42UL, etc
   Double(Double) // 1.0, 3.14, etc
   Float(Double) // 1.0F, 3.14F (stored as Double)
   Char(Char) // 'a', '\n', etc
@@ -34,6 +36,8 @@ pub fn Context::check_atom_expr(
   let (typed_atom_expr_kind, type_kind) = match atom_expr.kind {
     Int(v) => (AtomExprKind::Int(v), TypeKind::Int)
     Int64(v) => (AtomExprKind::Int64(v), TypeKind::Int64)
+    UInt(v) => (AtomExprKind::UInt(v), TypeKind::UInt)
+    UInt64(v) => (AtomExprKind::UInt64(v), TypeKind::UInt64)
     Double(v) => (Double(v), Double)
     Float(v) => (Float(v), Float)
     Char(c) => (Char(c), Char)

@@ -96,6 +96,8 @@ pub(all) enum TokenKind {
   Bool(Bool) // true, false
   Int(Int) // 1, 42, -100
   Int64(Int64) // 1L, 42L
+  UInt(UInt) // 1U, 42U
+  UInt64(UInt64) // 1UL, 42UL
   Double(Double)
   Float(Double) // 1.0F, 3.14F (stored as Double internally)
   Char(Char) // 'a', '\n'
@@ -517,8 +519,20 @@ fn tokenize_number(
       let hex_str = hex_sb.to_string()
       let total_len = 2 + hex_str.length() // "0x" + hex digits
       
-      // Check for L suffix
+      // Check for suffix: UL, U, or L
       match rest {
+        ['U', 'L', .. rest] => {
+          let value = @strconv.parse_uint64(hex_str, base=16) catch {
+            _ => raise TokenizeError("Invalid hexadecimal UInt64 literal: 0x\{hex_str}")
+          }
+          (TokenKind::UInt64(value), total_len + 2, rest)
+        }
+        ['U', .. rest] => {
+          let value = @strconv.parse_uint(hex_str, base=16) catch {
+            _ => raise TokenizeError("Invalid hexadecimal UInt literal: 0x\{hex_str}")
+          }
+          (TokenKind::UInt(value), total_len + 1, rest)
+        }
         ['L', .. rest] => {
           let value = @strconv.parse_int64(hex_str, base=16) catch {
             _ => raise TokenizeError("Invalid hexadecimal Int64 literal: 0x\{hex_str}")
@@ -598,7 +612,7 @@ fn tokenize_number(
       }
       
       let num_str = sb.to_string()
-      // Check for type suffix (L for Int64, F for Float)
+      // Check for type suffix (F for Float, UL for UInt64, U for UInt, L for Int64)
       if is_float {
         match rest {
           ['F', .. rest] => {
@@ -616,6 +630,18 @@ fn tokenize_number(
         }
       } else {
         match rest {
+          ['U', 'L', .. rest] => {
+            let value = @strconv.parse_uint64(num_str) catch {
+              _ => raise TokenizeError("Invalid UInt64 literal: \{num_str}")
+            }
+            (TokenKind::UInt64(value), num_str.length() + 2, rest)
+          }
+          ['U', .. rest] => {
+            let value = @strconv.parse_uint(num_str) catch {
+              _ => raise TokenizeError("Invalid UInt literal: \{num_str}")
+            }
+            (TokenKind::UInt(value), num_str.length() + 1, rest)
+          }
           ['L', .. rest] => {
             let value = @strconv.parse_int64(num_str) catch {
               _ => raise TokenizeError("Invalid Int64 literal: \{num_str}")

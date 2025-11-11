@@ -7,6 +7,8 @@ pub fn Context::atom_expr_to_knf(
     Unit => ([], KnfExpr::Unit)
     Int(value) => ([], KnfExpr::Int(value))
     Int64(value) => ([], KnfExpr::Int64(value))
+    UInt(value) => ([], KnfExpr::UInt(value))
+    UInt64(value) => ([], KnfExpr::UInt64(value))
     Bool(value) => ([], KnfExpr::Bool(value))
     Double(value) => ([], KnfExpr::Double(value))
     Float(value) => ([], KnfExpr::Float(value))

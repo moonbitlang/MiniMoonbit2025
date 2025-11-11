@@ -19,6 +19,18 @@ typedef struct {
 typedef struct {
   int32_t length;
   int32_t capacity; // default: length * 2 + 1
+  uint32_t *data;
+} UIntArray;
+
+typedef struct {
+  int32_t length;
+  int32_t capacity; // default: length * 2 + 1
+  uint64_t *data;
+} UInt64Array;
+
+typedef struct {
+  int32_t length;
+  int32_t capacity; // default: length * 2 + 1
   double *data;
 } DoubleArray;
 
@@ -75,6 +87,28 @@ Int64Array* make_int64_array(int32_t length, int64_t init_value) {
   arr->length = length;
   arr->capacity = length * 2 + 1;
   arr->data = (int64_t *)moonbit_malloc(arr->capacity * sizeof(int64_t));
+  for (int32_t i = 0; i < length; i++) {
+    arr->data[i] = init_value;
+  }
+  return arr;
+}
+
+UIntArray* make_uint_array(int32_t length, uint32_t init_value) {
+  UIntArray *arr = (UIntArray *)moonbit_malloc(sizeof(UIntArray));
+  arr->length = length;
+  arr->capacity = length * 2 + 1;
+  arr->data = (uint32_t *)moonbit_malloc(arr->capacity * sizeof(uint32_t));
+  for (int32_t i = 0; i < length; i++) {
+    arr->data[i] = init_value;
+  }
+  return arr;
+}
+
+UInt64Array* make_uint64_array(int32_t length, uint64_t init_value) {
+  UInt64Array *arr = (UInt64Array *)moonbit_malloc(sizeof(UInt64Array));
+  arr->length = length;
+  arr->capacity = length * 2 + 1;
+  arr->data = (uint64_t *)moonbit_malloc(arr->capacity * sizeof(uint64_t));
   for (int32_t i = 0; i < length; i++) {
     arr->data[i] = init_value;
   }
@@ -155,6 +189,22 @@ void array_int64_push(Int64Array *arr, int64_t value) {
   arr->data[arr->length++] = value;
 }
 
+void array_uint_push(UIntArray *arr, uint32_t value) {
+  if (arr->length >= arr->capacity) {
+    arr->capacity = arr->capacity * 2 + 1;
+    arr->data = (uint32_t *)moonbit_realloc(arr->data, arr->capacity * sizeof(uint32_t));
+  }
+  arr->data[arr->length++] = value;
+}
+
+void array_uint64_push(UInt64Array *arr, uint64_t value) {
+  if (arr->length >= arr->capacity) {
+    arr->capacity = arr->capacity * 2 + 1;
+    arr->data = (uint64_t *)moonbit_realloc(arr->data, arr->capacity * sizeof(uint64_t));
+  }
+  arr->data[arr->length++] = value;
+}
+
 void array_double_push(DoubleArray *arr, double value) {
   if (arr->length >= arr->capacity) {
     arr->capacity = arr->capacity * 2 + 1;
@@ -203,6 +253,14 @@ int64_t array_int64_get(Int64Array *arr, int32_t index) {
   return arr->data[index];
 }
 
+uint32_t array_uint_get(UIntArray *arr, int32_t index) {
+  return arr->data[index];
+}
+
+uint64_t array_uint64_get(UInt64Array *arr, int32_t index) {
+  return arr->data[index];
+}
+
 double array_double_get(DoubleArray *arr, int32_t index) {
   return arr->data[index];
 }
@@ -228,6 +286,14 @@ void array_int_put(IntArray *arr, int32_t index, int32_t value) {
 }
 
 void array_int64_put(Int64Array *arr, int32_t index, int64_t value) {
+  arr->data[index] = value;
+}
+
+void array_uint_put(UIntArray *arr, int32_t index, uint32_t value) {
+  arr->data[index] = value;
+}
+
+void array_uint64_put(UInt64Array *arr, int32_t index, uint64_t value) {
   arr->data[index] = value;
 }
 
@@ -320,6 +386,14 @@ void __builtin_println_int64(int64_t value) {
   printf("%lld\n", (long long)value);
 }
 
+void __builtin_println_uint(uint32_t value) {
+  printf("%u\n", value);
+}
+
+void __builtin_println_uint64(uint64_t value) {
+  printf("%llu\n", (unsigned long long)value);
+}
+
 void __builtin_println_float(float value) {
   printf("%f\n", value);
 }
@@ -334,6 +408,14 @@ void __builtin_print_int(int value) {
 
 void __builtin_print_int64(int64_t value) {
   printf("%lld", (long long)value);
+}
+
+void __builtin_print_uint(uint32_t value) {
+  printf("%u", value);
+}
+
+void __builtin_print_uint64(uint64_t value) {
+  printf("%llu", (unsigned long long)value);
 }
 
 void __builtin_print_float(float value) {
@@ -421,6 +503,18 @@ MoonBitStr* __builtin_int_to_string(int32_t value) {
 MoonBitStr* __builtin_int64_to_string(int64_t value) {
   char buffer[64];
   snprintf(buffer, sizeof(buffer), "%lld", (long long)value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_uint_to_string(uint32_t value) {
+  char buffer[32];
+  snprintf(buffer, sizeof(buffer), "%u", value);
+  return __builtin_create_string(buffer);
+}
+
+MoonBitStr* __builtin_uint64_to_string(uint64_t value) {
+  char buffer[64];
+  snprintf(buffer, sizeof(buffer), "%llu", (unsigned long long)value);
   return __builtin_create_string(buffer);
 }
 

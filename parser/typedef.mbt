@@ -10,6 +10,8 @@ pub(all) enum TypeKind {
   Bool
   Int
   Int64
+  UInt
+  UInt64
   Double
   Float
   Char
@@ -29,6 +31,8 @@ pub fn parse_type(
     [{ kind: Upper("Bool"), .. }, .. rest] => (Type::{ kind: Bool, toks: tokens[0:1] }, rest)
     [{ kind: Upper("Int"), .. }, .. rest] => (Type::{ kind: Int, toks: tokens[0:1] }, rest)
     [{ kind: Upper("Int64"), .. }, .. rest] => (Type::{ kind: Int64, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("UInt"), .. }, .. rest] => (Type::{ kind: UInt, toks: tokens[0:1] }, rest)
+    [{ kind: Upper("UInt64"), .. }, .. rest] => (Type::{ kind: UInt64, toks: tokens[0:1] }, rest)
     [{ kind: Upper("Double"), .. }, .. rest] => (Type::{ kind: Double, toks: tokens[0:1] }, rest)
     [{ kind: Upper("Float"), .. }, .. rest] => (Type::{ kind: Float, toks: tokens[0:1] }, rest)
     [{ kind: Upper("Char"), .. }, .. rest] => (Type::{ kind: Char, toks: tokens[0:1] }, rest)

@@ -9,6 +9,8 @@ fn handle_primitive_conversion(
     // Int conversions
     Int => match method_name {
       "to_int64" => Some(Cast(Int64, base_name))
+      "to_uint" => Some(Cast(UInt, base_name))
+      "to_uint64" => Some(Cast(UInt64, base_name))
       "to_float" => Some(Cast(Float, base_name))
       "to_double" => Some(Cast(Double, base_name))
       "to_string" => Some(Call(Name::{ id: "__builtin_int_to_string", slot: 0 }, [base_name]))
@@ -18,9 +20,33 @@ fn handle_primitive_conversion(
     // Int64 conversions
     Int64 => match method_name {
       "to_int" => Some(Cast(Int, base_name))
+      "to_uint" => Some(Cast(UInt, base_name))
+      "to_uint64" => Some(Cast(UInt64, base_name))
       "to_float" => Some(Cast(Float, base_name))
       "to_double" => Some(Cast(Double, base_name))
       "to_string" => Some(Call(Name::{ id: "__builtin_int64_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_double" => Some(BitCast(Double, base_name))
+      _ => None
+    }
+    // UInt conversions
+    UInt => match method_name {
+      "to_int" => Some(Cast(Int, base_name))
+      "to_int64" => Some(Cast(Int64, base_name))
+      "to_uint64" => Some(Cast(UInt64, base_name))
+      "to_float" => Some(Cast(Float, base_name))
+      "to_double" => Some(Cast(Double, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_uint_to_string", slot: 0 }, [base_name]))
+      "reinterpret_as_float" => Some(BitCast(Float, base_name))
+      _ => None
+    }
+    // UInt64 conversions
+    UInt64 => match method_name {
+      "to_int" => Some(Cast(Int, base_name))
+      "to_int64" => Some(Cast(Int64, base_name))
+      "to_uint" => Some(Cast(UInt, base_name))
+      "to_float" => Some(Cast(Float, base_name))
+      "to_double" => Some(Cast(Double, base_name))
+      "to_string" => Some(Call(Name::{ id: "__builtin_uint64_to_string", slot: 0 }, [base_name]))
       "reinterpret_as_double" => Some(BitCast(Double, base_name))
       _ => None
     }
@@ -28,6 +54,8 @@ fn handle_primitive_conversion(
     Float => match method_name {
       "to_int" => Some(Cast(Int, base_name))
       "to_int64" => Some(Cast(Int64, base_name))
+      "to_uint" => Some(Cast(UInt, base_name))
+      "to_uint64" => Some(Cast(UInt64, base_name))
       "to_double" => Some(Cast(Double, base_name))
       "to_string" => Some(Call(Name::{ id: "__builtin_float_to_string", slot: 0 }, [base_name]))
       "reinterpret_as_int" => Some(BitCast(Int, base_name))
@@ -37,6 +65,8 @@ fn handle_primitive_conversion(
     Double => match method_name {
       "to_int" => Some(Cast(Int, base_name))
       "to_int64" => Some(Cast(Int64, base_name))
+      "to_uint" => Some(Cast(UInt, base_name))
+      "to_uint64" => Some(Cast(UInt64, base_name))
       "to_float" => Some(Cast(Float, base_name))
       "to_string" => Some(Call(Name::{ id: "__builtin_double_to_string", slot: 0 }, [base_name]))
       "reinterpret_as_int64" => Some(BitCast(Int64, base_name))

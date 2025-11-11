@@ -329,3 +329,45 @@ test "Tokenize Symbols" {
   assert_true(tokens[14].kind is Symbol("::"))
   assert_true(tokens[15].kind is EOF)
 }
+
+///|
+test "Tokenize Unsigned Int Number" {
+  let code =
+    #|42U 0U 65U 15899U 65355U
+  let tokens = tokenize(code)
+  assert_true(tokens.length() is 6)
+  assert_true(tokens[0].kind is UInt(42U))
+  assert_true(tokens[1].kind is UInt(0U))
+  assert_true(tokens[2].kind is UInt(65U))
+  assert_true(tokens[3].kind is UInt(15899U))
+  assert_true(tokens[4].kind is UInt(65355U))
+  assert_true(tokens[5].kind is EOF)
+}
+
+///|
+test "Tokenize Unsigned Int64 Number" {
+  let code =
+    #|42UL 0UL 65UL 15899UL 1234567890UL
+  let tokens = tokenize(code)
+  assert_true(tokens.length() is 6)
+  assert_true(tokens[0].kind is UInt64(42UL))
+  assert_true(tokens[1].kind is UInt64(0UL))
+  assert_true(tokens[2].kind is UInt64(65UL))
+  assert_true(tokens[3].kind is UInt64(15899UL))
+  assert_true(tokens[4].kind is UInt64(1234567890UL))
+  assert_true(tokens[5].kind is EOF)
+}
+
+///|
+test "Tokenize Hexadecimal Unsigned Numbers" {
+  let code =
+    #|0x1aU 0xFFU 0xFFFFFFFFU 0x10UL 0xDeadBeefUL
+  let tokens = tokenize(code)
+  assert_true(tokens.length() is 6)
+  assert_true(tokens[0].kind is UInt(26U))            // 0x1aU = 26U
+  assert_true(tokens[1].kind is UInt(255U))           // 0xFFU = 255U
+  assert_true(tokens[2].kind is UInt(4294967295U))    // 0xFFFFFFFFU = max UInt
+  assert_true(tokens[3].kind is UInt64(16UL))         // 0x10UL = 16UL
+  assert_true(tokens[4].kind is UInt64(3735928559UL)) // 0xDeadBeefUL = 3735928559UL
+  assert_true(tokens[5].kind is EOF)
+}

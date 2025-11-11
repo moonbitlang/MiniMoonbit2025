@@ -14,6 +14,8 @@ pub impl Show for TypeKind with output(self, logger) {
     Bool => "Bool"
     Int => "Int"
     Int64 => "Int64"
+    UInt => "UInt"
+    UInt64 => "UInt64"
     Double => "Double"
     Float => "Float"
     Char => "Char"

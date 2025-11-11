@@ -6,6 +6,8 @@ pub fn Context::type_codegen_opaque(
   match knf_type {
     Int => (self.llvm_ctx.getInt32Ty() : &@llvm.Type)
     Int64 => self.llvm_ctx.getInt64Ty()
+    UInt => self.llvm_ctx.getInt32Ty()
+    UInt64 => self.llvm_ctx.getInt64Ty()
     Bool => self.llvm_ctx.getInt1Ty()
     Unit => self.llvm_ctx.getVoidTy()
     Double => self.llvm_ctx.getDoubleTy()
@@ -27,6 +29,8 @@ pub fn Context::type_codegen_concrete(
   match knf_type {
     Int => (self.llvm_ctx.getInt32Ty() : &@llvm.Type)
     Int64 => self.llvm_ctx.getInt64Ty()
+    UInt => self.llvm_ctx.getInt32Ty()
+    UInt64 => self.llvm_ctx.getInt64Ty()
     Bool => self.llvm_ctx.getInt1Ty()
     Unit => self.llvm_ctx.getVoidTy()
     Double => self.llvm_ctx.getDoubleTy()

@@ -42,6 +42,8 @@ pub fn Context::new(mod_name : String) -> Context {
   // Add `make_ptr_array_ty, make_ptr_array`: (Int, Ptr) -> Ptr
   let make_int_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, i32ty])
   let make_int64_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, i64ty])
+  let make_uint_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, i32ty])
+  let make_uint64_array_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty, i64ty])
   let make_double_array_ty = try! llvm_ctx.getFunctionType(ptrty, [
       i32ty, doublety,
     ])
@@ -54,6 +56,12 @@ pub fn Context::new(mod_name : String) -> Context {
       ptrty, i32ty,
     ])
   let array_int64_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
+      ptrty, i64ty,
+    ])
+  let array_uint_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
+      ptrty, i32ty,
+    ])
+  let array_uint64_push_ty = try! llvm_ctx.getFunctionType(llvm_ctx.getVoidTy(), [
       ptrty, i64ty,
     ])
   let array_double_push_ty = try! llvm_ctx.getFunctionType(
@@ -74,6 +82,8 @@ pub fn Context::new(mod_name : String) -> Context {
     ])
   let array_int_get_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty, i32ty])
   let array_int64_get_ty = try! llvm_ctx.getFunctionType(i64ty, [ptrty, i32ty])
+  let array_uint_get_ty = try! llvm_ctx.getFunctionType(i32ty, [ptrty, i32ty])
+  let array_uint64_get_ty = try! llvm_ctx.getFunctionType(i64ty, [ptrty, i32ty])
   let array_double_get_ty = try! llvm_ctx.getFunctionType(doublety, [
       ptrty, i32ty,
     ])
@@ -85,6 +95,12 @@ pub fn Context::new(mod_name : String) -> Context {
       ptrty, i32ty, i32ty,
     ])
   let array_int64_put_ty = try! llvm_ctx.getFunctionType(voidty, [
+      ptrty, i32ty, i64ty,
+    ])
+  let array_uint_put_ty = try! llvm_ctx.getFunctionType(voidty, [
+      ptrty, i32ty, i32ty,
+    ])
+  let array_uint64_put_ty = try! llvm_ctx.getFunctionType(voidty, [
       ptrty, i32ty, i64ty,
     ])
   let array_double_put_ty = try! llvm_ctx.getFunctionType(voidty, [
@@ -106,6 +122,8 @@ pub fn Context::new(mod_name : String) -> Context {
   let float_of_int_ty = try! llvm_ctx.getFunctionType(doublety, [i32ty])
   let builtin_print_int_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
   let builtin_print_int64_ty = try! llvm_ctx.getFunctionType(voidty, [i64ty])
+  let builtin_print_uint_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
+  let builtin_print_uint64_ty = try! llvm_ctx.getFunctionType(voidty, [i64ty])
   let builtin_print_double_ty = try! llvm_ctx.getFunctionType(voidty, [doublety])
   let builtin_print_float_ty = try! llvm_ctx.getFunctionType(voidty, [floatty])
   let builtin_print_char_ty = try! llvm_ctx.getFunctionType(voidty, [i8ty])
@@ -113,6 +131,8 @@ pub fn Context::new(mod_name : String) -> Context {
   let builtin_print_string_ty = try! llvm_ctx.getFunctionType(voidty, [ptrty])
   let builtin_println_int_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
   let builtin_println_int64_ty = try! llvm_ctx.getFunctionType(voidty, [i64ty])
+  let builtin_println_uint_ty = try! llvm_ctx.getFunctionType(voidty, [i32ty])
+  let builtin_println_uint64_ty = try! llvm_ctx.getFunctionType(voidty, [i64ty])
   let builtin_println_double_ty = try! llvm_ctx.getFunctionType(voidty, [
       doublety,
     ])
@@ -129,6 +149,8 @@ pub fn Context::new(mod_name : String) -> Context {
   // Type conversion to string functions
   let builtin_int_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty])
   let builtin_int64_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i64ty])
+  let builtin_uint_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i32ty])
+  let builtin_uint64_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i64ty])
   let builtin_float_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [floatty])
   let builtin_double_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [doublety])
   let builtin_char_to_string_ty = try! llvm_ctx.getFunctionType(ptrty, [i8ty])
@@ -136,6 +158,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "moonbit_malloc": moonbit_malloc_ty,
     "make_int_array": make_int_array_ty,
     "make_int64_array": make_int64_array_ty,
+    "make_uint_array": make_uint_array_ty,
+    "make_uint64_array": make_uint64_array_ty,
     "make_double_array": make_double_array_ty,
     "make_float_array": make_float_array_ty,
     "make_bool_array": make_bool_array_ty,
@@ -144,6 +168,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "get_array_length": get_array_length_ty,
     "array_int_push": array_int_push_ty,
     "array_int64_push": array_int64_push_ty,
+    "array_uint_push": array_uint_push_ty,
+    "array_uint64_push": array_uint64_push_ty,
     "array_double_push": array_double_push_ty,
     "array_float_push": array_float_push_ty,
     "array_bool_push": array_bool_push_ty,
@@ -151,6 +177,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "array_ptr_push": array_ptr_push_ty,
     "array_int_get": array_int_get_ty,
     "array_int64_get": array_int64_get_ty,
+    "array_uint_get": array_uint_get_ty,
+    "array_uint64_get": array_uint64_get_ty,
     "array_double_get": array_double_get_ty,
     "array_float_get": array_float_get_ty,
     "array_bool_get": array_bool_get_ty,
@@ -158,6 +186,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "array_ptr_get": array_ptr_get_ty,
     "array_int_put": array_int_put_ty,
     "array_int64_put": array_int64_put_ty,
+    "array_uint_put": array_uint_put_ty,
+    "array_uint64_put": array_uint64_put_ty,
     "array_double_put": array_double_put_ty,
     "array_float_put": array_float_put_ty,
     "array_bool_put": array_bool_put_ty,
@@ -167,6 +197,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "float_of_int": float_of_int_ty,
     "__builtin_print_int": builtin_print_int_ty,
     "__builtin_print_int64": builtin_print_int64_ty,
+    "__builtin_print_uint": builtin_print_uint_ty,
+    "__builtin_print_uint64": builtin_print_uint64_ty,
     "__builtin_print_double": builtin_print_double_ty,
     "__builtin_print_float": builtin_print_float_ty,
     "__builtin_print_char": builtin_print_char_ty,
@@ -174,6 +206,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "__builtin_print_string": builtin_print_string_ty,
     "__builtin_println_int": builtin_println_int_ty,
     "__builtin_println_int64": builtin_println_int64_ty,
+    "__builtin_println_uint": builtin_println_uint_ty,
+    "__builtin_println_uint64": builtin_println_uint64_ty,
     "__builtin_println_double": builtin_println_double_ty,
     "__builtin_println_float": builtin_println_float_ty,
     "__builtin_println_char": builtin_println_char_ty,
@@ -186,6 +220,8 @@ pub fn Context::new(mod_name : String) -> Context {
     "moonbit_string_eq": moonbit_string_eq_ty,
     "__builtin_int_to_string": builtin_int_to_string_ty,
     "__builtin_int64_to_string": builtin_int64_to_string_ty,
+    "__builtin_uint_to_string": builtin_uint_to_string_ty,
+    "__builtin_uint64_to_string": builtin_uint64_to_string_ty,
     "__builtin_float_to_string": builtin_float_to_string_ty,
     "__builtin_double_to_string": builtin_double_to_string_ty,
     "__builtin_char_to_string": builtin_char_to_string_ty,

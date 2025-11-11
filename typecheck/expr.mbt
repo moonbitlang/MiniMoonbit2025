@@ -162,11 +162,11 @@ pub fn Context::check_expr(
           }
           return e
         }
-        if !(ty is (Int | Int64 | Double | Float | TypeVar(_))) {
+        if !(ty is (Int | Int64 | UInt | UInt64 | Double | Float | TypeVar(_))) {
           let msg = if op is Add {
-            "TypeMismatch: both side of + Must Be Int, Int64, Double, Float, or String, while got \{ty}"
+            "TypeMismatch: both side of + Must Be Int, Int64, UInt, UInt64, Double, Float, or String, while got \{ty}"
           } else {
-            "TypeMismatch: both side of \{op} Must Be Int, Int64, Double, or Float, while got \{ty}"
+            "TypeMismatch: both side of \{op} Must Be Int, Int64, UInt, UInt64, Double, or Float, while got \{ty}"
           }
           self.throw_(
             expr.toks[0],
@@ -198,10 +198,10 @@ pub fn Context::check_expr(
         return e
       }
       if binop_is_shift(op) {
-        // Shift operations: left operand can be Int or Int64, right operand must be Int
+        // Shift operations: left operand can be Int, Int64, UInt, or UInt64, right operand must be Int
         let left_ty = self.ensure_type(checked_left.ty)
-        if !(left_ty is (Int | Int64 | TypeVar(_))) {
-          let msg = "Left operand of shift operation must be of type Int or Int64"+
+        if !(left_ty is (Int | Int64 | UInt | UInt64 | TypeVar(_))) {
+          let msg = "Left operand of shift operation must be of type Int, Int64, UInt, or UInt64"+
            " while got \{left_ty}"
           self.throw_(
             expr.toks[0],
