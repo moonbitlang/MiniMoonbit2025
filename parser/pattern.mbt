@@ -20,6 +20,12 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
         text
       }
     }
+    Boolean(v) => {
+      let prefix = "bool pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      let v = if v { "true" } else { "false" }
+      "\{prefix} \{v}"
+    }
     Integer(v) => {
       let prefix = "int pattern"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
@@ -94,6 +100,7 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
 ///|
 pub(all) enum PatternKind {
   Wildcard
+  Boolean(Bool)
   Integer(Int)
   Ident(String)
   Tuple(Array[Pattern])
@@ -104,6 +111,7 @@ pub(all) enum PatternKind {
 pub impl Show for PatternKind with output(self, logger) {
   let s = match self {
     Wildcard => "_"
+    Boolean(v) => "\{v}"
     Integer(v) => "\{v}"
     Ident(name) => "\{name}"
     Tuple(patterns) => {
@@ -141,6 +149,10 @@ pub fn parse_pattern(
     }
     [{ kind: Int(v), .. }, .. tokens] => {
       let pattern = Pattern::{ kind: Integer(v) }
+      (pattern, tokens)
+    }
+    [{ kind: Bool(v), .. }, .. tokens] => {
+      let pattern = Pattern::{ kind: Boolean(v) }
       (pattern, tokens)
     }
     [{ kind: Upper(name1), .. }, .. tokens] => {

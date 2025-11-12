@@ -65,15 +65,21 @@ pub impl Show for Pattern with output(self, logger) {
 pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
   match self.kind {
     Wildcard => "_"
-    Ident(name) => {
-      let prefix = "ident pattern"
+    Boolean(b) => {
+      let prefix = "bool pattern"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
-      "\{prefix} \{name}"
+      let b = if b { "true" } else { "false" }
+      "\{prefix} \{b}"
     }
     Integer(i) => {
       let prefix = "int pattern"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       "\{prefix} \{i}"
+    }
+    Ident(name) => {
+      let prefix = "ident pattern"
+      let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
+      "\{prefix} \{name}"
     }
     Tuple(patterns) => {
       let prefix = "tuple pattern"
@@ -136,9 +142,10 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
 ///|
 pub(all) enum PatternKind {
   Wildcard
+  Boolean(Bool)
+  Integer(Int)
   Ident(String)
   Tuple(Array[Pattern])
-  Integer(Int)
   EnumVariant(String, String, Array[Pattern])
 } derive(Show, Eq)
 
@@ -149,12 +156,13 @@ fn Context::from_parser_pattern(
 ) -> Pattern raise TypeCheckError {
   match pattern.kind {
     Wildcard => Pattern::{ kind: PatternKind::Wildcard }
+    Boolean(b) => Pattern::{ kind: PatternKind::Boolean(b) }
+    Integer(i) => Pattern::{ kind: PatternKind::Integer(i) }
     Ident(name) => Pattern::{ kind: PatternKind::Ident(name) }
     Tuple(sub_patterns) => {
       let patterns = sub_patterns.map(p => self.from_parser_pattern(p))
       Pattern::{ kind: PatternKind::Tuple(patterns) }
     }
-    Integer(i) => Pattern::{ kind: PatternKind::Integer(i) }
     EnumVariant(tag, variant_name, sub_patterns) => {
       let patterns = sub_patterns.map(p => self.from_parser_pattern(p))
       let tag = match tag {
@@ -206,6 +214,11 @@ fn Context::bind_pattern_type(
     Integer(_) => {
       guard ty_kind is Int else {
         raise TypeCheckError("Pattern is an integer but type is not an integer")
+      }
+    }
+    Boolean(_) => {
+      guard ty_kind is Bool else {
+        raise TypeCheckError("Pattern is a boolean but type is not a boolean")
       }
     }
     EnumVariant(tag, variant_name, sub_pattern) => {

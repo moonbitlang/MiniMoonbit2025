@@ -230,10 +230,14 @@ pub fn Context::substitute_atom_expr_type_var(
       let new_expr = self.substitute_expr_type_var(expr)
       AtomExprKind::BitCast(new_target_ty, new_expr)
     }
-    AtomExprKind::EnumConstruct(_) =>
-      raise TypeCheckError(
-        "EnumConstruct is not supported yet in type variable substitution.",
-      )
+    AtomExprKind::EnumConstruct(tag, name, exprs) => {
+      let new_exprs = Array::new()
+      for expr in exprs {
+        let new_expr = self.substitute_expr_type_var(expr)
+        new_exprs.push(new_expr)
+      }
+      AtomExprKind::EnumConstruct(tag, name, new_exprs)
+    }
   }
   AtomExpr::{ kind: new_atom_expr_kind, ty: new_ty_kind, toks: atom_expr.toks }
 }
