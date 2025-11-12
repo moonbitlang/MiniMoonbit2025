@@ -198,7 +198,6 @@ test "Stmt to_string Test - Expr and Return" {
       #|function call (Unit)
       #|├-variable foo ((Int) -> Unit)
       #|└-int literal 42 (Int)
-
     ),
   )
 

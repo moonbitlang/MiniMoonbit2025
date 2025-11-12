@@ -115,7 +115,6 @@ test "ExternFunction to_string Test - Simple" {
       #|└-ffi: "sqrt"
       #|
       #|
-
     ),
   )
 }
@@ -143,7 +142,6 @@ test "ExternFunction to_string Test - Multiple Params" {
       #|└-ffi: "pow"
       #|
       #|
-
     ),
   )
 }

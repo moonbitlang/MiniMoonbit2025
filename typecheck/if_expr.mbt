@@ -147,7 +147,6 @@ test "IfExpr to_string Test - Simple" {
       #|└-then: block (Int)
       #|        └-int literal 1 (Int)
       #|        
-
     ),
   )
 }
@@ -177,7 +176,6 @@ test "IfExpr to_string Test - With Else" {
       #|└-else: block (Int)
       #|        └-int literal 0 (Int)
       #|        
-
     ),
   )
 }
@@ -214,7 +212,6 @@ test "IfExpr to_string Test - Else If" {
       #|        └-else: block (Int)
       #|                └-int literal 0 (Int)
       #|                
-
     ),
   )
 }

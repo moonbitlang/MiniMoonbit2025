@@ -114,7 +114,6 @@ test "EnumDef to_string Test - Simple" {
       #|
       #|└-None
       #|
-
     ),
   )
 }
@@ -138,7 +137,6 @@ test "EnumDef to_string Test - Multiple Types" {
       #|
       #|└-Err(String)
       #|
-
     ),
   )
 }

@@ -107,7 +107,6 @@ test "StructDef to_string Test - Simple" {
       #|├-x: Int
       #|└-y: Int
       #|
-
     ),
   )
 }
@@ -130,7 +129,6 @@ test "StructDef to_string Test - With Mut" {
       #|├-mut count: Int
       #|└-name: String
       #|
-
     ),
   )
 }

@@ -80,7 +80,6 @@ test "TopLet to_string Test - Simple" {
       #|├-type: Double
       #|└-expr: double literal 3.14 (Double)
       #|
-
     ),
   )
 }
@@ -103,7 +102,6 @@ test "TopLet to_string Test - With Type" {
       #|├-type: Int
       #|└-expr: int literal 42 (Int)
       #|
-
     ),
   )
 }

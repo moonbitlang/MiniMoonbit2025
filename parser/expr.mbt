@@ -608,7 +608,6 @@ test "Expr to_string Test - Block" {
       #|  ├-variable x
       #|  └-int literal 1
       #|
-
     ),
   )
 

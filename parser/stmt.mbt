@@ -320,7 +320,6 @@ test "Stmt to_string Test - Expr and Return" {
       #|function call
       #|├-variable foo
       #|└-int literal 42
-
     ),
   )
 
@@ -358,7 +357,6 @@ test "Stmt to_string Test - Complex Expr" {
       #|array access
       #|├-variable arr
       #|└-int literal 0
-
     ),
   )
 
@@ -371,7 +369,6 @@ test "Stmt to_string Test - Complex Expr" {
       #|field access .y
       #|└-field access .x
       #|  └-variable point
-
     ),
   )
 
@@ -386,7 +383,6 @@ test "Stmt to_string Test - Complex Expr" {
       #|├-int literal 1
       #|├-int literal 2
       #|└-int literal 3
-
     ),
   )
 }

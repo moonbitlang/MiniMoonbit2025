@@ -175,7 +175,6 @@ test "BlockExpr to_string Test - Complex" {
       #|    ├-variable x
       #|    └-int literal 2
       #|
-
     ),
   )
 }
