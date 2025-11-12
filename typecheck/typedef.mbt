@@ -28,7 +28,7 @@ pub(all) enum TypeKind {
   Enum(String)
   Any
   TypeVar(Int)
-} derive(Hash)
+} derive(Hash, Eq)
 
 ///|
 pub fn Context::check_parser_typekind(

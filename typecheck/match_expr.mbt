@@ -56,6 +56,7 @@ pub struct MatchArm {
   pattern : Pattern
   match_guard : Expr?
   body : Expr
+  toks: ArrayView[Token]
 }
 
 ///|
@@ -125,8 +126,29 @@ pub fn MatchArm::to_string(self : Self, color? : Bool = true) -> String {
   }
 }
 
-///|
 pub fn Context::check_match_expr(
+  self : Context,
+  match_expr : @parser.MatchExpr,
+) -> MatchExpr {
+  // Step 1. Type Check for Match Expression
+  let checked_match_expr = self.check_match_expr_type(match_expr)
+
+  // Step 2. Exhaustiveness Check
+  checked_match_expr.check_match_exhaustiveness(self) catch {
+    err => {
+      self.throw_(
+        match_expr.cond.toks[0],
+        "Match expression exhaustiveness check failed: \{err}",
+        Error,
+      )
+    }
+  }
+
+  checked_match_expr
+}
+
+///|
+pub fn Context::check_match_expr_type(
   self : Context,
   match_expr : @parser.MatchExpr,
 ) -> MatchExpr {
@@ -153,6 +175,7 @@ pub fn Context::check_match_expr(
     } noraise {
       pat => pat
     }
+    self.enter_scope()
     self.bind_pattern_type(pattern, checked_cond.ty) catch {
       err =>
         self.throw_(
@@ -179,10 +202,12 @@ pub fn Context::check_match_expr(
       None => None
     }
     let checked_body = self.check_expr(arm.body)
+    self.exit_scope()
     let checked_arm = MatchArm::{
       pattern,
       match_guard: checked_guard,
       body: checked_body,
+      toks: arm.toks,
     }
     checked_arms.push(checked_arm)
   }
@@ -202,6 +227,148 @@ pub fn Context::check_match_expr(
     self.ensure_type(arm_types[0])
   }
   MatchExpr::{ cond: checked_cond, arms: checked_arms, ty: tykind }
+}
+
+pub(all) enum PatternSet {
+  Empty 
+  Single(PatternKind)
+  // Only Integer `Int` (Not Support UInt, UInt64, Int64 for now)
+  // Integer Complement, e.g. NumberComplement{1, 3, 5}
+  // represents all integers except 1, 3, 5
+  // if arr is empty, it means all integers
+  NumberComplement(Array[Int])
+  Union(Array[PatternSet])
+  // tag, name, subpatterns
+  EnumConstructor(String, String, Array[PatternSet])
+  TupleConstructor(Array[PatternSet])
+} derive(Show, Eq)
+
+fn Context::full_pattern_set_of_type(self: Self, ty: TypeKind) -> PatternSet raise TypeCheckError {
+  match ty {
+    Int => NumberComplement([])
+    Bool => {
+      Union([
+        Single(Boolean(true)),
+        Single(Boolean(false)),
+      ])
+    }
+    Enum(enum_name) => {
+      match self.enum_defs.get(enum_name) {
+        Some(enum_def) => {
+          let variants = Array::new()
+          for field in enum_def.enum_fields {
+            let { name, types } = field
+            let sub_pattern_sets = types.map(t => self.full_pattern_set_of_type(t))
+            variants.push(EnumConstructor(enum_name, name, sub_pattern_sets))
+          }
+          Union(variants)
+        }
+        None => raise TypeCheckError(
+          "Cannot get full pattern set for Unknown enum type: \{enum_name} during pattern exhaustiveness check"
+        )
+      }
+    }
+    Tuple(elem_types) => {
+      let sub_pattern_sets = elem_types.map(t => self.full_pattern_set_of_type(t))
+      TupleConstructor(sub_pattern_sets)
+    }
+    _ => raise TypeCheckError(
+      "Cannot get full pattern set for type: \{ty} during pattern exhaustiveness check"
+    ) 
+  }
+}
+
+fn PatternSet::subtract(self: Self, pat: PatternKind) -> PatternSet raise TypeCheckError {
+  match (self, pat) {
+    (Empty, _) => Empty
+    (_, Wildcard|Ident(_)) => Empty
+    (Single(pk), pat) if pk == pat => Empty
+    (Single(_), _) => self
+    (NumberComplement(excluded), Integer(n)) => {
+      let new_excluded = excluded.copy()
+      new_excluded.push(n)
+      NumberComplement(new_excluded)
+    }
+    // for TupleConstructor(P1, P2, ..., Pn) - Tuple(pat1, pat2, ..., patn)
+    // it should be:
+    //   (P1 - pat1, P2, ..., Pn) U
+    //   (pat1, P2 - Pat2, ..., Pn) U
+    //   (pat1, pat2, P3 - pat3, ..., Pn) U
+    //   ...
+    //   (pat1, pat2, ..., Pn - patn)
+    (TupleConstructor(subsets), Tuple(pats)) => {
+      let unioned_sets = Array::new()
+      for i in 0..<subsets.length() {
+        let new_subsets = Array::new()
+        for k in 0..<i {
+          new_subsets.push(Single(pats[k].kind))
+        }
+        let subs = subsets[i].subtract(pats[i].kind)
+        if subs is Empty {
+          continue
+        }
+        new_subsets.push(subs)
+        for j in (i+1)..<subsets.length() {
+          new_subsets.push(subsets[j])
+        }
+        unioned_sets.push(TupleConstructor(new_subsets))
+      }
+      Union(unioned_sets)
+    }
+    (EnumConstructor(tag, name, subsets), EnumVariant(tag2, name2, pats)) if
+    tag == tag2 && name == name2 => {
+      let unioned_sets = Array::new()
+      for i in 0..<subsets.length() {
+        let new_subsets = Array::new()
+        for k in 0..<i {
+          new_subsets.push(Single(pats[k].kind))
+        }
+        let subs = subsets[i].subtract(pats[i].kind)
+        if subs is Empty {
+          continue
+        }
+        new_subsets.push(subs)
+        for j in (i+1)..<subsets.length() {
+          new_subsets.push(subsets[j])
+        }
+        unioned_sets.push(EnumConstructor(tag, name, new_subsets))
+      }
+      Union(unioned_sets)
+    }
+    (Union(sets), pat) => {
+      let new_sets = Array::new()
+      for s in sets {
+        let subtracted = s.subtract(pat)
+        if subtracted is Empty {
+          continue
+        }
+        new_sets.push(subtracted)
+      }
+      match new_sets.length() {
+        0 => Empty
+        1 => new_sets[0]
+        _ => Union(new_sets)
+      }
+    }
+    _ => raise TypeCheckError(
+      "TypeMismatch during pattern set subtraction: cannot subtract \{pat} from \{self}"
+    )
+  }
+}
+
+fn MatchExpr::check_match_exhaustiveness(self: Self, ctx: Context) -> Unit raise TypeCheckError {
+  let ty = ctx.ensure_type(self.cond.ty)
+  let full_set = ctx.full_pattern_set_of_type(ty)
+  let mut remaining_set = full_set
+  for arm in self.arms.filter(arm => arm.match_guard is None) {
+    remaining_set = remaining_set.subtract(arm.pattern.kind)
+  }
+  match remaining_set {
+    Empty => ()
+    _ => raise TypeCheckError(
+      "Non-exhaustive match expression: some patterns are not covered: \{remaining_set}"
+    )
+  }
 }
 
 ///|

@@ -413,7 +413,7 @@ pub fn Context::substitute_match_expr_type_var(
   let new_cond_expr = self.substitute_expr_type_var(match_expr.cond)
   let new_arms = Array::new()
   for arm in match_expr.arms {
-    let { pattern, match_guard, body } = arm
+    let { pattern, match_guard, body, toks } = arm
     let match_body = match match_guard {
       Some(guard_expr) => {
         let new_guard_expr = self.substitute_expr_type_var(guard_expr)
@@ -422,7 +422,7 @@ pub fn Context::substitute_match_expr_type_var(
       None => None
     }
     let body = self.substitute_expr_type_var(body)
-    let new_arm = MatchArm::{ pattern, match_guard: match_body, body }
+    let new_arm = MatchArm::{ pattern, match_guard: match_body, body, toks }
     new_arms.push(new_arm)
   }
   MatchExpr::{ cond: new_cond_expr, arms: new_arms, ty: new_ty_kind }
