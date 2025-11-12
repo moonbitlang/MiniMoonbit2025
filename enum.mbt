@@ -11,6 +11,5 @@ fn main {
     RGB(a, 0, 0) if a < 100 => println("Red in RGB")
     RGB(255, 0, 0) => println("Red in RGB")
     RGBA(255, 0, 0, 255) => println("Red in RGBA")
-    _ => println("Some other color")
   }
 }

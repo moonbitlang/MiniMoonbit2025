@@ -147,7 +147,27 @@ pub(all) enum PatternKind {
   Ident(String)
   Tuple(Array[Pattern])
   EnumVariant(String, String, Array[Pattern])
-} derive(Show, Eq)
+} derive(Eq)
+
+pub impl Show for PatternKind with output(self, logger) {
+  let s = match self {
+    Wildcard => "_"
+    Boolean(b) => b.to_string()
+    Integer(i) => i.to_string()
+    Ident(name) => name
+    Tuple(patterns) => {
+      let elems = patterns.map(p => p.to_string(color=true))
+      let elem_str = elems.join(", ")
+      "(\{elem_str})"
+    }
+    EnumVariant(tag, variant, patterns) => {
+      let elems = patterns.map(p => p.to_string(color=true))
+      let elem_str = elems.join(", ")
+      "\{tag}::\{variant}(\{elem_str})"
+    }
+  }
+  logger.write_string(s)
+}
 
 ///|
 fn Context::from_parser_pattern(

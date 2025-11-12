@@ -136,10 +136,10 @@ pub fn Context::check_match_expr(
 
   // Step 2. Exhaustiveness Check
   checked_match_expr.check_match_exhaustiveness(self) catch {
-    err =>
+    TypeCheckError(err) =>
       self.throw_(
         match_expr.cond.toks[0],
-        "Match expression exhaustiveness check failed: \{err}",
+        "\{err}",
         Error,
       )
   }
@@ -369,6 +369,88 @@ fn PatternSet::subtract(
 }
 
 ///|
+fn PatternSet::to_pattern_hints(self : Self) -> Array[String] {
+  match self {
+    Empty => []
+    Single(pk) => [pk.to_string()]
+    NumberComplement(_) => ["_"]
+    Union(sets) => {
+      let hints = []
+      for s in sets {
+        hints.append(s.to_pattern_hints())
+      }
+      hints
+    }
+    EnumConstructor(_, name, subsets) => {
+      if subsets.length() == 0 {
+        [name]
+      } else {
+        let sub_hints = subsets.map(s => s.to_pattern_hints())
+        let patterns = []
+        generate_enum_patterns(name, sub_hints, 0, [], patterns)
+        patterns
+      }
+    }
+    TupleConstructor(subsets) => {
+      let sub_hints = subsets.map(s => s.to_pattern_hints())
+      let patterns = []
+      generate_tuple_patterns(sub_hints, 0, [], patterns)
+      patterns
+    }
+  }
+}
+
+fn join_strings(arr : Array[String], sep : String) -> String {
+  if arr.length() == 0 {
+    return ""
+  }
+  let mut result = arr[0]
+  for i = 1; i < arr.length(); i = i + 1 {
+    result = result + sep + arr[i]
+  }
+  result
+}
+
+fn generate_enum_patterns(
+  name : String,
+  sub_hints : Array[Array[String]],
+  index : Int,
+  current : Array[String],
+  result : Array[String]
+) -> Unit {
+  if index == sub_hints.length() {
+    let joined = join_strings(current, ", ")
+    let pattern_str = "\{name}(\{joined})"
+    result.push(pattern_str)
+    return
+  }
+  for hint in sub_hints[index] {
+    let new_current = current.copy()
+    new_current.push(hint)
+    generate_enum_patterns(name, sub_hints, index + 1, new_current, result)
+  }
+}
+
+fn generate_tuple_patterns(
+  sub_hints : Array[Array[String]],
+  index : Int,
+  current : Array[String],
+  result : Array[String]
+) -> Unit {
+  if index == sub_hints.length() {
+    let joined = join_strings(current, ", ")
+    let pattern_str = "(\{joined})"
+    result.push(pattern_str)
+    return
+  }
+  for hint in sub_hints[index] {
+    let new_current = current.copy()
+    new_current.push(hint)
+    generate_tuple_patterns(sub_hints, index + 1, new_current, result)
+  }
+}
+
+///|
 fn MatchExpr::check_match_exhaustiveness(
   self : Self,
   ctx : Context,
@@ -381,10 +463,23 @@ fn MatchExpr::check_match_exhaustiveness(
   }
   match remaining_set {
     Empty => ()
-    _ =>
+    _ => {
+      let hints = remaining_set.to_pattern_hints()
+      let hint_str = if hints.length() <= 5 {
+        join_strings(hints, "\n")
+      } else {
+        let first_five = []
+        for i = 0; i < 5; i = i + 1 {
+          first_five.push(hints[i])
+        }
+        let first_part = join_strings(first_five, "\n")
+        let remaining_count = hints.length() - 5
+        "\{first_part}\n... and \{remaining_count} more patterns"
+      }
       raise TypeCheckError(
-        "Non-exhaustive match expression: some patterns are not covered: \{remaining_set}",
+        "Non-exhaustive match expression, some patterns are not covered:\n\{hint_str}",
       )
+    }
   }
 }
 
