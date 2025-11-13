@@ -84,19 +84,28 @@ pub fn KnfExpr::to_string(self : KnfExpr, ident? : Int = 0) -> String {
       }
     }
     Switch(expr_name, cases, default_block) => {
+      let indent_str = " ".repeat(ident + 2)
+      let closing_indent = " ".repeat(ident)
       let mut result = "switch (\{expr_name}) {\n"
+      
+      // 生成每个 case
       for case in cases {
         let (case_value, case_block) = case
-        let case_str = case_block.to_string(ident + 1)
-        result = "\{result}\\{ "  // indent
-        result = "\{result}case \{case_value}:\n"
-        result = "\{result}\{case_str}\n"
+        result = "\{result}\{indent_str}case \{case_value}: {\n"
+        for stmt in case_block.stmts {
+          result = "\{result}\{stmt.to_string(ident=ident + 4)}\n"
+        }
+        result = "\{result}\{indent_str}}\n"
       }
-      let default_str = default_block.to_string(ident + 1)
-      result = "\{result}\\{ "  // indent
-      result = "\{result}default:\n"
-      result = "\{result}\{default_str}\n"
-      result = "\{result}}\n"
+      
+      // 生成 default
+      result = "\{result}\{indent_str}default: {\n"
+      for stmt in default_block.stmts {
+        result = "\{result}\{stmt.to_string(ident=ident + 4)}\n"
+      }
+      result = "\{result}\{indent_str}}\n"
+      
+      result = "\{result}\{closing_indent}}"
       result
     }
   }

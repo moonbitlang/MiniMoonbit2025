@@ -169,10 +169,166 @@ pub fn Context::match_bool_expr_to_knf(
 /// convert to switch-case
 pub fn Context::match_int_expr_to_knf(
   self : Context,
-  _expr : @typecheck.MatchExpr,
+  expr : @typecheck.MatchExpr,
 ) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError {
-  ignore(self)
-  raise KnfTransformError("Not implemented yet")
+  let match_expr_ty = self.typekind_to_knf(expr.ty)
+  let (stmts, cond_expr) = self.expr_to_knf(expr.cond)
+  let cond_name = self.expr_to_knf_name(cond_expr, Int, stmts)
+  
+  let cases : Array[(Int, KnfBlock)] = []
+  let default_arms : Array[@typecheck.MatchArm] = []
+  let cases_map : Map[Int, Array[@typecheck.MatchArm]] = Map::new()
+  
+  for arm in expr.arms {
+    match arm.pattern.kind {
+      Integer(n) => {
+        match cases_map.get(n) {
+          Some(existing) => existing.push(arm)
+          None => {
+            let arr = Array::new()
+            arr.push(arm)
+            cases_map.set(n, arr)
+          }
+        }
+      }
+      Wildcard | Ident(_) => {
+        // We do not only have one default arm, since we may have guards on default arms
+        default_arms.push(arm)
+      }
+      _ => raise KnfTransformError("Non-integer pattern in match int expression")
+    }
+  }
+  
+  for entry in cases_map {
+    let (int_value, arms) = entry
+    let case_block = self.build_int_case_block(arms, match_expr_ty)
+    cases.push((int_value, case_block))
+  }
+  
+  let default_block = if default_arms.is_empty() {
+    raise KnfTransformError(
+      "Non-exhaustive patterns in match int expression: missing default case",
+    )
+  } else {
+    self.build_default_arms_block(default_arms, cond_name, match_expr_ty)
+  }
+  
+  (stmts, Switch(cond_name, cases, default_block))
+}
+
+///| 
+fn Context::build_int_case_block(
+  self : Context,
+  arms : Array[@typecheck.MatchArm],
+  result_ty : Type,
+) -> KnfBlock raise KnfTransformError {
+  let mut current_else_block : KnfBlock? = None
+  
+  for arm in arms.rev_iter() {
+    self.enter_scope()
+    
+    let (body_stmts, body_expr) = self.expr_to_knf(arm.body)
+    
+    let then_block_stmts = Array::new()
+    then_block_stmts.append(body_stmts)
+    then_block_stmts.push(ExprStmt(body_expr))
+    let then_block = KnfBlock::{ stmts: then_block_stmts, ty: result_ty }
+    
+    if arm.match_guard is Some(guard_expr) {
+      let (guard_stmts, guard_knf) = self.expr_to_knf(guard_expr)
+      let guard_name = self.expr_to_knf_name(guard_knf, Bool, guard_stmts)
+      
+      let else_block = match current_else_block {
+        Some(blk) => blk
+        None => KnfBlock::{ stmts: [], ty: result_ty }
+      }
+      
+      let case_stmts = {
+        let arr = guard_stmts
+        arr.push(ExprStmt(KnfExpr::If(
+          KnfExpr::Ident(guard_name),
+          then_block,
+          else_block,
+        )))
+        arr
+      }
+      
+      current_else_block = Some(KnfBlock::{ stmts: case_stmts, ty: result_ty })
+    } else {
+      current_else_block = Some(then_block)
+    }
+    
+    self.exit_scope()
+  }
+  
+  match current_else_block {
+    Some(block) => block
+    None => KnfBlock::{ stmts: [], ty: result_ty }
+  }
+}
+
+///|
+fn Context::build_default_arms_block(
+  self : Context,
+  arms : Array[@typecheck.MatchArm],
+  cond_name : Name,
+  result_ty : Type,
+) -> KnfBlock raise KnfTransformError {
+  let mut current_else_block : KnfBlock? = None
+  
+  for arm in arms.rev_iter() {
+    self.enter_scope()
+    
+    let branch_stmts : Array[KnfStmt] = Array::new()
+    
+    if arm.pattern.kind is Ident(name) {
+      let pat_name = self.add_new_name(name, Int)
+      branch_stmts.push(Let(pat_name, Int, KnfExpr::Ident(cond_name)))
+    }
+    
+    let guard_name_opt = match arm.match_guard {
+      Some(guard_expr) => {
+        let (guard_stmts, guard_knf) = self.expr_to_knf(guard_expr)
+        branch_stmts.append(guard_stmts)
+        let guard_name = self.expr_to_knf_name(guard_knf, Bool, branch_stmts)
+        Some(guard_name)
+      }
+      None => None
+    }
+    
+    let (body_stmts, body_expr) = self.expr_to_knf(arm.body)
+    
+    self.exit_scope()
+    let then_block_stmts = Array::new()
+    then_block_stmts.append(body_stmts)
+    then_block_stmts.push(ExprStmt(body_expr))
+    let then_block = KnfBlock::{ stmts: then_block_stmts, ty: result_ty }
+    
+    let else_block = match current_else_block {
+      Some(blk) => blk
+      None => KnfBlock::{ stmts: [], ty: result_ty }
+    }
+    
+    match guard_name_opt {
+      Some(guard_name) => {
+        branch_stmts.push(ExprStmt(KnfExpr::If(
+          KnfExpr::Ident(guard_name),
+          then_block,
+          else_block,
+        )))
+        current_else_block = Some(KnfBlock::{ stmts: branch_stmts, ty: result_ty })
+      }
+      None => {
+        branch_stmts.append(then_block.stmts)
+        current_else_block = Some(KnfBlock::{ stmts: branch_stmts, ty: result_ty })
+      }
+    }
+  }
+  
+  match current_else_block {
+    Some(block) => block
+    None => KnfBlock::{ stmts: [], ty: result_ty }
+  }
 }
 
 ///|
