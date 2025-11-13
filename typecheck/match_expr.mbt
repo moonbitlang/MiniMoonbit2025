@@ -305,6 +305,17 @@ fn PatternSet::subtract(
     //   ...
     //   (pat1, pat2, ..., Pn - patn)
     (TupleConstructor(subsets), Tuple(pats)) => {
+      // First check if any fixed position (Single) doesn't match the pattern
+      // If so, the pattern doesn't overlap with this tuple, return self
+      // Note: Ident patterns match everything, so we don't check them
+      for i in 0..<subsets.length() {
+        match (subsets[i], pats[i].kind) {
+          (Single(Ident(_)), Ident(_)) => () // Both are idents, they match
+          (Single(pk), pat_kind) if pk != pat_kind => return self
+          _ => ()
+        }
+      }
+      
       let unioned_sets = Array::new()
       for i in 0..<subsets.length() {
         let new_subsets = Array::new()
@@ -321,11 +332,26 @@ fn PatternSet::subtract(
         }
         unioned_sets.push(TupleConstructor(new_subsets))
       }
-      Union(unioned_sets)
+      match unioned_sets.length() {
+        0 => Empty
+        1 => unioned_sets[0]
+        _ => Union(unioned_sets)
+      }
     }
     (EnumConstructor(tag, name, subsets), EnumVariant(tag2, name2, pats)) if tag ==
       tag2 &&
       name == name2 => {
+      // First check if any fixed position (Single) doesn't match the pattern
+      // If so, the pattern doesn't overlap with this enum, return self
+      // Note: Ident patterns match everything, so we don't check them
+      for i in 0..<subsets.length() {
+        match (subsets[i], pats[i].kind) {
+          (Single(Ident(_)), Ident(_)) => () // Both are idents, they match
+          (Single(pk), pat_kind) if pk != pat_kind => return self
+          _ => ()
+        }
+      }
+      
       let unioned_sets = Array::new()
       for i in 0..<subsets.length() {
         let new_subsets = Array::new()
@@ -342,7 +368,11 @@ fn PatternSet::subtract(
         }
         unioned_sets.push(EnumConstructor(tag, name, new_subsets))
       }
-      Union(unioned_sets)
+      match unioned_sets.length() {
+        0 => Empty
+        1 => unioned_sets[0]
+        _ => Union(unioned_sets)
+      }
     }
     // If enum constructor and variant have different names, they don't overlap
     (EnumConstructor(_, _, _), EnumVariant(_, _, _)) => self

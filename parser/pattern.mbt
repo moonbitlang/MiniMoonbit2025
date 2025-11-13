@@ -214,7 +214,7 @@ pub fn parse_pattern(
       let patterns : Array[Pattern] = Array::new()
       let tokens = loop tokens {
         [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
-        [{ kind: Lower(_) | Wildcard | Bracket('(') | Upper(_), .. }, ..] as tokens => {
+        [{ kind: Lower(_) | Wildcard | Bracket('(') | Upper(_) | Int(_) | Bool(_), .. }, ..] as tokens => {
           let (pat, rest) = parse_pattern(tokens)
           patterns.push(pat)
           continue rest
@@ -226,7 +226,9 @@ pub fn parse_pattern(
             | Wildcard
             | Bracket('(')
             | Bracket(')')
-            | Upper(_),
+            | Upper(_)
+            | Int(_)
+            | Bool(_),
             ..,
           },
           ..,
