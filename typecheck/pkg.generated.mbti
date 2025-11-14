@@ -332,6 +332,7 @@ impl Show for PatternKind
 pub(all) enum PatternSet {
   Empty
   Single(PatternKind)
+  Universal(TypeKind)
   NumberComplement(Array[Int])
   Union(Array[PatternSet])
   EnumConstructor(String, String, Array[PatternSet])

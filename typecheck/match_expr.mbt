@@ -227,6 +227,10 @@ pub fn Context::check_match_expr_type(
 pub(all) enum PatternSet {
   Empty
   Single(PatternKind)
+  // Represents the universal set of a type - all possible values of that type
+  // Used for types that cannot be enumerated (like Double, String, etc.)
+  // Can only be reduced by Wildcard or Ident patterns
+  Universal(TypeKind)
   // Only Integer `Int` (Not Support UInt, UInt64, Int64 for now)
   // Integer Complement, e.g. NumberComplement{1, 3, 5}
   // represents all integers except 1, 3, 5
@@ -270,10 +274,9 @@ fn Context::full_pattern_set_of_type(
       ))
       TupleConstructor(sub_pattern_sets)
     }
-    _ =>
-      raise TypeCheckError(
-        "Cannot get full pattern set for type: \{ty} during pattern exhaustiveness check",
-      )
+    // For types that cannot be enumerated (Double, String, Float, etc.),
+    // return Universal set which can only be matched by Wildcard or Ident
+    _ => Universal(ty)
   }
 }
 
@@ -285,6 +288,9 @@ fn PatternSet::subtract(
   match (self, pat) {
     (Empty, _) => Empty
     (_, Wildcard | Ident(_)) => Empty
+    // Universal can only be matched by Wildcard or Ident (handled above)
+    // Any other pattern on Universal is a type error
+    (Universal(_), _) => self
     (Single(pk), pat) if pk == pat => Empty
     (Single(_), _) => self
     (NumberComplement(excluded), Integer(n)) => {
@@ -400,6 +406,7 @@ fn PatternSet::to_pattern_hints(self : Self) -> Array[String] {
   match self {
     Empty => []
     Single(pk) => [pk.to_string()]
+    Universal(_) => ["_"]
     NumberComplement(_) => ["_"]
     Union(sets) => {
       let hints = []
