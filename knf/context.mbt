@@ -85,7 +85,7 @@ pub(all) struct Context {
   capture : Array[Name]
   global_stmts : Array[KnfStmt]
   globals : Map[String, Type]
-  unions: Map[String, Array[String]] // union name to variant names
+  unions : Map[String, Array[String]] // union name to variant names
 }
 
 ///|
@@ -95,7 +95,7 @@ pub fn Context::new() -> Context {
     capture: Array::new(),
     global_stmts: Array::new(),
     globals: Map::new(),
-    unions: Map::new()
+    unions: Map::new(),
   }
 }
 

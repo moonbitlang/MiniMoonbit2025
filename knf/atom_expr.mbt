@@ -103,7 +103,9 @@ pub fn Context::atom_expr_to_knf(
       }
       // 2. find variant struct name, get index
       guard variant_names.search_by(v => v == struct_variant_name) is Some(idx) else {
-        raise KnfTransformError("Undefined variant: \{variant} for enum tag: \{tag}")
+        raise KnfTransformError(
+          "Undefined variant: \{variant} for enum tag: \{tag}",
+        )
       }
       let stmts : Array[KnfStmt] = Array::new()
       let knf_names : Array[Name] = Array::new()

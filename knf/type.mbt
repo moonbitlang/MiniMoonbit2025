@@ -75,7 +75,9 @@ pub fn Context::typekind_to_knf(
     }
     Any => Unit
     TypeVar(_) =>
-      raise KnfTransformError("Unexpected TypeVar in KNF transformation: loc: typekind_to_knf")
+      raise KnfTransformError(
+        "Unexpected TypeVar in KNF transformation: loc: typekind_to_knf",
+      )
   }
 }
 

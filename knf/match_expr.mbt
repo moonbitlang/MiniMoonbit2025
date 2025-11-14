@@ -341,7 +341,7 @@ pub fn Context::match_tuple_expr_to_knf(
       let tuple_ty = Tuple(tuple_types)
       let tuple_name = self.add_temp(tuple_ty)
       stmts.push(Let(tuple_name, tuple_ty, cond_expr))
- 
+
       // Extract each element using TupleAccess
       let elem_names : Array[Name] = []
       for i = 0; i < tuple_types.length(); i = i + 1 {
@@ -360,10 +360,10 @@ pub fn Context::match_tuple_expr_to_knf(
     self.enter_scope()
     let { pattern, match_guard, body, .. } = match_arm
 
-      // Build condition and bindings for this branch
-      let (cond_stmts, cond_expr_opt, bindings) = self.build_tuple_pattern_condition(
-        pattern, tuple_elem_names, tuple_types,
-      )
+    // Build condition and bindings for this branch
+    let (cond_stmts, cond_expr_opt, bindings) = self.build_tuple_pattern_condition(
+      pattern, tuple_elem_names, tuple_types,
+    )
 
     // Apply bindings first (before guard evaluation)
     cond_stmts.append(bindings)
@@ -421,7 +421,7 @@ pub fn Context::match_tuple_expr_to_knf(
     }
     self.exit_scope()
   }
-  
+
   // Unwrap unnecessary block wrapper
   match last_else_block.stmts {
     // If the block contains only a single expression statement, return it directly

@@ -2,7 +2,7 @@
 pub(all) struct KnfProgram {
   source_file : String
   struct_defs : Map[String, KnfStructDef]
-  unions: Map[String, KnfUnion]
+  unions : Map[String, KnfUnion]
   global_stmts : Array[KnfStmt]
   top_lets : Map[String, KnfTopLet]
   functions : Map[String, KnfFunction]
