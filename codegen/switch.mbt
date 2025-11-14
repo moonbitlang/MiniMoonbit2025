@@ -81,10 +81,9 @@ pub fn Context::switch_codegen(
     // Default block is empty (all cases covered)
     None
   }
-  
   let default_end_bb = self.builder.getInsertBlock()
   let default_terminated = default_end_bb.getTerminator() is Some(_)
-  
+
   // Determine if default block should contribute to PHI
   // Default block is considered "empty" if it has no statements and produces no value
   let default_is_empty = default_stmt_len == 0

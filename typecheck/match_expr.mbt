@@ -247,20 +247,40 @@ fn Context::full_pattern_set_of_type(
   self : Self,
   ty : TypeKind,
 ) -> PatternSet raise TypeCheckError {
+  // Use a set to track types being processed to detect cycles
+  let visiting : @hashset.HashSet[String] = @hashset.HashSet::new()
+  self.full_pattern_set_of_type_impl(ty, visiting)
+}
+
+///|
+fn Context::full_pattern_set_of_type_impl(
+  self : Self,
+  ty : TypeKind,
+  visiting : @hashset.HashSet[String],
+) -> PatternSet raise TypeCheckError {
   match ty {
     Int => NumberComplement([])
     Bool => Union([Single(Boolean(true)), Single(Boolean(false))])
-    Enum(enum_name) =>
+    Enum(enum_name) => {
+      // Check for recursive types
+      if visiting.contains(enum_name) {
+        // Recursive type detected, return Universal to break the cycle
+        return Universal(ty)
+      }
       match self.enum_defs.get(enum_name) {
         Some(enum_def) => {
+          // Mark this enum as being visited
+          visiting.add(enum_name)
           let variants = Array::new()
           for field in enum_def.enum_fields {
             let { name, types } = field
-            let sub_pattern_sets = types.map(t => self.full_pattern_set_of_type(
-              t,
+            let sub_pattern_sets = types.map(t => self.full_pattern_set_of_type_impl(
+              t, visiting,
             ))
             variants.push(EnumConstructor(enum_name, name, sub_pattern_sets))
           }
+          // Remove from visiting set after processing
+          visiting.remove(enum_name)
           Union(variants)
         }
         None =>
@@ -268,9 +288,10 @@ fn Context::full_pattern_set_of_type(
             "Cannot get full pattern set for Unknown enum type: \{enum_name} during pattern exhaustiveness check",
           )
       }
+    }
     Tuple(elem_types) => {
-      let sub_pattern_sets = elem_types.map(t => self.full_pattern_set_of_type(
-        t,
+      let sub_pattern_sets = elem_types.map(t => self.full_pattern_set_of_type_impl(
+        t, visiting,
       ))
       TupleConstructor(sub_pattern_sets)
     }

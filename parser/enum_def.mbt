@@ -62,7 +62,9 @@ pub fn parse_enum_field(
   tokens : ArrayView[Token],
 ) -> (EnumField, ArrayView[Token]) raise ParseError {
   guard tokens is [{ kind: Upper(name), .. } as name_tok, .. tokens] else {
-    raise ParseError("Expected enum field name, while got \{tokens[0].kind}, \{tokens[1].kind}...")
+    raise ParseError(
+      "Expected enum field name, while got \{tokens[0].kind}, \{tokens[1].kind}...",
+    )
   }
   let types : Array[Type] = Array::new()
   let mut last_tok = Some(name_tok)
