@@ -364,6 +364,16 @@ fn PatternSet::subtract(
     (EnumConstructor(tag, name, subsets), EnumVariant(tag2, name2, pats)) if tag ==
       tag2 &&
       name == name2 => {
+      // Special case: pattern like Variant(_) matches all fields
+      if pats is [{ kind: Wildcard }] {
+        return Empty
+      }
+      // Check if pattern length matches subset length
+      guard subsets.length() == pats.length() else {
+        raise TypeCheckError(
+          "Pattern length mismatch: enum variant \{name} expects \{subsets.length()} arguments but got \{pats.length()}",
+        )
+      }
       // First check if any fixed position (Single) doesn't match the pattern
       // If so, the pattern doesn't overlap with this enum, return self
       // Note: Ident patterns match everything, so we don't check them

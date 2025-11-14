@@ -67,12 +67,32 @@ pub fn Context::if_codegen(
   // merge block
   self.builder.setInsertPoint(merge_bb)
   if !(then_block.ty is Unit) {
-    let then_value = then_value.unwrap()
-    let else_value = else_value.unwrap()
-    let phi = self.builder.createPHI(then_value.getType())
-    phi.addIncoming(then_value, then_end_bb)
-    phi.addIncoming(else_value, else_end_bb)
-    Some((phi : &@llvm.Value))
+    // Handle partially terminated branches
+    match (terminated_in_then, terminated_in_else) {
+      (false, false) => {
+        // Both branches reach merge, need PHI
+        guard then_value is Some(tv) else {
+          raise CodegenError("Then branch did not produce a value")
+        }
+        guard else_value is Some(ev) else {
+          raise CodegenError("Else branch did not produce a value")
+        }
+        let phi = self.builder.createPHI(tv.getType())
+        phi.addIncoming(tv, then_end_bb)
+        phi.addIncoming(ev, else_end_bb)
+        Some((phi : &@llvm.Value))
+      }
+      (false, true) =>
+        // Only then branch reaches merge, no PHI needed
+        then_value
+      (true, false) =>
+        // Only else branch reaches merge, no PHI needed
+        else_value
+      (true, true) => {
+        // Both terminated, should have been caught above
+        raise CodegenError("Internal error: both branches terminated but not caught")
+      }
+    }
   } else {
     None
   }
