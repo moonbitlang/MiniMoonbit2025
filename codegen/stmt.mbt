@@ -102,13 +102,15 @@ pub fn Context::assign_stmt_codegen(
     raise CodegenError("Assign expression cannot be void")
   }
   match self.get_value_by_name(name) {
-    Some(v) =>
-      if v.asValueEnum() is AllocaInst(alloca) {
-        let _ = self.builder.createStore(value, alloca)
-
-      } else {
-        raise CodegenError("Cannot assign to non-alloca value in codegen")
+    Some(v) => {
+      guard v.getType().asTypeEnum() is PointerType(_) else {
+        raise CodegenError(
+          "Cannot assign to non-alloca value '\{name}' in codegen",
+        )
       }
+      let _ = self.builder.createStore(value, v)
+
+    }
     None => raise CodegenError("Identifier \{name} not found in codegen")
   }
 }

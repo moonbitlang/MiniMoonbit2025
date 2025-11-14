@@ -33,7 +33,6 @@ pub fn Context::match_bool_expr_to_knf(
   }
   let mut is_last_branch = true
   for match_arm in expr.arms.rev_iter() {
-    self.enter_scope()
     let { pattern, match_guard, body, .. } = match_arm
     let branch_stmts : Array[KnfStmt] = Array::new()
     if pattern.kind is Ident(name) {
@@ -141,7 +140,6 @@ pub fn Context::match_bool_expr_to_knf(
       _ =>
         raise KnfTransformError("Non-boolean pattern in match bool expression")
     }
-    self.exit_scope()
   }
   match last_else_block.stmts {
     [ExprStmt(knf_expr)] if last_else_block.stmts.length() == 1 =>
@@ -206,7 +204,6 @@ fn Context::build_int_case_block(
 ) -> KnfBlock raise KnfTransformError {
   let mut current_else_block : KnfBlock? = None
   for arm in arms.rev_iter() {
-    self.enter_scope()
     let (body_stmts, body_expr) = self.expr_to_knf(arm.body)
     let then_block = match (body_stmts, body_expr) {
       ([], Block(block)) => block
@@ -243,7 +240,6 @@ fn Context::build_int_case_block(
     } else {
       current_else_block = Some(then_block)
     }
-    self.exit_scope()
   }
   match current_else_block {
     Some(block) => block
@@ -260,7 +256,6 @@ fn Context::build_default_arms_block(
 ) -> KnfBlock raise KnfTransformError {
   let mut current_else_block : KnfBlock? = None
   for arm in arms.rev_iter() {
-    self.enter_scope()
     let branch_stmts : Array[KnfStmt] = Array::new()
     if arm.pattern.kind is Ident(name) {
       let pat_name = self.add_new_name(name, Int)
@@ -276,7 +271,6 @@ fn Context::build_default_arms_block(
       None => None
     }
     let (body_stmts, body_expr) = self.expr_to_knf(arm.body)
-    self.exit_scope()
     let then_block = match (body_stmts, body_expr) {
       ([], Block(block)) => block
       (_, Block(block)) => {
@@ -423,7 +417,6 @@ fn Context::build_enum_case_block(
 ) -> KnfBlock raise KnfTransformError {
   let mut current_else_block : KnfBlock? = None
   for arm in arms.rev_iter() {
-    self.enter_scope()
     let branch_stmts : Array[KnfStmt] = Array::new()
 
     // Extract pattern info
@@ -521,7 +514,6 @@ fn Context::build_enum_case_block(
         })
       }
     }
-    self.exit_scope()
   }
   match current_else_block {
     Some(block) => block
@@ -755,7 +747,6 @@ pub fn Context::match_tuple_expr_to_knf(
   let mut last_else_block = KnfBlock::{ stmts: [], ty: match_expr_ty }
   let mut is_last_branch = true
   for match_arm in expr.arms.rev_iter() {
-    self.enter_scope()
     let { pattern, match_guard, body, .. } = match_arm
 
     // Build condition and bindings for this branch
@@ -828,7 +819,6 @@ pub fn Context::match_tuple_expr_to_knf(
         last_else_block = KnfBlock::{ stmts: final_stmts, ty: match_expr_ty }
       }
     }
-    self.exit_scope()
   }
 
   // Unwrap unnecessary block wrapper

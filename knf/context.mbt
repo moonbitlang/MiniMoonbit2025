@@ -22,8 +22,8 @@ pub impl Show for Name with output(self, logger) {
 
 ///|
 pub(all) struct Env {
-  local_ : Map[String, (Name, Type)] // defined in this scope
-  capture : Map[Name, Type] // captured from outer scopes
+  local_ : Map[String, (Name, Type, Bool)] // defined in this scope, Bool is mutable flag
+  capture : Map[Name, (Type, Bool)] // captured from outer scopes, Bool is mutable flag
   parent : Env?
 }
 
@@ -33,7 +33,7 @@ pub fn Env::new(parent? : Env? = None) -> Env {
 }
 
 ///|
-pub fn Env::get_and_capture(self : Env, name : String) -> (Name, Type)? {
+pub fn Env::get_and_capture(self : Env, name : String) -> (Name, Type, Bool)? {
   if self.local_.get(name) is Some(n) {
     return Some(n)
   }
@@ -41,9 +41,9 @@ pub fn Env::get_and_capture(self : Env, name : String) -> (Name, Type)? {
   guard self.parent is Some(p) else { return None }
   // In This Case, it is local function, search parent
   match p.get_and_capture(name) {
-    Some((n, ty)) => {
-      self.capture.set(n, ty)
-      Some((n, ty))
+    Some((n, ty, is_mut)) => {
+      self.capture.set(n, (ty, is_mut))
+      Some((n, ty, is_mut))
     }
     None => None
   }
@@ -53,7 +53,7 @@ pub fn Env::get_and_capture(self : Env, name : String) -> (Name, Type)? {
 pub fn Env::get_name_type(self : Env, name : Name) -> Type? {
   let { id, .. } = name
   match self.local_.get(id) {
-    Some((_, t)) => Some(t)
+    Some((_, t, _)) => Some(t)
     None =>
       match self.parent {
         Some(p) => p.get_name_type(name)
@@ -65,7 +65,7 @@ pub fn Env::get_name_type(self : Env, name : Name) -> Type? {
 ///|
 pub fn Env::get(self : Env, name : String) -> Name? {
   match self.local_.get(name) {
-    Some((n, _)) => Some(n)
+    Some((n, _, _)) => Some(n)
     None =>
       match self.parent {
         Some(p) => p.get(name)
@@ -75,8 +75,14 @@ pub fn Env::get(self : Env, name : String) -> Name? {
 }
 
 ///|
-pub fn Env::set(self : Env, s : String, name : Name, ty : Type) -> Unit {
-  self.local_.set(s, (name, ty))
+pub fn Env::set(
+  self : Env,
+  s : String,
+  name : Name,
+  ty : Type,
+  is_mut : Bool,
+) -> Unit {
+  self.local_.set(s, (name, ty, is_mut))
 }
 
 ///|
@@ -104,7 +110,7 @@ pub fn Context::new() -> Context {
 ///|
 pub fn Context::lookup_name(self : Context, s : String) -> (Name, Type)? {
   match self.name_env.get_and_capture(s) {
-    Some(n) => Some(n)
+    Some((n, ty, _)) => Some((n, ty))
     None =>
       match self.globals.get(s) {
         Some(t) => {
@@ -131,16 +137,21 @@ pub fn Context::exit_scope(self : Context) -> Unit {
 }
 
 ///|
-pub fn Context::add_new_name(self : Context, s : String, ty : Type) -> Name {
+pub fn Context::add_new_name(
+  self : Context,
+  s : String,
+  ty : Type,
+  mutable? : Bool = false,
+) -> Name {
   match self.name_env.get(s) {
     Some({ id, slot }) => {
       let name = Name::{ id, slot: slot + 1 }
-      self.name_env.set(s, name, ty)
+      self.name_env.set(s, name, ty, mutable)
       name
     }
     None => {
       let name = Name::{ id: s, slot: 0 }
-      self.name_env.set(s, name, ty)
+      self.name_env.set(s, name, ty, mutable)
       name
     }
   }

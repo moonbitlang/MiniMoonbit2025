@@ -4,7 +4,7 @@ pub(all) struct KnfClosure {
   params : Array[(Name, Type)]
   ret_ty : Type
   body : KnfBlock
-  captured_vars : Map[Name, Type]
+  captured_vars : Map[Name, (Type, Bool)] // Bool is mutable flag
 }
 
 ///|
@@ -13,9 +13,11 @@ pub fn KnfClosure::to_string(self : KnfClosure, ident? : Int = 0) -> String {
   let indent_str = " ".repeat(ident)
   if !self.captured_vars.is_empty() {
     sb.write_string("// Captured variables: \n")
-    for name, ty in self.captured_vars {
+    for name, ty_mut in self.captured_vars {
       sb.write_string(indent_str)
-      sb.write_string("// - \{name} : \{ty}\n")
+      let (ty, is_mut) = ty_mut
+      let mut_str = if is_mut { "mut " } else { "" }
+      sb.write_string("// - \{mut_str}\{name} : \{ty}\n")
     }
     sb.write_string(indent_str)
     sb.write_string("fn \{self.name}(")
@@ -54,7 +56,7 @@ pub fn Context::local_function_to_knf(
     let (param_name, param_ty) = param
     let param_type = self.typekind_to_knf(param_ty.kind)
     let param = self.add_new_name(param_name, param_type)
-    self.name_env.set(param_name, param, param_type)
+    self.name_env.set(param_name, param, param_type, false)
     knf_params.push((param, param_type))
   }
   let new_body = self.block_expr_to_knf(local_function.body)

@@ -18,7 +18,7 @@ pub fn Context::top_function_to_knf(
     let { name: param_name, ty: param_ty } = param
     let param_type = self.typekind_to_knf(param_ty)
     let param = self.add_new_name(param_name, param_type)
-    self.name_env.set(param_name, param, param_type)
+    self.name_env.set(param_name, param, param_type, false)
     knf_params.push((param, param_type))
     param_types.push(param_type)
   }

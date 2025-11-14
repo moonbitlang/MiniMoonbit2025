@@ -5,7 +5,7 @@ pub fn Context::closure_codegen(
 ) -> Unit raise {
   let func_value = self.closure_func_codegen(closure_def)
   // Generate closure function
-  let captured_vars : Array[(@knf.Name, @knf.Type)] = closure_def.captured_vars.to_array()
+  let captured_vars : Array[(@knf.Name, (@knf.Type, Bool))] = closure_def.captured_vars.to_array()
   let ptrty = self.llvm_ctx.getPtrTy()
   let zero = self.llvm_ctx.getConstInt32(0)
 
@@ -15,8 +15,13 @@ pub fn Context::closure_codegen(
   closure_struct_field_types.push(ptrty)
   // following fields: captured variables
   for _, captured_var in captured_vars {
-    let (_, captured_ty) = captured_var
-    let captured_llvm_ty = self.type_codegen_opaque(captured_ty)
+    let (_, (captured_ty, is_mut)) = captured_var
+    // For mutable captured variables, store pointer; for immutable, store value
+    let captured_llvm_ty = if is_mut {
+      (ptrty : &@llvm.Type)
+    } else {
+      self.type_codegen_opaque(captured_ty)
+    }
     closure_struct_field_types.push(captured_llvm_ty)
   }
   let closure_struct_ty = self.llvm_ctx.getStructType(
@@ -41,8 +46,21 @@ pub fn Context::closure_codegen(
   let _ = self.builder.createStore(func_value, func_ptr_ptr)
   // set captured variables
   for i, captured_var in captured_vars {
-    let (captured_name, _) = captured_var
-    let captured_value = self.get_value_by_name_or_load(captured_name)
+    let (captured_name, (_, is_mut)) = captured_var
+    // For mutable variables, we need to get the alloca pointer instead of loading the value
+    let captured_value = if is_mut {
+      // For mutable variables, store the pointer itself
+      match self.get_value_by_name(captured_name) {
+        Some(v) => v
+        None =>
+          raise CodegenError(
+            "Captured mutable variable \{captured_name} not found",
+          )
+      }
+    } else {
+      // For immutable variables, store the value
+      self.get_value_by_name_or_load(captured_name)
+    }
     let field_index_val = self.llvm_ctx.getConstInt32(i + 1) // +1 for function pointer
     let captured_ptr = self.builder.createGEP(closure_ptr, closure_struct_ty, [
       zero, field_index_val,
@@ -58,7 +76,7 @@ pub fn Context::closure_func_codegen(
   closure_def : @knf.KnfClosure,
 ) -> @llvm.Function raise {
   let current_insert_block = self.builder.getInsertBlock()
-  let captured_vars : Array[(@knf.Name, @knf.Type)] = closure_def.captured_vars.to_array()
+  let captured_vars : Array[(@knf.Name, (@knf.Type, Bool))] = closure_def.captured_vars.to_array()
   let zero = self.llvm_ctx.getConstInt32(0)
 
   // Generate closure function declaration
@@ -87,8 +105,13 @@ pub fn Context::closure_func_codegen(
   let closure_struct_ty : Array[&@llvm.Type] = Array::new()
   closure_struct_ty.push(ptrty) // function pointer
   for _, captured_var in captured_vars {
-    let (_, captured_ty) = captured_var
-    let captured_llvm_ty = self.type_codegen_opaque(captured_ty)
+    let (_, (captured_ty, is_mut)) = captured_var
+    // For mutable captured variables, the struct stores pointer; for immutable, stores value
+    let captured_llvm_ty = if is_mut {
+      (ptrty : &@llvm.Type)
+    } else {
+      self.type_codegen_opaque(captured_ty)
+    }
     closure_struct_ty.push(captured_llvm_ty)
   }
   let closure_struct_ty = self.llvm_ctx.getStructType(closure_struct_ty)
@@ -108,17 +131,28 @@ pub fn Context::closure_func_codegen(
   }
   let func_arg0 = func_value.getArg(0).unwrap() // closure environment pointer
   for i, captured_var in captured_vars {
-    let (captured_name, captured_ty) = captured_var
+    let (captured_name, (captured_ty, is_mut)) = captured_var
     let field_index_val = self.llvm_ctx.getConstInt32(i + 1) // +1 for function pointer
     let captured_ptr = self.builder.createGEP(func_arg0, closure_struct_ty, [
       zero, field_index_val,
     ])
-    let captured_value = self.builder.createLoad(
-      self.type_codegen_opaque(captured_ty),
-      captured_ptr,
-    )
-    self.name_values.set(captured_name, captured_value)
-    self.name_types.set(captured_name, captured_ty)
+    if is_mut {
+      // For mutable variables, the struct contains the pointer to alloca
+      // Load the pointer and register it directly (it's already an alloca pointer)
+      let alloca_ptr = self.builder.createLoad(ptrty, captured_ptr)
+      self.name_values.set(captured_name, alloca_ptr)
+      self.name_types.set(captured_name, captured_ty)
+      // Mark this as a mutable captured variable
+      self.mutable_captured_vars.set(captured_name, true)
+    } else {
+      // For immutable variables, load the value
+      let captured_value = self.builder.createLoad(
+        self.type_codegen_opaque(captured_ty),
+        captured_ptr,
+      )
+      self.name_values.set(captured_name, captured_value)
+      self.name_types.set(captured_name, captured_ty)
+    }
   }
   let stmts_cnt = closure_def.body.stmts.length()
   if stmts_cnt > 0 {
@@ -165,6 +199,13 @@ pub fn Context::closure_func_codegen(
   // Restore old mappings
   self.name_values = old_name_value
   self.name_types = old_name_knf_type
+  // Clear mutable captured vars (they're only valid within this closure)
+  for captured_var in captured_vars {
+    let (captured_name, (_, is_mut)) = captured_var
+    if is_mut {
+      self.mutable_captured_vars.remove(captured_name)
+    }
+  }
   self.builder.setInsertPoint(current_insert_block)
   func_value
 }

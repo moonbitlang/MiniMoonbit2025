@@ -13,6 +13,7 @@ pub struct Context {
   function_types : Map[String, @knf.Type]
   mut name_values : Map[@knf.Name, &@llvm.Value]
   mut name_types : Map[@knf.Name, @knf.Type]
+  mutable_captured_vars : Map[@knf.Name, Bool] // Track mutable captured variables
   global_values : Map[String, &@llvm.GlobalValue]
   global_consts : Map[String, &@llvm.Constant]
   global_types : Map[String, @knf.Type]
@@ -254,6 +255,7 @@ pub fn Context::new(mod_name : String) -> Context {
     function_types: Map::new(),
     name_values: Map::new(),
     name_types: Map::new(),
+    mutable_captured_vars: Map::new(),
     builtin_funcs: Map::new(),
     builtin_func_tys,
     global_values: Map::new(),
@@ -616,6 +618,14 @@ fn Context::get_value_by_name_or_load(
         }
         let llvmty = self.type_codegen_opaque(knfty)
         self.builder.createLoad(llvmty, alloca)
+      } else if self.mutable_captured_vars.contains(name) {
+        // This is a mutable captured variable, v is a pointer, need to load
+        let knfty = match self.get_knf_type_by_name(name) {
+          Some(t) => t
+          None => raise CodegenError("Type not found for identifier in codegen")
+        }
+        let llvmty = self.type_codegen_opaque(knfty)
+        self.builder.createLoad(llvmty, v)
       } else {
         v
       }

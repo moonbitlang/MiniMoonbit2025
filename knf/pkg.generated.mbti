@@ -45,7 +45,7 @@ pub(all) struct Context {
   unions : Map[String, Array[String]]
   struct_defs : Map[String, KnfStructDef]
 }
-fn Context::add_new_name(Self, String, Type) -> Name
+fn Context::add_new_name(Self, String, Type, mutable? : Bool) -> Name
 fn Context::add_temp(Self, Type) -> Name
 fn Context::apply_expr_to_knf(Self, @typecheck.ApplyExpr) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError
 fn Context::assign_stmt_to_knf(Self, @typecheck.AssignStmt) -> Array[KnfStmt] raise KnfTransformError
@@ -79,15 +79,15 @@ fn Context::typekind_to_knf(Self, @typecheck.TypeKind) -> Type raise KnfTransfor
 fn Context::while_stmt_to_knf(Self, @typecheck.WhileStmt) -> Array[KnfStmt] raise KnfTransformError
 
 pub(all) struct Env {
-  local_ : Map[String, (Name, Type)]
-  capture : Map[Name, Type]
+  local_ : Map[String, (Name, Type, Bool)]
+  capture : Map[Name, (Type, Bool)]
   parent : Env?
 }
 fn Env::get(Self, String) -> Name?
-fn Env::get_and_capture(Self, String) -> (Name, Type)?
+fn Env::get_and_capture(Self, String) -> (Name, Type, Bool)?
 fn Env::get_name_type(Self, Name) -> Type?
 fn Env::new(parent? : Self?) -> Self
-fn Env::set(Self, String, Name, Type) -> Unit
+fn Env::set(Self, String, Name, Type, Bool) -> Unit
 
 pub(all) struct KnfBlock {
   stmts : Array[KnfStmt]
@@ -102,7 +102,7 @@ pub(all) struct KnfClosure {
   params : Array[(Name, Type)]
   ret_ty : Type
   body : KnfBlock
-  captured_vars : Map[Name, Type]
+  captured_vars : Map[Name, (Type, Bool)]
 }
 fn KnfClosure::to_string(Self, ident? : Int) -> String
 
