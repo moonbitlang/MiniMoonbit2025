@@ -86,6 +86,7 @@ pub(all) struct Context {
   global_stmts : Array[KnfStmt]
   globals : Map[String, Type]
   unions : Map[String, Array[String]] // union name to variant names
+  struct_defs : Map[String, KnfStructDef] // struct definitions
 }
 
 ///|
@@ -96,6 +97,7 @@ pub fn Context::new() -> Context {
     global_stmts: Array::new(),
     globals: Map::new(),
     unions: Map::new(),
+    struct_defs: Map::new(),
   }
 }
 

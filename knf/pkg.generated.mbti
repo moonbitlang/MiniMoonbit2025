@@ -42,6 +42,8 @@ pub(all) struct Context {
   capture : Array[Name]
   global_stmts : Array[KnfStmt]
   globals : Map[String, Type]
+  unions : Map[String, Array[String]]
+  struct_defs : Map[String, KnfStructDef]
 }
 fn Context::add_new_name(Self, String, Type) -> Name
 fn Context::add_temp(Self, Type) -> Name
@@ -163,6 +165,7 @@ fn KnfLeftValue::to_knf_expr(Self) -> KnfExpr
 pub(all) struct KnfProgram {
   source_file : String
   struct_defs : Map[String, KnfStructDef]
+  unions : Map[String, KnfUnion]
   global_stmts : Array[KnfStmt]
   top_lets : Map[String, KnfTopLet]
   functions : Map[String, KnfFunction]
@@ -226,6 +229,7 @@ pub(all) enum Type {
   String
   Array(Type)
   Struct(String)
+  Union(String)
   Tuple(Array[Type])
   Function(Array[Type], Type)
 }

@@ -74,7 +74,7 @@ pub fn parse_enum_field(
       last_tok = Some(rparen_tok)
       break rest
     }
-    [{ kind: Upper(_), .. }, ..] as tokens => {
+    [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
       let (ty, rest) = parse_type(tokens)
       types.push(ty)
       if rest is [{ kind: Symbol(","), .. }, .. rest] {

@@ -49,6 +49,7 @@ pub fn Context::program_to_knf(
     unions.set(enum_name, knf_union)
     for variant in knf_union.variants {
       struct_defs.set(variant.name, variant)
+      self.struct_defs.set(variant.name, variant)
       union_variant_names.push(variant.name)
     }
     self.unions.set(enum_name, union_variant_names)
@@ -58,6 +59,7 @@ pub fn Context::program_to_knf(
   for sname, struct_def in prog.struct_defs {
     let knf_struct_def = self.struct_def_to_knf(struct_def)
     struct_defs.set(sname, knf_struct_def)
+    self.struct_defs.set(sname, knf_struct_def)
   }
 
   // Step - 3, regiter all extern functions

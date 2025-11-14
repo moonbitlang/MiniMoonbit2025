@@ -122,6 +122,7 @@ pub fn Context::is_type_compatible(
       self.is_type_compatible(ret_a, ret_b)
     }
     (Struct(name_a), Struct(name_b)) => name_a == name_b
+    (Enum(name_a), Enum(name_b)) => name_a == name_b
     (Any, _) => true
     (_, Any) => true
     (TypeVar(id_a), TypeVar(id_b)) => {

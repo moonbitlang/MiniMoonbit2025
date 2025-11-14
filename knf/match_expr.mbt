@@ -308,10 +308,292 @@ fn Context::build_default_arms_block(
 /// convert to swicth-case
 pub fn Context::match_enum_expr_to_knf(
   self : Context,
-  _expr : @typecheck.MatchExpr,
+  expr : @typecheck.MatchExpr,
 ) -> (Array[KnfStmt], KnfExpr) raise KnfTransformError {
-  ignore(self)
-  raise KnfTransformError("Not implemented yet")
+  let match_expr_ty = self.typekind_to_knf(expr.ty)
+  let (stmts, cond_expr) = self.expr_to_knf(expr.cond)
+
+  // Get the enum type info
+  guard expr.cond.ty is Enum(enum_name) else {
+    raise KnfTransformError(
+      "Expected enum type in match enum expression, got \{expr.cond.ty}",
+    )
+  }
+
+  // Store the enum value in a temp variable
+  let enum_value_name = self.expr_to_knf_name(
+    cond_expr,
+    self.typekind_to_knf(expr.cond.ty),
+    stmts,
+  )
+
+  // Get the tag of the enum value
+  let tag_name = self.add_temp(Int)
+  stmts.push(Let(tag_name, Int, GetUnionTag(enum_value_name)))
+
+  // Group arms by variant
+  let cases_map : Map[String, Array[@typecheck.MatchArm]] = Map::new()
+  let default_arms : Array[@typecheck.MatchArm] = []
+  for arm in expr.arms {
+    match arm.pattern.kind {
+      EnumVariant(_, variant_name, _) =>
+        match cases_map.get(variant_name) {
+          Some(existing) => existing.push(arm)
+          None => {
+            let arr = Array::new()
+            arr.push(arm)
+            cases_map.set(variant_name, arr)
+          }
+        }
+      Wildcard | Ident(_) => default_arms.push(arm)
+      _ => raise KnfTransformError("Non-enum pattern in match enum expression")
+    }
+  }
+
+  // Build switch cases
+  let cases : Array[(Int, KnfBlock)] = []
+  guard self.unions.get(enum_name) is Some(variant_names) else {
+    raise KnfTransformError("Enum \{enum_name} not found in unions")
+  }
+  for i, variant_full_name in variant_names {
+    // Extract variant name from "EnumName$VariantName"
+    let parts = variant_full_name.split("$").collect()
+    let variant_name = if parts.length() == 2 {
+      parts[1].to_string()
+    } else {
+      raise KnfTransformError(
+        "Invalid variant name format: \{variant_full_name}",
+      )
+    }
+    match cases_map.get(variant_name) {
+      Some(arms) => {
+        let case_block = self.build_enum_case_block(
+          arms, enum_name, variant_name, variant_full_name, enum_value_name, match_expr_ty,
+        )
+        cases.push((i, case_block))
+      }
+      None => ()
+    }
+  }
+
+  // Build default block
+  let default_block = if default_arms.is_empty() {
+    // If all variants are covered in cases, create an empty default block
+    // The type checker should have already verified exhaustiveness
+    KnfBlock::{ stmts: [], ty: match_expr_ty }
+  } else {
+    self.build_default_arms_block(default_arms, enum_value_name, match_expr_ty)
+  }
+  (stmts, Switch(tag_name, cases, default_block))
+}
+
+///|
+fn Context::build_enum_case_block(
+  self : Context,
+  arms : Array[@typecheck.MatchArm],
+  _enum_name : String,
+  _variant_name : String,
+  variant_full_name : String,
+  enum_value_name : Name,
+  result_ty : Type,
+) -> KnfBlock raise KnfTransformError {
+  let mut current_else_block : KnfBlock? = None
+  for arm in arms.rev_iter() {
+    self.enter_scope()
+    let branch_stmts : Array[KnfStmt] = Array::new()
+
+    // Extract pattern info
+    let sub_patterns = match arm.pattern.kind {
+      EnumVariant(_tag, _vname, subs) => subs
+      _ => raise KnfTransformError("Expected enum variant pattern in enum case")
+    }
+
+    // Reinterpret the enum value as the specific variant struct
+    let variant_struct_name = self.add_temp(Struct(variant_full_name))
+    branch_stmts.push(
+      Let(
+        variant_struct_name,
+        Struct(variant_full_name),
+        ReInterpretUnion(variant_full_name, enum_value_name),
+      ),
+    )
+
+    // Build pattern matching condition and bindings for sub-patterns
+    let (pattern_cond_opt, bindings) = self.build_enum_pattern_condition(
+      sub_patterns, variant_struct_name, variant_full_name,
+    )
+
+    // Apply bindings
+    branch_stmts.append(bindings)
+
+    // Process guard if exists
+    let guard_cond_opt = match arm.match_guard {
+      Some(guard_expr) => {
+        let (guard_stmts, guard_knf) = self.expr_to_knf(guard_expr)
+        branch_stmts.append(guard_stmts)
+        let guard_name = self.expr_to_knf_name(guard_knf, Bool, branch_stmts)
+        Some(guard_name)
+      }
+      None => None
+    }
+
+    // Build then block (arm body)
+    let (body_stmts, body_expr) = self.expr_to_knf(arm.body)
+    let then_block_stmts = Array::new()
+    then_block_stmts.append(body_stmts)
+    then_block_stmts.push(ExprStmt(body_expr))
+    let then_block = KnfBlock::{ stmts: then_block_stmts, ty: result_ty }
+    let else_block = match current_else_block {
+      Some(blk) => blk
+      None => KnfBlock::{ stmts: [], ty: result_ty }
+    }
+
+    // Combine pattern condition and guard
+    match (pattern_cond_opt, guard_cond_opt) {
+      (Some(pat_cond), Some(guard_cond)) => {
+        let combined_cond = Binary(And, pat_cond, guard_cond)
+        branch_stmts.push(ExprStmt(If(combined_cond, then_block, else_block)))
+        current_else_block = Some(KnfBlock::{
+          stmts: branch_stmts,
+          ty: result_ty,
+        })
+      }
+      (Some(pat_cond), None) => {
+        branch_stmts.push(ExprStmt(If(Ident(pat_cond), then_block, else_block)))
+        current_else_block = Some(KnfBlock::{
+          stmts: branch_stmts,
+          ty: result_ty,
+        })
+      }
+      (None, Some(guard_cond)) => {
+        branch_stmts.push(
+          ExprStmt(If(Ident(guard_cond), then_block, else_block)),
+        )
+        current_else_block = Some(KnfBlock::{
+          stmts: branch_stmts,
+          ty: result_ty,
+        })
+      }
+      (None, None) => {
+        branch_stmts.append(then_block.stmts)
+        current_else_block = Some(KnfBlock::{
+          stmts: branch_stmts,
+          ty: result_ty,
+        })
+      }
+    }
+    self.exit_scope()
+  }
+  match current_else_block {
+    Some(block) => block
+    None => KnfBlock::{ stmts: [], ty: result_ty }
+  }
+}
+
+///|
+/// Build condition and bindings for enum variant sub-patterns
+/// Returns (condition_name?, bindings)
+fn Context::build_enum_pattern_condition(
+  self : Context,
+  sub_patterns : Array[@typecheck.Pattern],
+  variant_struct_name : Name,
+  variant_full_name : String,
+) -> (Name?, Array[KnfStmt]) raise KnfTransformError {
+  let stmts : Array[KnfStmt] = []
+  let bindings : Array[KnfStmt] = []
+  let conditions : Array[Name] = []
+
+  // Get struct definition to determine field types
+  guard self.struct_defs.get(variant_full_name) is Some(struct_def) else {
+    raise KnfTransformError(
+      "Struct definition not found for variant: \{variant_full_name}",
+    )
+  }
+  for i, sub_pat in sub_patterns {
+    let field_name = "$\{i}"
+
+    // Get field type from struct definition (skip tag field at index 0)
+    let field_ty = match struct_def.fields.get(i + 1) {
+      Some((_, _, ty)) => ty
+      None =>
+        raise KnfTransformError(
+          "Field \{field_name} not found in struct \{variant_full_name}",
+        )
+    }
+    match sub_pat.kind {
+      Wildcard => continue // No condition or binding
+      Ident(var_name) => {
+        // Bind variable to the field
+        let new_name = self.add_new_name(var_name, field_ty)
+        bindings.push(
+          Let(new_name, field_ty, FieldAccess(variant_struct_name, field_name)),
+        )
+      }
+      Boolean(b) => {
+        // Extract field and check equality
+        let field_val_name = self.add_temp(field_ty)
+        stmts.push(
+          Let(
+            field_val_name,
+            field_ty,
+            FieldAccess(variant_struct_name, field_name),
+          ),
+        )
+        let bool_val_name = self.add_temp(Type::Bool)
+        stmts.push(Let(bool_val_name, Type::Bool, KnfExpr::Bool(b)))
+        let cond_name = self.add_temp(Type::Bool)
+        stmts.push(
+          Let(cond_name, Type::Bool, Binary(Eq, field_val_name, bool_val_name)),
+        )
+        conditions.push(cond_name)
+      }
+      Integer(n) => {
+        // Extract field and check equality
+        let field_val_name = self.add_temp(field_ty)
+        stmts.push(
+          Let(
+            field_val_name,
+            field_ty,
+            FieldAccess(variant_struct_name, field_name),
+          ),
+        )
+        let int_val_name = self.add_temp(Type::Int)
+        stmts.push(Let(int_val_name, Type::Int, KnfExpr::Int(n)))
+        let cond_name = self.add_temp(Type::Bool)
+        stmts.push(
+          Let(cond_name, Type::Bool, Binary(Eq, field_val_name, int_val_name)),
+        )
+        conditions.push(cond_name)
+      }
+      _ =>
+        raise KnfTransformError(
+          "Unsupported sub-pattern in enum match: \{sub_pat.kind}",
+        )
+    }
+  }
+
+  // Combine all conditions with AND
+  let final_cond = if conditions.is_empty() {
+    None
+  } else if conditions.length() == 1 {
+    Some(conditions[0])
+  } else {
+    let mut result = conditions[0]
+    for i = 1; i < conditions.length(); i = i + 1 {
+      let and_result = self.add_temp(Type::Bool)
+      stmts.push(
+        Let(and_result, Type::Bool, Binary(And, result, conditions[i])),
+      )
+      result = and_result
+    }
+    Some(result)
+  }
+
+  // Merge stmts (conditions) and bindings together
+  let all_stmts = Array::new()
+  all_stmts.append(stmts)
+  all_stmts.append(bindings)
+  (final_cond, all_stmts)
 }
 
 ///|
