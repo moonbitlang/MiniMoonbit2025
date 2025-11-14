@@ -14,7 +14,7 @@ pub fn Context::stmt_codegen(self : Self, stmt : @knf.KnfStmt) -> Unit raise {
     }
     Return(expr) => {
       guard self.expr_codegen(expr) is Some(ret_value) else {
-        raise CodegenError("Return expression cannot be void")
+        raise CodegenError("Return expression cannot be void, knf expr is \{expr}")
       }
       let _ = self.builder.createRet(ret_value)
 

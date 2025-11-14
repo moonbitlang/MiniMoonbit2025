@@ -67,7 +67,11 @@ pub fn Context::stmt_to_knf(
     }
     ReturnStmt(Some(expr)) => {
       let (stmts, knf_expr) = self.expr_to_knf(expr)
-      stmts.append([KnfStmt::Return(knf_expr)])
+      if knf_expr is Unit {
+        stmts.append([KnfStmt::ReturnUnit])
+      } else {
+        stmts.append([KnfStmt::Return(knf_expr)])
+      }
       stmts
     }
     ReturnStmt(None) => [KnfStmt::ReturnUnit]
