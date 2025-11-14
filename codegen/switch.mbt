@@ -78,10 +78,16 @@ pub fn Context::switch_codegen(
       }
     }
   } else {
+    // Default block is empty (all cases covered)
     None
   }
+  
   let default_end_bb = self.builder.getInsertBlock()
   let default_terminated = default_end_bb.getTerminator() is Some(_)
+  
+  // Determine if default block should contribute to PHI
+  // Default block is considered "empty" if it has no statements and produces no value
+  let default_is_empty = default_stmt_len == 0
   if !default_terminated {
     let _ = self.builder.createBr(merge_bb)
 
@@ -127,8 +133,8 @@ pub fn Context::switch_codegen(
       }
     }
 
-    // Add incoming value from default block
-    if !default_terminated {
+    // Add incoming value from default block (only if it's not empty)
+    if !default_terminated && !default_is_empty {
       guard default_value is Some(dv) else {
         raise CodegenError("Switch default block did not produce a value")
       }
