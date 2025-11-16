@@ -1389,7 +1389,7 @@ test "Top Function Knf Transformation Test - 2" {
   )
   // Body should have: return ();
   assert_true(knf_func2.body.stmts.length() is 1)
-  assert_true(knf_func2.body.stmts[0] is Return(Unit))
+  assert_true(knf_func2.body.stmts[0] is ReturnUnit)
 
   // Test 3: Recursive function with if expression
   let (top_func3, tok_view) = @parser.parse_top_function(tok_view)
