@@ -158,14 +158,14 @@ fn main_err() -> Unit raise {
 
 fn main {
   try main_err() catch {
-    @ArgParser.ErrorMsg(msg) => println(msg)
-    NoInputFiles(msg) => println("\{msg}")
-    MultipleInputFiles(msg) => println("\{msg}")
-    InValidFile(msg) => println("\{msg}")
-    InValidOutput(msg) => println("\{msg}")
-    RedundantOption(msg) => println("\{msg}")
-    InValidOption(msg) => println("\{msg}")
-    err => println("Compilation Error: \{err}")
+    @ArgParser.ErrorMsg(msg) => { println(msg); panic() }
+    NoInputFiles(msg) => { println("\{msg}"); panic() }
+    MultipleInputFiles(msg) => { println("\{msg}"); panic() }
+    InValidFile(msg) => { println("\{msg}"); panic() }
+    InValidOutput(msg) => { println("\{msg}"); panic() }
+    RedundantOption(msg) => { println("\{msg}"); panic() }
+    InValidOption(msg) => { println("\{msg}"); panic() }
+    err => { println("Compilation Error: \{err}"); panic() }
   } noraise {
     _ => ()
   }
