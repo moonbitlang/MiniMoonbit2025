@@ -68,7 +68,7 @@ def test_file(mbt_file):
     
     try:
         # 步骤 1: 编译到 LLVM IR
-        compile_cmd = f"moon run main -- --file {mbt_file} -emit-llvm > {ll_file}"
+        compile_cmd = f"moon run main -- {mbt_file} -emit-llvm -o {ll_file}"
         print(f"  编译: {compile_cmd}")
         returncode, stdout, stderr = run_command(compile_cmd)
         

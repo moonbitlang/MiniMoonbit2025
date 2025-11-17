@@ -10,6 +10,7 @@
     "Kaida-Amethyst/MiniMoonBit/typecheck",
     "Kaida-Amethyst/MiniMoonBit/knf",
     "Kaida-Amethyst/MiniMoonBit/codegen",
+    "Yoorkin/ArgParser"
   ],
   "warn-list" : "-29"
 }
