@@ -230,7 +230,6 @@ fn main {
   try main_err() catch {
     @ArgParser.ErrorMsg(msg) => {
       println(msg)
-      panic()
     }
     NoInputFiles(msg) => {
       println("\{msg}")

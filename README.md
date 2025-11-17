@@ -6,7 +6,29 @@ MiniMoonbit 是一个 MoonBit 语言子集的编译器，将 MoonBit 源代码�
 
 例子放在examples目录下
 
+## 安装MoonBit
+
+首先请确保安装了MoonBit工具链：
+
+Linux/MacOs用户：
+
+```
+curl -fsSL https://cli.moonbitlang.cn/install/unix.sh | bash
+```
+
+Windows用户：
+
+```
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser; irm https://cli.moonbitlang.cn/install/powershell.ps1 | iex
+```
+
 ## Usage
+
+以下的`{file}.mbt`代指MiniMoonBit语法文件，可以查看examples目录下的示例程序。
+
+1. `moon run main` （打印帮助信息)
+
+1. `moon run main -- x --help`（打印帮助信息，这里需要一个额外的x，或者任意字符串，因为当前的Moonbit工具链存在一个bug）
 
 1. `moon run main -- {file}.mbt` （默认输出llvm IR，无需安装llvm 工具链）
 
@@ -15,6 +37,64 @@ MiniMoonbit 是一个 MoonBit 语言子集的编译器，将 MoonBit 源代码�
 3. `moon run main -- {file}.mbt --target=aarch64` （输出aarch64汇编）
 
 4. `moon run main -- {file}.mbt --target=riscv64` （输出riscv64汇编）
+
+## 特性
+
+1. 支持基本的运算，控制流，字符串，数组，结构体，ADT，模式匹配等语法
+2. 带有简单的错误恢复
+
+以下是两个简单的错误恢复例子
+
+简单的类型错误：
+
+```plaintext
+[err.mbt:5:7] Warning:
+4|  let y = x + true;
+5|  let (x) = 5;
+6|      ^ Warning: Should Not use tuple pattern for single pattern
+
+[err.mbt:3:15] Error:
+2|fn main {
+3|  let mut x = 8 + 1.0;
+4|              ^ TypeMismatch: Binary Expression Must have same type for both side while got Int and Double
+
+[err.mbt:4:12] Error:
+3|  let mut x = 8 + 1.0;
+4|  let y = x + true;
+5|           ^ TypeMismatch: Binary Expression Must have same type for both side while got Int and Bool
+
+[err.mbt:6:9] Error:
+5|  let (x) = 5;
+6|  return false;
+7|        ^ Return type mismatch, wanted: Unit, got: Bool
+
+Compilation Error: TypeCheckError("Type checking failed.")
+RuntimeError: unreachable
+    at wasm://wasm/0071595e:wasm-function[8919]:0x1700b3
+error: failed to run
+```
+
+模式匹配的完备性检测：
+
+```plaintext
+moon run main -- enum.mbt
+[enum.mbt:10:10] Error:
+9|
+10|  match a {
+11|         ^ Non-exhaustive match expression, some patterns are not covered:
+RGB(_, _, _)
+RGB(255, _, _)
+RGB(255, 0, _)
+RGBA(_, _, _, _)
+RGBA(255, _, _, _)
+... and 2 more patterns
+
+Compilation Error: TypeCheckError("Type checking failed.")
+RuntimeError: unreachable
+    at wasm://wasm/0071595e:wasm-function[8919]:0x1700b3
+error: failed to run
+```
+
 
 ## 编译运行
 
