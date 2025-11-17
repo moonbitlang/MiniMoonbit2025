@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-MiniMoonBit 编译器测试脚本
+MiniMoonBit 多后端测试脚本
 
-对 examples 目录下的每个 .mbt 文件进行编译、运行和结果验证
+支持测试 llvm IR, aarch64 和 riscv64 三个编译后端
 """
 
 import os
 import sys
 import subprocess
 import glob
+import argparse
 from pathlib import Path
 
-# 颜色输出
 class Colors:
     GREEN = '\033[92m'
     RED = '\033[91m'
@@ -19,6 +19,13 @@ class Colors:
     BLUE = '\033[94m'
     END = '\033[0m'
     BOLD = '\033[1m'
+
+class FailureReason:
+    COMPILE_ERROR = "编译错误"
+    ASSEMBLE_ERROR = "汇编错误"
+    RUN_ERROR = "运行错误"
+    NO_ANS_FILE = "未找到ans文件"
+    OUTPUT_MISMATCH = "输出不匹配"
 
 def run_command(cmd, capture_output=True, timeout=30):
     """运行命令并返回结果"""
@@ -50,107 +57,228 @@ def cleanup_files(*files):
         if os.path.exists(f):
             try:
                 os.remove(f)
-            except Exception as e:
-                print(f"{Colors.YELLOW}警告: 无法删除文件 {f}: {e}{Colors.END}")
+            except:
+                pass
 
-def test_file(mbt_file):
-    """测试单个 .mbt 文件"""
-    # 获取文件名（不带扩展名）
-    basename = os.path.basename(mbt_file)
-    filename = os.path.splitext(basename)[0]
-    
-    print(f"{Colors.BLUE}测试: {basename}{Colors.END}")
-    
-    # 定义文件路径
+def test_llvm(mbt_file, filename, ans_file):
+    """测试 LLVM IR 后端"""
     ll_file = f"{filename}.ll"
     exe_file = f"{filename}"
-    ans_file = f"ans/{filename}.ans"
     
     try:
-        # 步骤 1: 编译到 LLVM IR
-        compile_cmd = f"moon run main -- {mbt_file} -emit-llvm -o {ll_file}"
-        print(f"  编译: {compile_cmd}")
-        returncode, stdout, stderr = run_command(compile_cmd)
-        
+        # 编译到 LLVM IR
+        cmd = f"moon run main -- {mbt_file} --emit-llvm -o {ll_file}"
+        returncode, stdout, stderr = run_command(cmd)
         if returncode != 0:
-            print(f"{Colors.RED}  ✗ 编译失败{Colors.END}")
-            if stderr:
-                print(f"    错误: {stderr}")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.COMPILE_ERROR
         
-        # 检查 .ll 文件是否生成
         if not os.path.exists(ll_file) or os.path.getsize(ll_file) == 0:
-            print(f"{Colors.RED}  ✗ 未生成 LLVM IR 文件{Colors.END}")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.COMPILE_ERROR
         
-        # 步骤 2: 使用 clang 编译
-        # clang_cmd = f"clang {ll_file} runtime.c -I/opt/homebrew/opt/bdw-gc/include -L/opt/homebrew/opt/bdw-gc/lib -lgc -lm -o {exe_file}"
-        clang_cmd = f"clang {ll_file} runtime.c -lm -o {exe_file}"
-        print(f"  链接: {clang_cmd}")
-        returncode, stdout, stderr = run_command(clang_cmd)
-        
+        # 使用 clang 编译
+        cmd = f"clang {ll_file} runtime.c -lm -o {exe_file}"
+        returncode, stdout, stderr = run_command(cmd)
         if returncode != 0:
-            print(f"{Colors.RED}  ✗ clang 编译失败{Colors.END}")
-            if stderr:
-                print(f"    错误: {stderr}")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.ASSEMBLE_ERROR
         
-        # 步骤 3: 运行可执行文件
-        run_cmd = f"./{exe_file}"
-        print(f"  运行: {run_cmd}")
-        returncode, output, stderr = run_command(run_cmd)
-        
+        # 运行
+        returncode, output, stderr = run_command(f"./{exe_file}")
         if returncode != 0:
-            print(f"{Colors.RED}  ✗ 运行失败{Colors.END}")
-            if stderr:
-                print(f"    错误: {stderr}")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.RUN_ERROR
         
-        # 步骤 4: 读取预期结果
+        # 检查答案文件
         if not os.path.exists(ans_file):
-            print(f"{Colors.YELLOW}  ⚠ 警告: 找不到答案文件 {ans_file}{Colors.END}")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.NO_ANS_FILE
         
         with open(ans_file, 'r') as f:
             expected = f.read()
         
-        # 步骤 5: 比较结果
-        # 去除首尾空白字符进行比较
-        output_stripped = output.strip()
-        expected_stripped = expected.strip()
-        
-        if output_stripped == expected_stripped:
-            print(f"{Colors.GREEN}  ✓ 测试通过{Colors.END}")
+        # 比较结果
+        if output.strip() == expected.strip():
             cleanup_files(ll_file, exe_file)
-            return True
+            return True, None
         else:
-            print(f"{Colors.RED}  ✗ 输出不匹配{Colors.END}")
-            print(f"    预期输出:")
-            for line in expected_stripped.split('\n')[:5]:  # 只显示前5行
-                print(f"      {line}")
-            if len(expected_stripped.split('\n')) > 5:
-                print(f"      ...")
-            print(f"    实际输出:")
-            for line in output_stripped.split('\n')[:5]:  # 只显示前5行
-                print(f"      {line}")
-            if len(output_stripped.split('\n')) > 5:
-                print(f"      ...")
             cleanup_files(ll_file, exe_file)
-            return False
+            return False, FailureReason.OUTPUT_MISMATCH
     
     except Exception as e:
-        print(f"{Colors.RED}  ✗ 异常: {e}{Colors.END}")
         cleanup_files(ll_file, exe_file)
-        return False
+        return False, str(e)
+
+def test_aarch64(mbt_file, filename, ans_file):
+    """测试 aarch64 后端"""
+    s_file = f"{filename}.s"
+    exe_file = f"{filename}"
+    
+    try:
+        # 编译到 aarch64 汇编
+        cmd = f"moon run main -- {mbt_file} --target=aarch64 -o {s_file}"
+        returncode, stdout, stderr = run_command(cmd)
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.COMPILE_ERROR
+        
+        if not os.path.exists(s_file) or os.path.getsize(s_file) == 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.COMPILE_ERROR
+        
+        # 使用 clang 编译
+        cmd = f"clang {s_file} runtime.c -lm -o {exe_file}"
+        returncode, stdout, stderr = run_command(cmd)
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.ASSEMBLE_ERROR
+        
+        # 运行
+        returncode, output, stderr = run_command(f"./{exe_file}")
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.RUN_ERROR
+        
+        # 检查答案文件
+        if not os.path.exists(ans_file):
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.NO_ANS_FILE
+        
+        with open(ans_file, 'r') as f:
+            expected = f.read()
+        
+        # 比较结果
+        if output.strip() == expected.strip():
+            cleanup_files(s_file, exe_file)
+            return True, None
+        else:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.OUTPUT_MISMATCH
+    
+    except Exception as e:
+        cleanup_files(s_file, exe_file)
+        return False, str(e)
+
+def test_riscv64(mbt_file, filename, ans_file):
+    """测试 riscv64 后端"""
+    s_file = f"{filename}.s"
+    exe_file = f"{filename}"
+    
+    try:
+        # 编译到 riscv64 汇编
+        cmd = f"moon run main -- {mbt_file} --target=riscv64 -o {s_file}"
+        returncode, stdout, stderr = run_command(cmd)
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.COMPILE_ERROR
+        
+        if not os.path.exists(s_file) or os.path.getsize(s_file) == 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.COMPILE_ERROR
+        
+        # 使用 riscv64-unknown-elf-gcc 编译
+        cmd = f"riscv64-unknown-elf-gcc -o {exe_file} {s_file} runtime.c -lm"
+        returncode, stdout, stderr = run_command(cmd)
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.ASSEMBLE_ERROR
+        
+        # 使用 spike 运行
+        returncode, output, stderr = run_command(f"spike pk {exe_file}")
+        if returncode != 0:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.RUN_ERROR
+        
+        # 检查答案文件
+        if not os.path.exists(ans_file):
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.NO_ANS_FILE
+        
+        with open(ans_file, 'r') as f:
+            expected = f.read()
+        
+        # 比较结果
+        if output.strip() == expected.strip():
+            cleanup_files(s_file, exe_file)
+            return True, None
+        else:
+            cleanup_files(s_file, exe_file)
+            return False, FailureReason.OUTPUT_MISMATCH
+    
+    except Exception as e:
+        cleanup_files(s_file, exe_file)
+        return False, str(e)
+
+def test_file(mbt_file, targets):
+    """测试单个文件的指定后端"""
+    basename = os.path.basename(mbt_file)
+    filename = os.path.splitext(basename)[0]
+    ans_file = f"ans/{filename}.ans"
+    
+    results = {}
+    
+    for target in targets:
+        if target == "llvm":
+            success, reason = test_llvm(mbt_file, filename, ans_file)
+        elif target == "aarch64":
+            success, reason = test_aarch64(mbt_file, filename, ans_file)
+        elif target == "riscv64":
+            success, reason = test_riscv64(mbt_file, filename, ans_file)
+        else:
+            success, reason = False, "未知目标"
+        
+        results[target] = (success, reason)
+    
+    return results
+
+def print_help():
+    """打印帮助信息"""
+    help_text = f"""
+{Colors.BOLD}MiniMoonBit 多后端测试脚本{Colors.END}
+
+用法:
+    python test2.py [OPTIONS]
+
+选项:
+    --target=BACKEND    指定测试的后端，可以使用多次
+                        可选值: llvm, aarch64, riscv64, all
+    --help, -h          显示此帮助信息
+
+示例:
+    python test2.py --target=llvm
+    python test2.py --target=aarch64 --target=riscv64
+    python test2.py --target=all
+"""
+    print(help_text)
 
 def main():
     """主函数"""
-    print(f"{Colors.BOLD}=== MiniMoonBit 编译器测试 ==={Colors.END}\n")
+    # 检查是否需要显示帮助
+    if len(sys.argv) == 1 or '--help' in sys.argv or '-h' in sys.argv:
+        print_help()
+        return 0
+    
+    # 解析命令行参数
+    targets = []
+    for arg in sys.argv[1:]:
+        if arg.startswith('--target='):
+            target = arg.split('=', 1)[1]
+            if target == 'all':
+                targets = ['llvm', 'aarch64', 'riscv64']
+                break
+            elif target in ['llvm', 'aarch64', 'riscv64']:
+                if target not in targets:
+                    targets.append(target)
+            else:
+                print(f"{Colors.RED}错误: 未知的目标 '{target}'{Colors.END}")
+                print_help()
+                return 1
+    
+    if not targets:
+        print(f"{Colors.RED}错误: 未指定测试目标{Colors.END}")
+        print_help()
+        return 1
     
     # 检查必要的文件和目录
     if not os.path.exists("examples"):
@@ -172,30 +300,40 @@ def main():
         print(f"{Colors.YELLOW}警告: examples 目录下没有 .mbt 文件{Colors.END}")
         return 0
     
-    print(f"找到 {len(mbt_files)} 个测试文件\n")
+    print(f"{Colors.BOLD}测试后端: {', '.join(targets)}{Colors.END}")
+    print(f"测试文件: {len(mbt_files)} 个\n")
     
     # 运行测试
-    passed = 0
-    failed = 0
+    all_passed = True
+    failures = []
     
     for mbt_file in mbt_files:
-        if test_file(mbt_file):
-            passed += 1
+        basename = os.path.basename(mbt_file)
+        results = test_file(mbt_file, targets)
+        
+        # 检查所有目标是否都通过
+        all_targets_passed = all(success for success, _ in results.values())
+        
+        if all_targets_passed:
+            print(f"{Colors.GREEN}✓{Colors.END} {basename}")
         else:
-            failed += 1
-        print()  # 空行分隔
+            print(f"{Colors.RED}✗{Colors.END} {basename}")
+            all_passed = False
+            for target, (success, reason) in results.items():
+                if not success:
+                    print(f"  - {target}: {reason}")
+                    failures.append((basename, target, reason))
     
     # 输出总结
-    print(f"{Colors.BOLD}=== 测试总结 ==={Colors.END}")
-    print(f"总计: {len(mbt_files)}")
-    print(f"{Colors.GREEN}通过: {passed}{Colors.END}")
-    print(f"{Colors.RED}失败: {failed}{Colors.END}")
-    
-    if failed == 0:
-        print(f"\n{Colors.GREEN}{Colors.BOLD}✓ 所有测试通过！{Colors.END}")
+    print(f"\n{Colors.BOLD}{'='*50}{Colors.END}")
+    if all_passed:
+        print(f"{Colors.GREEN}{Colors.BOLD}All Tests Passed{Colors.END}")
         return 0
     else:
-        print(f"\n{Colors.RED}{Colors.BOLD}✗ 有 {failed} 个测试失败{Colors.END}")
+        print(f"{Colors.RED}{Colors.BOLD}Some Tests Failed{Colors.END}")
+        print(f"\n失败详情:")
+        for filename, target, reason in failures:
+            print(f"  {filename} [{target}]: {reason}")
         return 1
 
 if __name__ == "__main__":
