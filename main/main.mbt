@@ -10,11 +10,14 @@ fn main {
     #|  -stop-after=parse, --stop-after=parse         Stop after parsing
     #|  -stop-after=typecheck --stop-after=typecheck  Stop after type checking
     #|  -stop-after=knf --stop-after=knf              Stop after Knf transformation
+    #|  -emit-llvm                                    Emit the generated LLVM IR
+    #|  --target=riscvc64                             Specify the target architecture (default: riscv64)
+    #|  --target=aarch64                              Specify the target architecture (default: aarch64)
   let args = @env.args()
   let legal_args = [
     "-h", "--help", "-f", "--file", "-stop-after=lex", "--stop-after=lex", "-stop-after=parse",
     "--stop-after=parse", "-stop-after=typecheck", "--stop-after=typecheck", "-stop-after=knf",
-    "--stop-after=knf",
+    "--stop-after=knf", "-emit-llvm", "--target=riscv64", "--target=aarch64"
   ]
   for arg in args[1:] {
     if arg.has_prefix("-") && !legal_args.contains(arg) {
@@ -58,7 +61,6 @@ fn main {
     }
   }
   if args.contains("-stop-after=lex") {
-    println("Tokens:")
     for token in tokens {
       println(token)
     }
@@ -71,7 +73,6 @@ fn main {
     }
   }
   if args.contains("-stop-after=parse") || args.contains("--stop-after=parse") {
-    println("Parsed AST:")
     println(prog)
     return
   }
@@ -83,7 +84,6 @@ fn main {
   }
   if args.contains("-stop-after=typecheck") ||
     args.contains("--stop-after=typecheck") {
-    println("Type-Checked AST:")
     println(checked_prog)
     return
   }
@@ -94,7 +94,6 @@ fn main {
     }
   }
   if args.contains("-stop-after=knf") || args.contains("--stop-after=knf") {
-    println("KNF Transformed:")
     println(knf)
     return
   }
@@ -104,5 +103,25 @@ fn main {
       return
     }
   }
-  println(llvm_mod)
+  if args.contains("-emit-llvm") {
+    println(llvm_mod)
+    return
+  }
+  if args.contains("--target=riscv64") {
+    let rv_module = @riscv64.compile(llvm_mod) catch {
+      err => {
+        println("RISC-V64 Compilation Error: \{err}")
+        return
+      }
+    }
+    println(rv_module)
+  } else {
+    let aarch64_module = @aarch64.compile(llvm_mod) catch {
+      err => {
+        println("AArch64 Compilation Error: \{err}")
+        return
+      }
+    }
+    println(aarch64_module)
+  }
 }

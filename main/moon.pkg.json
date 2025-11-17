@@ -2,6 +2,8 @@
   "is-main": true,
   "import": [
     "Kaida-Amethyst/MoonLLVM/IR",
+    "Kaida-Amethyst/MoonMIR/riscv64",
+    "Kaida-Amethyst/MoonMIR/aarch64",
     "moonbitlang/x/fs",
     "Kaida-Amethyst/MiniMoonBit/lexer",
     "Kaida-Amethyst/MiniMoonBit/parser",

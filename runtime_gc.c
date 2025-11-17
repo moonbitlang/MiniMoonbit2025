@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <gc.h>
 
 typedef struct {
   int32_t length;
@@ -63,11 +64,11 @@ typedef struct {
 } MoonBitStr;
 
 void* moonbit_malloc(int32_t size) {
-  return malloc(size);
+  return GC_MALLOC(size);
 }
 
 void* moonbit_realloc(void *ptr, size_t size) {
-  return realloc(ptr, size);
+  return GC_REALLOC(ptr, size);
 }
 
 IntArray* make_int_array(int32_t length, int32_t init_value) {
@@ -537,6 +538,7 @@ MoonBitStr* __builtin_char_to_string(char value) {
 }
 
 int main() {
+  GC_INIT();
   moonbit_main();
   return 0;
 }

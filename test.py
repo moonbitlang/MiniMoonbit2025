@@ -68,7 +68,7 @@ def test_file(mbt_file):
     
     try:
         # 步骤 1: 编译到 LLVM IR
-        compile_cmd = f"moon run main -- --file {mbt_file} > {ll_file}"
+        compile_cmd = f"moon run main -- --file {mbt_file} -emit-llvm > {ll_file}"
         print(f"  编译: {compile_cmd}")
         returncode, stdout, stderr = run_command(compile_cmd)
         
@@ -86,7 +86,8 @@ def test_file(mbt_file):
             return False
         
         # 步骤 2: 使用 clang 编译
-        clang_cmd = f"clang {ll_file} runtime.c -I/opt/homebrew/opt/bdw-gc/include -L/opt/homebrew/opt/bdw-gc/lib -lgc -lm -o {exe_file}"
+        # clang_cmd = f"clang {ll_file} runtime.c -I/opt/homebrew/opt/bdw-gc/include -L/opt/homebrew/opt/bdw-gc/lib -lgc -lm -o {exe_file}"
+        clang_cmd = f"clang {ll_file} runtime.c -lm -o {exe_file}"
         print(f"  链接: {clang_cmd}")
         returncode, stdout, stderr = run_command(clang_cmd)
         
