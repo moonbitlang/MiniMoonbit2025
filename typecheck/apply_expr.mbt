@@ -520,13 +520,14 @@ fn handle_primitive_method_call(
     // Int methods
     TypeKind::Int =>
       match method_name {
-        "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
+        "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_uint" => {
           let target_ty = match method_name {
             "to_int64" => TypeKind::Int64
             "to_uint" => TypeKind::UInt
             "to_uint64" => TypeKind::UInt64
             "to_float" => TypeKind::Float
             "to_double" => TypeKind::Double
+            "reinterpret_as_uint" => TypeKind::UInt
             _ => TypeKind::Int // unreachable
           }
           Some(ApplyExpr::{
@@ -570,13 +571,14 @@ fn handle_primitive_method_call(
     // UInt methods
     TypeKind::UInt =>
       match method_name {
-        "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" => {
+        "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_int" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_int64" => TypeKind::Int64
             "to_uint64" => TypeKind::UInt64
             "to_float" => TypeKind::Float
             "to_double" => TypeKind::Double
+            "reinterpret_as_int" => TypeKind::Int
             _ => TypeKind::UInt // unreachable
           }
           Some(ApplyExpr::{
@@ -620,13 +622,14 @@ fn handle_primitive_method_call(
     // Int64 methods
     TypeKind::Int64 =>
       match method_name {
-        "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" => {
+        "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_uint64" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_uint" => TypeKind::UInt
             "to_uint64" => TypeKind::UInt64
             "to_float" => TypeKind::Float
             "to_double" => TypeKind::Double
+            "reinterpret_as_uint64" => TypeKind::UInt64
             _ => TypeKind::Int64 // unreachable
           }
           Some(ApplyExpr::{
@@ -670,13 +673,14 @@ fn handle_primitive_method_call(
     // UInt64 methods
     TypeKind::UInt64 =>
       match method_name {
-        "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" => {
+        "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" | "reinterpret_as_int64" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_int64" => TypeKind::Int64
             "to_uint" => TypeKind::UInt
             "to_float" => TypeKind::Float
             "to_double" => TypeKind::Double
+            "reinterpret_as_int64" => TypeKind::Int64
             _ => TypeKind::UInt64 // unreachable
           }
           Some(ApplyExpr::{
