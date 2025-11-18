@@ -1,0 +1,73 @@
+=== Testing log (Natural Logarithm) ===
+
+--- Negative values (should be NaN) ---
+log(-0.8) = NaN (is_nan: true)
+log(-0.1) = NaN (is_nan: true)
+log(-1) = NaN (is_nan: true)
+log(-2) = NaN (is_nan: true)
+log(-3.14159) = NaN (is_nan: true)
+
+--- Zero (should be -infinity) ---
+log(0) = negative infinity (is_inf: true)
+log(-0) = negative infinity (is_inf: true)
+
+--- Positive infinity ---
+log(inf) = positive infinity (is_inf: true)
+
+--- Basic values ---
+log(1) = 0 (expected: 0)
+log(2.71828) = 1 (expected: 1)
+log(2) = 0.693147 (expected: 0.693147)
+log(10) = 2.30259 (expected: 2.30259)
+log(100) = 4.60517 (expected: 4.60517)
+log(1000) = 6.90776 (expected: 6.90776)
+
+--- Fractional values ---
+log(0.1) = -2.30259 (expected: -2.30259)
+log(0.2) = -1.60944 (expected: -1.60944)
+log(0.3) = -1.20397 (expected: -1.20397)
+log(0.4) = -0.916291 (expected: -0.916291)
+log(0.5) = -0.693147 (expected: -0.693147)
+log(0.6) = -0.510826 (expected: -0.510826)
+log(0.7) = -0.356675 (expected: -0.356675)
+log(0.8) = -0.223144 (expected: -0.223144)
+log(0.9) = -0.105361 (expected: -0.105361)
+
+--- Integer values ---
+log(1) = 0 (expected: 0)
+log(2) = 0.693147 (expected: 0.693147)
+log(3) = 1.09861 (expected: 1.09861)
+log(4) = 1.38629 (expected: 1.38629)
+log(5) = 1.60944 (expected: 1.60944)
+log(6) = 1.79176 (expected: 1.79176)
+log(7) = 1.94591 (expected: 1.94591)
+log(8) = 2.07944 (expected: 2.07944)
+log(9) = 2.19722 (expected: 2.19722)
+
+--- Decimal values ---
+log(2.5) = 0.916291 (expected: 0.916291)
+log(3.4) = 1.22378 (expected: 1.22378)
+log(5.3) = 1.66771 (expected: 1.66771)
+log(6.2) = 1.82455 (expected: 1.82455)
+log(7.1) = 1.96009 (expected: 1.96009)
+log(8.9) = 2.18605 (expected: 2.18605)
+log(9.8) = 2.28238 (expected: 2.28238)
+log(10.7) = 2.37024 (expected: 2.37024)
+log(101.6) = 4.62104 (expected: 4.62104)
+
+--- More decimal values ---
+log(1.542) = 0.43308 (expected: 0.43308)
+log(2.846) = 1.04591 (expected: 1.04591)
+log(7.881) = 2.06445 (expected: 2.06445)
+log(3.772) = 1.32761 (expected: 1.32761)
+
+--- Pi-related values ---
+log(3.14159) = 1.14473 (expected: 1.14473)
+log(1.5708) = 0.451583 (expected: 0.451583)
+log(0.785398) = -0.241564 (expected: -0.241564)
+
+--- Large values ---
+log(10000) = 9.21034 (expected: 9.21034)
+log(1e+06) = 13.8155 (expected: 13.8155)
+
+=== All tests completed ===

@@ -6,7 +6,9 @@
     "Kaida-Amethyst/either": "0.1.0",
     "Kaida-Amethyst/MoonLLVM": "0.1.12",
     "Yoorkin/ArgParser": "0.2.0",
-    "Kaida-Amethyst/MoonMIR": "0.1.1"
+    "Kaida-Amethyst/MoonMIR": {
+      "path": "../MoonMIR"
+    }
   },
   "readme": "README.md",
   "repository": "",
