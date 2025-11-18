@@ -7,7 +7,7 @@ import(
 )
 
 // Values
-fn codegen(@knf.KnfProgram, souce_file? : String) -> @IR.Module raise
+fn codegen(@knf.KnfProgram) -> @IR.Module raise
 
 #alias(codegen_all)
 fn compile(String, source_file? : String) -> @IR.Module raise
@@ -28,6 +28,7 @@ pub struct Context {
   function_types : Map[String, @knf.Type]
   mut name_values : Map[@knf.Name, &@IR.Value]
   mut name_types : Map[@knf.Name, @knf.Type]
+  mutable_captured_vars : Map[@knf.Name, Bool]
   global_values : Map[String, &@IR.GlobalValue]
   global_consts : Map[String, &@IR.Constant]
   global_types : Map[String, @knf.Type]

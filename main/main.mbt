@@ -228,9 +228,7 @@ fn main_err() -> Unit raise {
 ///|
 fn main {
   try main_err() catch {
-    @ArgParser.ErrorMsg(msg) => {
-      println(msg)
-    }
+    @ArgParser.ErrorMsg(msg) => println(msg)
     NoInputFiles(msg) => {
       println("\{msg}")
       panic()

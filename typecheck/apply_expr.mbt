@@ -520,7 +520,12 @@ fn handle_primitive_method_call(
     // Int methods
     TypeKind::Int =>
       match method_name {
-        "to_int64" | "to_uint" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_uint" => {
+        "to_int64"
+        | "to_uint"
+        | "to_uint64"
+        | "to_float"
+        | "to_double"
+        | "reinterpret_as_uint" => {
           let target_ty = match method_name {
             "to_int64" => TypeKind::Int64
             "to_uint" => TypeKind::UInt
@@ -571,7 +576,12 @@ fn handle_primitive_method_call(
     // UInt methods
     TypeKind::UInt =>
       match method_name {
-        "to_int" | "to_int64" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_int" => {
+        "to_int"
+        | "to_int64"
+        | "to_uint64"
+        | "to_float"
+        | "to_double"
+        | "reinterpret_as_int" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_int64" => TypeKind::Int64
@@ -622,7 +632,12 @@ fn handle_primitive_method_call(
     // Int64 methods
     TypeKind::Int64 =>
       match method_name {
-        "to_int" | "to_uint" | "to_uint64" | "to_float" | "to_double" | "reinterpret_as_uint64" => {
+        "to_int"
+        | "to_uint"
+        | "to_uint64"
+        | "to_float"
+        | "to_double"
+        | "reinterpret_as_uint64" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_uint" => TypeKind::UInt
@@ -673,7 +688,12 @@ fn handle_primitive_method_call(
     // UInt64 methods
     TypeKind::UInt64 =>
       match method_name {
-        "to_int" | "to_int64" | "to_uint" | "to_float" | "to_double" | "reinterpret_as_int64" => {
+        "to_int"
+        | "to_int64"
+        | "to_uint"
+        | "to_float"
+        | "to_double"
+        | "reinterpret_as_int64" => {
           let target_ty = match method_name {
             "to_int" => TypeKind::Int
             "to_int64" => TypeKind::Int64

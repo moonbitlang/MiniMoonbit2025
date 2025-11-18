@@ -4,6 +4,8 @@ package "Kaida-Amethyst/MiniMoonBit/main"
 // Values
 
 // Errors
+type ArgError
+impl Show for ArgError
 
 // Types and methods
 
