@@ -15,9 +15,8 @@ pub fn compile(
 ///|
 pub fn codegen(
   knf_prog : @knf.KnfProgram,
-  souce_file? : String = "demo",
 ) -> @llvm.Module raise {
-  let codegen_ctx = Context::new(souce_file)
+  let codegen_ctx = Context::new(knf_prog.source_file)
   codegen_ctx.collect_struct_types(knf_prog.struct_defs)
   codegen_ctx.generate_global_stmts(knf_prog.global_stmts)
   codegen_ctx.collect_top_lets(knf_prog.top_lets)

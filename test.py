@@ -238,7 +238,7 @@ def print_help():
 {Colors.BOLD}MiniMoonBit 多后端测试脚本{Colors.END}
 
 用法:
-    python test2.py [OPTIONS]
+    python test.py [OPTIONS]
 
 选项:
     --target=BACKEND    指定测试的后端，可以使用多次
