@@ -373,28 +373,6 @@ def test_riscv64(mbt_file, filename, ans_file):
         cleanup_files(s_file, exe_file)
         return False, str(e)
 
-def test_file(mbt_file, targets):
-    """测试单个文件的指定后端"""
-    basename = os.path.basename(mbt_file)
-    filename = os.path.splitext(basename)[0]
-    ans_file = f"ans/{filename}.ans"
-    
-    results = {}
-    
-    for target in targets:
-        if target == "llvm":
-            success, reason = test_llvm(mbt_file, filename, ans_file)
-        elif target == "aarch64":
-            success, reason = test_aarch64(mbt_file, filename, ans_file)
-        elif target == "riscv64":
-            success, reason = test_riscv64(mbt_file, filename, ans_file)
-        else:
-            success, reason = False, "未知目标"
-        
-        results[target] = (success, reason)
-    
-    return results
-
 def print_help():
     """打印帮助信息"""
     help_text = f"""
@@ -497,20 +475,29 @@ def main():
     
     for mbt_file in mbt_files:
         basename = os.path.basename(mbt_file)
-        results = test_file(mbt_file, targets)
+        filename = os.path.splitext(basename)[0]
+        ans_file = f"ans/{filename}.ans"
         
-        # 检查所有目标是否都通过
-        all_targets_passed = all(success for success, _ in results.values())
-        
-        if all_targets_passed:
-            print(f"{Colors.GREEN}✓{Colors.END} {basename}")
-        else:
-            print(f"{Colors.RED}✗{Colors.END} {basename}")
-            all_passed = False
-            for target, (success, reason) in results.items():
-                if not success:
-                    print(f"  - {target}: {reason}")
-                    failures.append((basename, target, reason))
+        for target in targets:
+            success = False
+            reason = ""
+            
+            if target == "llvm":
+                success, reason = test_llvm(mbt_file, filename, ans_file)
+            elif target == "aarch64":
+                success, reason = test_aarch64(mbt_file, filename, ans_file)
+            elif target == "riscv64":
+                success, reason = test_riscv64(mbt_file, filename, ans_file)
+            else:
+                success, reason = False, "未知目标"
+            
+            if success:
+                print(f"{Colors.GREEN}✓{Colors.END} {basename} ({target})")
+            else:
+                print(f"{Colors.RED}✗{Colors.END} {basename} ({target})")
+                print(f"  Reason: {reason}")
+                failures.append((basename, target, reason))
+                all_passed = False
     
     # 输出总结
     print(f"\n{Colors.BOLD}{'='*50}{Colors.END}")
