@@ -125,10 +125,10 @@ pub fn Context::generate_top_level_function_closure(
       let closure_size = self.llvm_ctx.getConstInt32(closure_size)
       let closure_ptr = try! self.builder.createCall(mbt_malloc, [closure_size])
       let func_ptr_ptr = try! self.builder.createGEP(
-          closure_ptr,
-          closure_struct_ty,
-          [zero, zero],
-        )
+        closure_ptr,
+        closure_struct_ty,
+        [zero, zero],
+      )
       let _ = try! self.builder.createStore(existing_wrapper, func_ptr_ptr)
       return closure_ptr
     }
@@ -143,13 +143,13 @@ pub fn Context::generate_top_level_function_closure(
       wrapper_param_types.append(orig_param_types)
       let ret_ty = func_ty.getReturnType()
       let wrapper_func_ty = try! self.llvm_ctx.getFunctionType(
-          ret_ty, wrapper_param_types,
-        )
+        ret_ty, wrapper_param_types,
+      )
 
       // Create wrapper function
       let wrapper_func = try! self.llvm_mod.addFunction(
-          wrapper_func_ty, wrapper_name,
-        )
+        wrapper_func_ty, wrapper_name,
+      )
       self.functions.set(wrapper_name, wrapper_func)
 
       // Save current insert block
@@ -194,10 +194,10 @@ pub fn Context::generate_top_level_function_closure(
       let closure_size = self.llvm_ctx.getConstInt32(closure_size)
       let closure_ptr = try! self.builder.createCall(mbt_malloc, [closure_size])
       let func_ptr_ptr = try! self.builder.createGEP(
-          closure_ptr,
-          closure_struct_ty,
-          [zero, zero],
-        )
+        closure_ptr,
+        closure_struct_ty,
+        [zero, zero],
+      )
       let _ = try! self.builder.createStore(wrapper_func, func_ptr_ptr)
       return closure_ptr
     }
@@ -241,10 +241,10 @@ pub fn Context::generate_extern_or_builtin_closure(
       let closure_size = self.llvm_ctx.getConstInt32(closure_size)
       let closure_ptr = try! self.builder.createCall(mbt_malloc, [closure_size])
       let func_ptr_ptr = try! self.builder.createGEP(
-          closure_ptr,
-          closure_struct_ty,
-          [zero, zero],
-        )
+        closure_ptr,
+        closure_struct_ty,
+        [zero, zero],
+      )
       let _ = try! self.builder.createStore(existing_wrapper, func_ptr_ptr)
       return closure_ptr
     }
@@ -259,13 +259,13 @@ pub fn Context::generate_extern_or_builtin_closure(
       wrapper_param_types.append(orig_param_types)
       let ret_ty = func_ty.getReturnType()
       let wrapper_func_ty = try! self.llvm_ctx.getFunctionType(
-          ret_ty, wrapper_param_types,
-        )
+        ret_ty, wrapper_param_types,
+      )
 
       // Create wrapper function
       let wrapper_func = try! self.llvm_mod.addFunction(
-          wrapper_func_ty, wrapper_name,
-        )
+        wrapper_func_ty, wrapper_name,
+      )
       self.functions.set(wrapper_name, wrapper_func)
 
       // Save current insert block
@@ -310,10 +310,10 @@ pub fn Context::generate_extern_or_builtin_closure(
       let closure_size = self.llvm_ctx.getConstInt32(closure_size)
       let closure_ptr = try! self.builder.createCall(mbt_malloc, [closure_size])
       let func_ptr_ptr = try! self.builder.createGEP(
-          closure_ptr,
-          closure_struct_ty,
-          [zero, zero],
-        )
+        closure_ptr,
+        closure_struct_ty,
+        [zero, zero],
+      )
       let _ = try! self.builder.createStore(wrapper_func, func_ptr_ptr)
       return closure_ptr
     }

@@ -81,7 +81,11 @@ pub fn parse_local_function(
     panic()
   }
   guard tokens is [{ kind: Lower(fname), .. }, .. tokens] else {
-    @lexer.throw_(tokens[0], "Expect a lower ident as local function name", Error)
+    @lexer.throw_(
+      tokens[0],
+      "Expect a lower ident as local function name",
+      Error,
+    )
     raise ParseError("Expect a lower ident")
   }
   guard tokens is [{ kind: Bracket('('), .. }, .. tokens] else {

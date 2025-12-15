@@ -2,13 +2,13 @@
 package "Kaida-Amethyst/MiniMoonBit/lexer"
 
 // Values
-fn throw_(Token, String, ThrowLevel) -> Unit
+pub fn throw_(Token, String, ThrowLevel) -> Unit
 
-fn tokenize(String, source_file? : String) -> Array[Token] raise TokenizeError
+pub fn tokenize(String, source_file? : String) -> Array[Token] raise TokenizeError
 
 // Errors
 pub suberror TokenizeError String
-impl Show for TokenizeError
+pub impl Show for TokenizeError
 
 // Types and methods
 pub(all) enum AssignOp {
@@ -19,9 +19,9 @@ pub(all) enum AssignOp {
   DivAssign
   ModAssign
 }
-impl Eq for AssignOp
-impl Show for AssignOp
-impl ToJson for AssignOp
+pub impl Eq for AssignOp
+pub impl Show for AssignOp
+pub impl ToJson for AssignOp
 
 pub(all) enum BinaryOp {
   Add
@@ -42,8 +42,8 @@ pub(all) enum BinaryOp {
   BitAnd
   BitOr
 }
-impl Eq for BinaryOp
-impl Show for BinaryOp
+pub impl Eq for BinaryOp
+pub impl Show for BinaryOp
 
 pub(all) enum Keyword {
   Fn
@@ -59,14 +59,14 @@ pub(all) enum Keyword {
   Enum
   Match
 }
-impl Eq for Keyword
-impl Show for Keyword
+pub impl Eq for Keyword
+pub impl Show for Keyword
 
 pub(all) enum ThrowLevel {
   Error
   Warning
 }
-impl Show for ThrowLevel
+pub impl Show for ThrowLevel
 
 pub struct Token {
   kind : TokenKind
@@ -76,9 +76,9 @@ pub struct Token {
   code : String
   file : String
 }
-fn Token::new(TokenKind, Int, Int, Int, String, String) -> Self
-impl Eq for Token
-impl Show for Token
+pub fn Token::new(TokenKind, Int, Int, Int, String, String) -> Self
+pub impl Eq for Token
+pub impl Show for Token
 
 pub(all) enum TokenKind {
   Bool(Bool)
@@ -101,8 +101,8 @@ pub(all) enum TokenKind {
   Wildcard
   EOF
 }
-impl Eq for TokenKind
-impl Show for TokenKind
+pub impl Eq for TokenKind
+pub impl Show for TokenKind
 
 // Type aliases
 
