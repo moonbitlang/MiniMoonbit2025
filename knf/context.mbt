@@ -1,5 +1,7 @@
 ///|
-pub(all) suberror KnfTransformError String derive(Show)
+pub(all) suberror KnfTransformError {
+  KnfTransformError(String)
+} derive(Show)
 
 ///|
 pub(all) struct Name {

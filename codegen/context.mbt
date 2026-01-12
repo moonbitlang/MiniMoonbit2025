@@ -1,5 +1,7 @@
 ///|
-pub(all) suberror CodegenError String derive(Show)
+pub(all) suberror CodegenError { 
+  CodegenError(String)
+} derive(Show)
 
 ///|
 pub struct Context {

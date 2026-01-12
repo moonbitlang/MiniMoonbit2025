@@ -20,7 +20,7 @@ pub fn Context::expr_codegen(
     Bool(true) => self.llvm_ctx.getConstTrue() |> Some
     Bool(false) => self.llvm_ctx.getConstFalse() |> Some
     Double(d) => self.llvm_ctx.getConstDouble(d) |> Some
-    Float(f) => self.llvm_ctx.getConstFloat(f.to_float()) |> Some
+    Float(f) => self.llvm_ctx.getConstFloat(Float::from_double(f)) |> Some
     Char(c) => self.llvm_ctx.getConstInt8(c.to_int()) |> Some
     // if name is a top function, we need to make a closure wrapper
     Ident(name) if self.is_top_level_function(name) =>

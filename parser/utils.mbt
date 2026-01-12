@@ -5,7 +5,9 @@ using @lexer {type Token}
 using @either {type Either}
 
 ///|
-pub suberror ParseError String derive(Show)
+pub suberror ParseError {
+  ParseError(String)
+} derive(Show)
 
 ///|
 pub impl Show for TypeKind with output(self, logger) {

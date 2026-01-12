@@ -205,7 +205,9 @@ pub fn Context::check_expr(self : Self, expr : @parser.Expr) -> Expr {
       if self.is_type_compatible(checked_inner.ty, Bool) is false {
         let msg = "Operand of 'not' must be of type Bool" +
           " while got \{checked_inner.ty}"
-        self.throw_(expr.toks[0], msg, Error)
+        // self.throw_(expr.toks[0], msg, Error)
+        println(msg)
+        panic()
       }
       Expr::{ kind: NotExpr(checked_inner), ty: Bool, toks: expr.toks }
     }

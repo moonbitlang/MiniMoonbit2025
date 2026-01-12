@@ -1,5 +1,7 @@
 ///|
-pub(all) suberror TypeCheckError String derive(Show)
+pub(all) suberror TypeCheckError {
+  TypeCheckError(String)
+} derive(Show)
 
 ///|
 pub(all) struct Env {

@@ -3,3 +3,5 @@ target/
 .DS_Store
 math.mbt
 mbtcc
+_build/
+_build
