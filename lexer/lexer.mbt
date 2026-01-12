@@ -1,5 +1,7 @@
 ///|
-pub suberror TokenizeError String derive(Show)
+pub suberror TokenizeError {
+  TokenizeError(String)
+} derive(Show)
 
 ///|
 pub(all) enum Keyword {

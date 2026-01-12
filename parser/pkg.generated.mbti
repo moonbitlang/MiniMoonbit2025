@@ -7,79 +7,81 @@ import(
 )
 
 // Values
-fn format_lines(Array[String], head_with? : String, continue_with? : String) -> String
+pub fn format_lines(Array[String], head_with? : String, continue_with? : String) -> String
 
-fn parse(Array[@lexer.Token]) -> Program raise ParseError
+pub fn parse(Array[@lexer.Token]) -> Program raise ParseError
 
-fn parse_apply_expr(ArrayView[@lexer.Token]) -> (ApplyExpr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_apply_expr(ArrayView[@lexer.Token]) -> (ApplyExpr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_assign_stmt(ArrayView[@lexer.Token]) -> (AssignStmt, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_assign_stmt(ArrayView[@lexer.Token]) -> (AssignStmt, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_atom_expr(ArrayView[@lexer.Token]) -> (AtomExpr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_atom_expr(ArrayView[@lexer.Token]) -> (AtomExpr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_block_expr(ArrayView[@lexer.Token]) -> (BlockExpr, ArrayView[@lexer.Token])
+pub fn parse_block_expr(ArrayView[@lexer.Token]) -> (BlockExpr, ArrayView[@lexer.Token])
 
-fn parse_enum_def(ArrayView[@lexer.Token]) -> (EnumDef, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_enum_def(ArrayView[@lexer.Token]) -> (EnumDef, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_enum_field(ArrayView[@lexer.Token]) -> (EnumField, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_enum_field(ArrayView[@lexer.Token]) -> (EnumField, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_expr(ArrayView[@lexer.Token]) -> (Expr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_expr(ArrayView[@lexer.Token]) -> (Expr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_extern_function(ArrayView[@lexer.Token]) -> (ExternFunction, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_extern_function(ArrayView[@lexer.Token]) -> (ExternFunction, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_for_stmt(ArrayView[@lexer.Token]) -> (ForStmt, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_for_stmt(ArrayView[@lexer.Token]) -> (ForStmt, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_if_expr(ArrayView[@lexer.Token]) -> (IfExpr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_if_expr(ArrayView[@lexer.Token]) -> (IfExpr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_left_value(ArrayView[@lexer.Token]) -> (LeftValue, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_left_value(ArrayView[@lexer.Token]) -> (LeftValue, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_let_mut_stmt(ArrayView[@lexer.Token]) -> (LetMutStmt, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_let_mut_stmt(ArrayView[@lexer.Token]) -> (LetMutStmt, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_let_stmt(ArrayView[@lexer.Token]) -> (LetStmt, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_let_stmt(ArrayView[@lexer.Token]) -> (LetStmt, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_local_function(ArrayView[@lexer.Token]) -> (LocalFunction, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_local_function(ArrayView[@lexer.Token]) -> (LocalFunction, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_match_arm(ArrayView[@lexer.Token]) -> (MatchArm, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_match_arm(ArrayView[@lexer.Token]) -> (MatchArm, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_match_expr(ArrayView[@lexer.Token]) -> (MatchExpr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_match_expr(ArrayView[@lexer.Token]) -> (MatchExpr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_param(ArrayView[@lexer.Token]) -> (Param, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_param(ArrayView[@lexer.Token]) -> (Param, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_param_list(ArrayView[@lexer.Token]) -> (Array[Param], ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_param_list(ArrayView[@lexer.Token]) -> (Array[Param], ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_pattern(ArrayView[@lexer.Token]) -> (Pattern, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_pattern(ArrayView[@lexer.Token]) -> (Pattern, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_stmt(ArrayView[@lexer.Token]) -> (Stmt, ArrayView[@lexer.Token])
+pub fn parse_stmt(ArrayView[@lexer.Token]) -> (Stmt, ArrayView[@lexer.Token])
 
-fn parse_struct_construct(ArrayView[@lexer.Token]) -> (AtomExpr, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_struct_construct(ArrayView[@lexer.Token]) -> (AtomExpr, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_struct_def(ArrayView[@lexer.Token]) -> (StructDef, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_struct_def(ArrayView[@lexer.Token]) -> (StructDef, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_struct_field(ArrayView[@lexer.Token]) -> (StructField, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_struct_field(ArrayView[@lexer.Token]) -> (StructField, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_top_function(ArrayView[@lexer.Token]) -> (TopFunction, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_top_function(ArrayView[@lexer.Token]) -> (TopFunction, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_top_let(ArrayView[@lexer.Token]) -> (TopLet, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_top_let(ArrayView[@lexer.Token]) -> (TopLet, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_type(ArrayView[@lexer.Token]) -> (Type, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_type(ArrayView[@lexer.Token]) -> (Type, ArrayView[@lexer.Token]) raise ParseError
 
-fn parse_while_stmt(ArrayView[@lexer.Token]) -> (WhileStmt, ArrayView[@lexer.Token]) raise ParseError
+pub fn parse_while_stmt(ArrayView[@lexer.Token]) -> (WhileStmt, ArrayView[@lexer.Token]) raise ParseError
 
-fn skip_semicolon(ArrayView[@lexer.Token]) -> ArrayView[@lexer.Token]
+pub fn skip_semicolon(ArrayView[@lexer.Token]) -> ArrayView[@lexer.Token]
 
 // Errors
-pub suberror ParseError String
-impl Show for ParseError
+pub suberror ParseError {
+  ParseError(String)
+}
+pub impl Show for ParseError
 
 // Types and methods
 pub(all) struct ApplyExpr {
   kind : ApplyExprKind
   toks : ArrayView[@lexer.Token]
 }
-fn ApplyExpr::new(ApplyExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
-fn ApplyExpr::to_string(Self, color? : Bool) -> String
-impl Eq for ApplyExpr
-impl Show for ApplyExpr
+pub fn ApplyExpr::new(ApplyExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn ApplyExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for ApplyExpr
+pub impl Show for ApplyExpr
 
 pub(all) enum ApplyExprKind {
   AtomExpr(AtomExpr)
@@ -87,8 +89,8 @@ pub(all) enum ApplyExprKind {
   FieldAccess(ApplyExpr, String)
   Call(ApplyExpr, Array[Expr])
 }
-impl Eq for ApplyExprKind
-impl Show for ApplyExprKind
+pub impl Eq for ApplyExprKind
+pub impl Show for ApplyExprKind
 
 pub(all) enum AssignOp {
   Assign
@@ -98,26 +100,26 @@ pub(all) enum AssignOp {
   DivAssign
   ModAssign
 }
-impl Eq for AssignOp
-impl Show for AssignOp
+pub impl Eq for AssignOp
+pub impl Show for AssignOp
 
 pub(all) struct AssignStmt {
   left_value : LeftValue
   op : AssignOp
   expr : Expr
 }
-fn AssignStmt::to_string(Self, color? : Bool) -> String
-impl Eq for AssignStmt
-impl Show for AssignStmt
+pub fn AssignStmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for AssignStmt
+pub impl Show for AssignStmt
 
 pub(all) struct AtomExpr {
   kind : AtomExprKind
   toks : ArrayView[@lexer.Token]
 }
-fn AtomExpr::new(AtomExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
-fn AtomExpr::to_string(Self, color? : Bool) -> String
-impl Eq for AtomExpr
-impl Show for AtomExpr
+pub fn AtomExpr::new(AtomExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn AtomExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for AtomExpr
+pub impl Show for AtomExpr
 
 pub(all) enum AtomExprKind {
   Int(Int)
@@ -139,8 +141,8 @@ pub(all) enum AtomExprKind {
   EnumConstruct(String?, String, Array[Expr])
   StructConstruct(StructConstructExpr)
 }
-impl Eq for AtomExprKind
-impl Show for AtomExprKind
+pub impl Eq for AtomExprKind
+pub impl Show for AtomExprKind
 
 pub(all) enum BinaryOp {
   Add
@@ -161,43 +163,43 @@ pub(all) enum BinaryOp {
   BitAnd
   BitOr
 }
-fn BinaryOp::from_tok_binary_op(@lexer.BinaryOp) -> Self
-impl Eq for BinaryOp
-impl Show for BinaryOp
+pub fn BinaryOp::from_tok_binary_op(@lexer.BinaryOp) -> Self
+pub impl Eq for BinaryOp
+pub impl Show for BinaryOp
 
 pub(all) struct BlockExpr {
   stmts : Array[Stmt]
   toks : ArrayView[@lexer.Token]
 }
-fn BlockExpr::to_string(Self, color? : Bool) -> String
-impl Eq for BlockExpr
-impl Show for BlockExpr
+pub fn BlockExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for BlockExpr
+pub impl Show for BlockExpr
 
 pub struct EnumDef {
   name : String
   enum_fields : Array[EnumField]
 }
-fn EnumDef::to_string(Self, color? : Bool) -> String
-impl Eq for EnumDef
-impl Show for EnumDef
+pub fn EnumDef::to_string(Self, color? : Bool) -> String
+pub impl Eq for EnumDef
+pub impl Show for EnumDef
 
 pub struct EnumField {
   name : String
   types : Array[Type]
 }
-fn EnumField::to_string(Self, color? : Bool) -> String
-impl Eq for EnumField
-impl Show for EnumField
+pub fn EnumField::to_string(Self, color? : Bool) -> String
+pub impl Eq for EnumField
+pub impl Show for EnumField
 
 pub(all) struct Expr {
   kind : ExprKind
   toks : ArrayView[@lexer.Token]
 }
-fn Expr::new(ExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
-fn Expr::new_binary(BinaryOp, ArrayView[@lexer.Token], Self, Self) -> Self
-fn Expr::to_string(Self, color? : Bool) -> String
-impl Eq for Expr
-impl Show for Expr
+pub fn Expr::new(ExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn Expr::new_binary(BinaryOp, ArrayView[@lexer.Token], Self, Self) -> Self
+pub fn Expr::to_string(Self, color? : Bool) -> String
+pub impl Eq for Expr
+pub impl Show for Expr
 
 pub(all) enum ExprKind {
   ApplyExpr(ApplyExpr)
@@ -208,8 +210,8 @@ pub(all) enum ExprKind {
   IfExpr(IfExpr)
   MatchExpr(MatchExpr)
 }
-impl Eq for ExprKind
-impl Show for ExprKind
+pub impl Eq for ExprKind
+pub impl Show for ExprKind
 
 pub(all) struct ExternFunction {
   fname : String
@@ -217,9 +219,9 @@ pub(all) struct ExternFunction {
   ret_ty : Type?
   ffi_name : String
 }
-fn ExternFunction::to_string(Self, color? : Bool) -> String
-impl Eq for ExternFunction
-impl Show for ExternFunction
+pub fn ExternFunction::to_string(Self, color? : Bool) -> String
+pub impl Eq for ExternFunction
+pub impl Show for ExternFunction
 
 pub struct ForStmt {
   inits : Array[(String, Expr)]
@@ -227,9 +229,9 @@ pub struct ForStmt {
   steps : Array[(String, AssignOp, Expr)]
   body : BlockExpr
 }
-fn ForStmt::to_string(Self, color? : Bool) -> String
-impl Eq for ForStmt
-impl Show for ForStmt
+pub fn ForStmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for ForStmt
+pub impl Show for ForStmt
 
 pub(all) struct IfExpr {
   cond : Expr
@@ -237,42 +239,42 @@ pub(all) struct IfExpr {
   else_block : @either.Either[IfExpr, BlockExpr]?
   toks : ArrayView[@lexer.Token]
 }
-fn IfExpr::to_string(Self, color? : Bool) -> String
-impl Eq for IfExpr
-impl Show for IfExpr
+pub fn IfExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for IfExpr
+pub impl Show for IfExpr
 
 pub(all) struct LeftValue {
   kind : LeftValueKind
 }
-fn LeftValue::to_string(Self, color? : Bool) -> String
-impl Eq for LeftValue
-impl Show for LeftValue
+pub fn LeftValue::to_string(Self, color? : Bool) -> String
+pub impl Eq for LeftValue
+pub impl Show for LeftValue
 
 pub(all) enum LeftValueKind {
   Ident(String)
   ArrayAccess(LeftValue, Expr)
   FieldAccess(LeftValue, String)
 }
-impl Eq for LeftValueKind
-impl Show for LeftValueKind
+pub impl Eq for LeftValueKind
+pub impl Show for LeftValueKind
 
 pub(all) struct LetMutStmt {
   name : String
   ty : Type?
   expr : Expr
 }
-fn LetMutStmt::to_string(Self, color? : Bool) -> String
-impl Eq for LetMutStmt
-impl Show for LetMutStmt
+pub fn LetMutStmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for LetMutStmt
+pub impl Show for LetMutStmt
 
 pub(all) struct LetStmt {
   pattern : Pattern
   ty : Type?
   expr : Expr
 }
-fn LetStmt::to_string(Self, color? : Bool) -> String
-impl Eq for LetStmt
-impl Show for LetStmt
+pub fn LetStmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for LetStmt
+pub impl Show for LetStmt
 
 pub(all) struct LocalFunction {
   fname : String
@@ -280,9 +282,9 @@ pub(all) struct LocalFunction {
   ret_ty : Type?
   body : BlockExpr
 }
-fn LocalFunction::to_string(Self, color? : Bool) -> String
-impl Eq for LocalFunction
-impl Show for LocalFunction
+pub fn LocalFunction::to_string(Self, color? : Bool) -> String
+pub impl Eq for LocalFunction
+pub impl Show for LocalFunction
 
 pub struct MatchArm {
   pattern : Pattern
@@ -290,32 +292,32 @@ pub struct MatchArm {
   body : Expr
   toks : ArrayView[@lexer.Token]
 }
-fn MatchArm::to_string(Self, color? : Bool) -> String
-impl Eq for MatchArm
-impl Show for MatchArm
+pub fn MatchArm::to_string(Self, color? : Bool) -> String
+pub impl Eq for MatchArm
+pub impl Show for MatchArm
 
 pub struct MatchExpr {
   cond : Expr
   arms : Array[MatchArm]
 }
-fn MatchExpr::to_string(Self, color? : Bool) -> String
-impl Eq for MatchExpr
-impl Show for MatchExpr
+pub fn MatchExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for MatchExpr
+pub impl Show for MatchExpr
 
 pub(all) struct Param {
   name : String
   ty : Type
 }
-fn Param::to_string(Self, color? : Bool) -> String
-impl Eq for Param
-impl Show for Param
+pub fn Param::to_string(Self, color? : Bool) -> String
+pub impl Eq for Param
+pub impl Show for Param
 
 pub(all) struct Pattern {
   kind : PatternKind
 }
-fn Pattern::to_string(Self, color? : Bool) -> String
-impl Eq for Pattern
-impl Show for Pattern
+pub fn Pattern::to_string(Self, color? : Bool) -> String
+pub impl Eq for Pattern
+pub impl Show for Pattern
 
 pub(all) enum PatternKind {
   Wildcard
@@ -325,8 +327,8 @@ pub(all) enum PatternKind {
   Tuple(Array[Pattern])
   EnumVariant(String?, String, Array[Pattern])
 }
-impl Eq for PatternKind
-impl Show for PatternKind
+pub impl Eq for PatternKind
+pub impl Show for PatternKind
 
 pub(all) struct Program {
   source_file : String
@@ -336,17 +338,17 @@ pub(all) struct Program {
   struct_defs : Map[String, StructDef]
   enum_defs : Map[String, EnumDef]
 }
-fn Program::to_string(Self, color? : Bool) -> String
-impl Show for Program
+pub fn Program::to_string(Self, color? : Bool) -> String
+pub impl Show for Program
 
 pub(all) struct Stmt {
   kind : StmtKind
   toks : ArrayView[@lexer.Token]
 }
-fn Stmt::new(StmtKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
-fn Stmt::to_string(Self, color? : Bool) -> String
-impl Eq for Stmt
-impl Show for Stmt
+pub fn Stmt::new(StmtKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn Stmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for Stmt
+pub impl Show for Stmt
 
 pub(all) enum StmtKind {
   LetStmt(LetStmt)
@@ -359,34 +361,34 @@ pub(all) enum StmtKind {
   LocalFunction(LocalFunction)
   NoopStmt
 }
-impl Eq for StmtKind
-impl Show for StmtKind
+pub impl Eq for StmtKind
+pub impl Show for StmtKind
 
 pub(all) struct StructConstructExpr {
   name : String
   fields : Array[(String, Expr)]
   toks : ArrayView[@lexer.Token]
 }
-fn StructConstructExpr::to_string(Self, color? : Bool) -> String
-impl Eq for StructConstructExpr
-impl Show for StructConstructExpr
+pub fn StructConstructExpr::to_string(Self, color? : Bool) -> String
+pub impl Eq for StructConstructExpr
+pub impl Show for StructConstructExpr
 
 pub struct StructDef {
   name : String
   fields : Array[StructField]
 }
-fn StructDef::to_string(Self, color? : Bool) -> String
-impl Eq for StructDef
-impl Show for StructDef
+pub fn StructDef::to_string(Self, color? : Bool) -> String
+pub impl Eq for StructDef
+pub impl Show for StructDef
 
 pub struct StructField {
   name : String
   is_mut : Bool
   ty : Type
 }
-fn StructField::to_string(Self, color? : Bool) -> String
-impl Eq for StructField
-impl Show for StructField
+pub fn StructField::to_string(Self, color? : Bool) -> String
+pub impl Eq for StructField
+pub impl Show for StructField
 
 pub(all) struct TopFunction {
   typeTag : String
@@ -395,27 +397,27 @@ pub(all) struct TopFunction {
   ret_ty : Type
   body : BlockExpr
 }
-fn TopFunction::to_string(Self, color? : Bool) -> String
-fn TopFunction::whole_name(Self) -> String
-impl Eq for TopFunction
-impl Show for TopFunction
+pub fn TopFunction::to_string(Self, color? : Bool) -> String
+pub fn TopFunction::whole_name(Self) -> String
+pub impl Eq for TopFunction
+pub impl Show for TopFunction
 
 pub struct TopLet {
   name : String
   ty : Type?
   expr : Expr
 }
-fn TopLet::to_string(Self, color? : Bool) -> String
-impl Eq for TopLet
-impl Show for TopLet
+pub fn TopLet::to_string(Self, color? : Bool) -> String
+pub impl Eq for TopLet
+pub impl Show for TopLet
 
 pub struct Type {
   kind : TypeKind
   toks : ArrayView[@lexer.Token]
 }
-fn Type::to_string(Self, color? : Bool) -> String
-impl Eq for Type
-impl Show for Type
+pub fn Type::to_string(Self, color? : Bool) -> String
+pub impl Eq for Type
+pub impl Show for Type
 
 pub(all) enum TypeKind {
   Unit
@@ -433,17 +435,17 @@ pub(all) enum TypeKind {
   Function(Array[TypeKind], TypeKind)
   Defined(String)
 }
-impl Eq for TypeKind
-impl Hash for TypeKind
-impl Show for TypeKind
+pub impl Eq for TypeKind
+pub impl Hash for TypeKind
+pub impl Show for TypeKind
 
 pub(all) struct WhileStmt {
   cond : Expr
   body : BlockExpr
 }
-fn WhileStmt::to_string(Self, color? : Bool) -> String
-impl Eq for WhileStmt
-impl Show for WhileStmt
+pub fn WhileStmt::to_string(Self, color? : Bool) -> String
+pub impl Eq for WhileStmt
+pub impl Show for WhileStmt
 
 // Type aliases
 

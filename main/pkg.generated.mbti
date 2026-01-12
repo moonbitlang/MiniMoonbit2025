@@ -5,7 +5,7 @@ package "Kaida-Amethyst/MiniMoonBit/main"
 
 // Errors
 type ArgError
-impl Show for ArgError
+pub impl Show for ArgError
 
 // Types and methods
 
