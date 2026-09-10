@@ -5,7 +5,7 @@ pub(all) struct ApplyExpr {
 } derive(Eq)
 
 ///|
-pub impl Show for ApplyExpr with output(self, logger) {
+pub impl Show for ApplyExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -22,7 +22,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let apply_str = apply_expr.to_string(color~)
       let apply_lines = apply_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let apply_formatted = format_lines(
         apply_lines,
@@ -34,7 +34,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let index_str = index_expr.to_string(color~)
       let index_lines = index_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let index_formatted = format_lines(
         index_lines,
@@ -47,10 +47,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let prefix = "field access"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       let inner_str = apply_expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = format_lines(lines)
       "\{prefix} .\{field}\n\{formatted}"
     }
@@ -62,7 +59,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let apply_str = apply_expr.to_string(color~)
       let apply_lines = apply_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let apply_formatted = if args.length() > 0 {
         format_lines(apply_lines, head_with="├-", continue_with="│ ")
@@ -77,7 +74,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
         let arg_str = arg.to_string(color~)
         let arg_lines = arg_str
           .split("\n")
-          .map(fn(sv) { sv.to_string() })
+          .map(fn(sv) { sv.to_owned() })
           .to_array()
         let is_last = i == args.length() - 1
         let arg_formatted = if is_last {
@@ -101,7 +98,7 @@ pub(all) enum ApplyExprKind {
 } derive(Eq)
 
 ///|
-pub impl Show for ApplyExprKind with output(self, logger) {
+pub impl Show for ApplyExprKind with fn output(self, logger) {
   let s = match self {
     AtomExpr(atom_expr) => atom_expr.to_string()
     ArrayAccess(apply_expr, index_expr) => {
@@ -125,7 +122,7 @@ pub impl Show for ApplyExprKind with output(self, logger) {
 ///|
 fn ApplyExpr::unit() -> ApplyExpr {
   let atom_unit = AtomExpr::unit()
-  ApplyExpr::{ kind: AtomExpr(atom_unit), toks: atom_unit.toks }
+  ApplyExpr::{ kind: AtomExpr(atom_unit), toks: atom_unit.toks, }
 }
 
 ///|
@@ -136,7 +133,7 @@ pub fn ApplyExpr::new(
 ) -> ApplyExpr {
   let len = rest_tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  ApplyExpr::{ kind, toks }
+  ApplyExpr::{ kind, toks, }
 }
 
 ///|
@@ -151,41 +148,43 @@ pub fn parse_apply_expr(
   }
   let mut last_apply_line = atom_expr.toks[atom_expr.toks.length() - 1].line
   let mut apply_expr = apply_expr
-  loop tokens {
-    [{ kind: Bracket('['), line, .. }, .. tokens] if line == last_apply_line => {
-      let (index_expr, tokens) = parse_expr(tokens)
-      guard tokens is [{ kind: Bracket(']'), .. }, .. tokens] else {
-        @lexer.throw_(tokens[0], "ParseError: Expect ']'", Error)
-        raise ParseError("Expect ']'")
+  for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket('['), line, .. }, .. tokens] if line == last_apply_line => {
+        let (index_expr, tokens) = parse_expr(tokens)
+        guard tokens is [{ kind: Bracket(']'), .. }, .. tokens] else {
+          @lexer.throw_(tokens[0], "ParseError: Expect ']'", Error)
+          raise ParseError("Expect ']'")
+        }
+        apply_expr = ApplyExpr::new(
+          ArrayAccess(apply_expr, index_expr),
+          init_tokens,
+          tokens,
+        )
+        last_apply_line = tokens[0].line
+        continue tokens
       }
-      apply_expr = ApplyExpr::new(
-        ArrayAccess(apply_expr, index_expr),
-        init_tokens,
-        tokens,
-      )
-      last_apply_line = tokens[0].line
-      continue tokens
-    }
-    [{ kind: Symbol("."), line, .. }, { kind: Lower(field), .. }, .. tokens] if line ==
-      last_apply_line => {
-      apply_expr = ApplyExpr::new(
-        FieldAccess(apply_expr, field),
-        init_tokens,
-        tokens,
-      )
-      last_apply_line = tokens[0].line
-      continue tokens
-    }
-    [{ kind: Bracket('('), line, .. }, .. tokens] if line == last_apply_line => {
-      let (args, tokens) = parse_expr_list(tokens)
-      guard tokens is [{ kind: Bracket(')'), .. }, .. tokens] else {
-        @lexer.throw_(tokens[0], "ParseError: Expect ')'", Error)
-        raise ParseError("Expect ')'")
+      [{ kind: Symbol("."), line, .. }, { kind: Lower(field), .. }, .. tokens] if line ==
+        last_apply_line => {
+        apply_expr = ApplyExpr::new(
+          FieldAccess(apply_expr, field),
+          init_tokens,
+          tokens,
+        )
+        last_apply_line = tokens[0].line
+        continue tokens
       }
-      apply_expr = ApplyExpr::new(Call(apply_expr, args), init_tokens, tokens)
-      continue tokens
+      [{ kind: Bracket('('), line, .. }, .. tokens] if line == last_apply_line => {
+        let (args, tokens) = parse_expr_list(tokens)
+        guard tokens is [{ kind: Bracket(')'), .. }, .. tokens] else {
+          @lexer.throw_(tokens[0], "ParseError: Expect ')'", Error)
+          raise ParseError("Expect ')'")
+        }
+        apply_expr = ApplyExpr::new(Call(apply_expr, args), init_tokens, tokens)
+        continue tokens
+      }
+      tokens => break (apply_expr, tokens)
     }
-    tokens => break (apply_expr, tokens)
   }
 }
 
@@ -345,3 +344,15 @@ test "ApplyExpr Complex Test" {
     ),
   )
 }
+
+///|
+pub extend ApplyExpr with Eq::{not_equal, equal}
+
+///|
+pub extend ApplyExpr with Show::{output}
+
+///|
+pub extend ApplyExprKind with Eq::{not_equal, equal}
+
+///|
+pub extend ApplyExprKind with Show::{to_string, output}

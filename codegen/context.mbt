@@ -1,7 +1,7 @@
 ///|
 pub(all) suberror CodegenError {
   CodegenError(String)
-} derive(Show)
+}
 
 ///|
 pub struct Context {
@@ -36,20 +36,20 @@ pub fn Context::new(mod_name : String) -> Context {
     llvm_mod,
     builder,
     str_cnt: 0,
-    struct_types: Map::new(),
-    knf_struct_types: Map::new(),
-    functions: Map::new(),
-    function_types: Map::new(),
-    name_values: Map::new(),
-    name_types: Map::new(),
-    mutable_captured_vars: Map::new(),
-    builtin_funcs: Map::new(),
+    struct_types: Map([]),
+    knf_struct_types: Map([]),
+    functions: Map([]),
+    function_types: Map([]),
+    name_values: Map([]),
+    name_types: Map([]),
+    mutable_captured_vars: Map([]),
+    builtin_funcs: Map([]),
     builtin_func_tys,
-    global_values: Map::new(),
-    global_consts: Map::new(),
-    global_types: Map::new(),
-    global_array_inits: Array::new(),
-    extern_funcs: Map::new(),
+    global_values: Map([]),
+    global_consts: Map([]),
+    global_types: Map([]),
+    global_array_inits: [],
+    extern_funcs: Map([]),
   }
   ctx.str_cnt += 1
   ctx
@@ -140,7 +140,7 @@ pub fn Context::generate_top_level_function_closure(
 
       // Build wrapper function type: add env pointer as first parameter
       let orig_param_types = func_ty.getParamTypes()
-      let wrapper_param_types : Array[&@llvm.Type] = Array::new()
+      let wrapper_param_types : Array[&@llvm.Type] = []
       wrapper_param_types.push(ptrty) // env pointer
       wrapper_param_types.append(orig_param_types)
       let ret_ty = func_ty.getReturnType()
@@ -162,7 +162,7 @@ pub fn Context::generate_top_level_function_closure(
       self.builder.setInsertPoint(entry_bb)
 
       // Forward all arguments except the first (env pointer) to the top level function
-      let args : Array[&@llvm.Value] = Array::new()
+      let args : Array[&@llvm.Value] = []
       for i = 1; i < wrapper_param_types.length(); i = i + 1 {
         guard wrapper_func.getArg(i) is Some(arg) else {
           raise CodegenError("Failed to get argument \{i} for wrapper function")
@@ -177,10 +177,8 @@ pub fn Context::generate_top_level_function_closure(
       let ret_ty_enum = ret_ty.asTypeEnum()
       if ret_ty_enum is VoidType(_) {
         let _ = try! self.builder.createRetVoid()
-
       } else {
         let _ = try! self.builder.createRet(result)
-
       }
 
       // Restore insert block
@@ -256,7 +254,7 @@ pub fn Context::generate_extern_or_builtin_closure(
 
       // Build wrapper function type: add env pointer as first parameter
       let orig_param_types = func_ty.getParamTypes()
-      let wrapper_param_types : Array[&@llvm.Type] = Array::new()
+      let wrapper_param_types : Array[&@llvm.Type] = []
       wrapper_param_types.push(ptrty) // env pointer
       wrapper_param_types.append(orig_param_types)
       let ret_ty = func_ty.getReturnType()
@@ -278,7 +276,7 @@ pub fn Context::generate_extern_or_builtin_closure(
       self.builder.setInsertPoint(entry_bb)
 
       // Forward all arguments except the first (env pointer) to the extern function
-      let args : Array[&@llvm.Value] = Array::new()
+      let args : Array[&@llvm.Value] = []
       for i = 1; i < wrapper_param_types.length(); i = i + 1 {
         guard wrapper_func.getArg(i) is Some(arg) else {
           raise CodegenError("Failed to get argument \{i} for wrapper function")
@@ -293,10 +291,8 @@ pub fn Context::generate_extern_or_builtin_closure(
       let ret_ty_enum = ret_ty.asTypeEnum()
       if ret_ty_enum is VoidType(_) {
         let _ = try! self.builder.createRetVoid()
-
       } else {
         let _ = try! self.builder.createRet(result)
-
       }
 
       // Restore insert block
@@ -362,13 +358,13 @@ pub fn Context::get_knf_type_by_name(
 
 ///|
 pub fn Context::set_new_name_value(self : Context) -> Unit {
-  let name_value = Map::new()
+  let name_value = Map([])
   self.name_values = name_value
 }
 
 ///|
 pub fn Context::set_new_name_knf_type(self : Context) -> Unit {
-  let name_types = Map::new()
+  let name_types = Map([])
   self.name_types = name_types
 }
 
@@ -440,3 +436,12 @@ fn Context::get_value_by_name_or_load(
       }
   }
 }
+
+///|
+pub impl Show for CodegenError with fn output(self, logger) {
+  let CodegenError(message) = self
+  logger.write_string("CodegenError(\{message.escape()})")
+}
+
+///|
+pub extend CodegenError with Show::{to_string, output}

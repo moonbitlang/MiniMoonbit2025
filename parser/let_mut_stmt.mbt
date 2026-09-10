@@ -6,7 +6,7 @@ pub(all) struct LetMutStmt {
 } derive(Eq)
 
 ///|
-pub impl Show for LetMutStmt with output(self, logger) {
+pub impl Show for LetMutStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -36,10 +36,7 @@ pub fn LetMutStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -74,19 +71,21 @@ pub fn parse_let_mut_stmt(
   guard tokens is [{ kind: AssignOp(Assign), .. }, .. tokens] else {
     @lexer.throw_(tokens[0], "Parse Error: Expect '='", Error)
     let line = tokens[0].line
-    let rest = loop tokens {
-      [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
-      [tok, ..] as tokens if tok.line != line => break tokens
-      [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
-      [] as tokens => break tokens
-      [_, .. tokens] => continue tokens
+    let rest = for tokens = tokens {
+      match tokens {
+        [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
+        [tok, ..] as tokens if tok.line != line => break tokens
+        [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
+        [] as tokens => break tokens
+        [_, .. tokens] => continue tokens
+      }
     }
     let expr = Expr::unit()
-    let let_mut_stmt = LetMutStmt::{ name, ty, expr }
+    let let_mut_stmt = LetMutStmt::{ name, ty, expr, }
     return (let_mut_stmt, rest)
   }
   let (expr, tokens) = parse_expr(tokens)
-  let let_mut_stmt = LetMutStmt::{ name, ty, expr }
+  let let_mut_stmt = LetMutStmt::{ name, ty, expr, }
   let tokens = if tokens is [{ kind: Symbol(";"), .. }, .. tokens] {
     tokens
   } else if tokens is [tok, ..] &&
@@ -214,3 +213,9 @@ test "LetMutStmt to_string Test - Complex" {
     ),
   )
 }
+
+///|
+pub extend LetMutStmt with Eq::{not_equal, equal}
+
+///|
+pub extend LetMutStmt with Show::{output}

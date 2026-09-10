@@ -35,7 +35,6 @@ pub fn Context::if_codegen(
   let terminated_in_then = then_end_bb.getTerminator() is Some(_)
   if !terminated_in_then {
     let _ = self.builder.createBr(merge_bb)
-
   }
   // else block
   self.builder.setInsertPoint(else_bb)
@@ -58,7 +57,6 @@ pub fn Context::if_codegen(
   let terminated_in_else = else_end_bb.getTerminator() is Some(_)
   if !terminated_in_else {
     let _ = self.builder.createBr(merge_bb)
-
   }
   if terminated_in_then && terminated_in_else {
     merge_bb.removeFromParent()

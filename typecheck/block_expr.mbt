@@ -5,7 +5,7 @@ pub(all) struct BlockExpr {
 }
 
 ///|
-pub impl Show for BlockExpr with output(self, logger) {
+pub impl Show for BlockExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -26,7 +26,7 @@ pub fn BlockExpr::to_string(self : Self, color? : Bool = true) -> String {
     let stmt_str = stmt.to_string(color~)
     let stmt_lines = stmt_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.stmts.length() - 1
     let stmt_formatted = if is_last {
@@ -45,7 +45,7 @@ pub fn Context::check_block_expr(
   block_expr : @parser.BlockExpr,
 ) -> BlockExpr {
   self.enter_scope()
-  let checked_stmts = Array::new()
+  let checked_stmts = []
   for stmt in block_expr.stmts {
     let checked_stmt = try self.check_stmt(stmt) catch {
       TypeCheckError(msg) => {
@@ -67,13 +67,13 @@ pub fn Context::check_block_expr(
   } else {
     Unit
   }
-  BlockExpr::{ stmts: checked_stmts, ty: tykind }
+  BlockExpr::{ stmts: checked_stmts, ty: tykind, }
 }
 
 ///|
 test "BlockExpr to_string Test - Empty" {
   let color = false
-  let block_expr = BlockExpr::{ stmts: [], ty: TypeKind::Unit }
+  let block_expr = BlockExpr::{ stmts: [], ty: TypeKind::Unit, }
   inspect(block_expr.to_string(color~), content="block (Unit) (empty)")
 }
 
@@ -160,3 +160,6 @@ test "BlockExpr to_string Test - With Return" {
     ),
   )
 }
+
+///|
+pub extend BlockExpr with Show::{output}

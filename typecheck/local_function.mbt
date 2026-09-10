@@ -7,7 +7,7 @@ pub(all) struct LocalFunction {
 }
 
 ///|
-pub impl Show for LocalFunction with output(self, logger) {
+pub impl Show for LocalFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -63,10 +63,7 @@ pub fn LocalFunction::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = @parser.format_lines(
     body_lines,
     head_with="└-body: ",
@@ -81,7 +78,7 @@ pub fn Context::check_local_function(
   self : Context,
   func : @parser.LocalFunction,
 ) -> LocalFunction raise TypeCheckError {
-  let param_types = Array::new()
+  let param_types = []
   for param in func.param_list {
     let (_, param_type) = param
     let param_ty = match param_type {
@@ -103,13 +100,13 @@ pub fn Context::check_local_function(
   let parent_func_ret_ty = self.current_func_ret_ty
   self.set_current_func_ret_ty(ret_ty)
   let fty = Function(param_types, ret_ty)
-  let fty = Type::{ kind: fty, mutable: false }
+  let fty = Type::{ kind: fty, mutable: false, }
   self.type_env.set(func.fname, fty)
   self.enter_scope()
-  let param_list = Array::new()
+  let param_list = []
   for i, param in func.param_list {
     let (param_name, _) = param
-    let param_ty = Type::{ kind: param_types[i], mutable: false }
+    let param_ty = Type::{ kind: param_types[i], mutable: false, }
     self.type_env.set(param_name, param_ty)
     param_list.push((param_name, param_ty))
   }
@@ -124,7 +121,7 @@ pub fn Context::check_local_function(
   let local_func = LocalFunction::{
     fname: func.fname,
     param_list,
-    ret_ty: { kind: ret_ty, mutable: false },
+    ret_ty: { kind: ret_ty, mutable: false, },
     body: checked_block,
   }
   self.current_func_ret_ty = parent_func_ret_ty
@@ -212,3 +209,6 @@ test "LocalFunction to_string Test - Inferred Types" {
     ),
   )
 }
+
+///|
+pub extend LocalFunction with Show::{output}

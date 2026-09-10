@@ -5,8 +5,8 @@ pub fn Context::top_function_codegen(
 ) -> @llvm.Function raise {
   let old_name_value = self.name_values
   let old_name_knf_type = self.name_types
-  self.name_values = Map::new()
-  self.name_types = Map::new()
+  self.name_values = Map([])
+  self.name_types = Map([])
   let fval = self.functions.get(func.name).unwrap()
   let fty = fval.getFunctionType()
   if func.name != "main" {
@@ -25,7 +25,7 @@ pub fn Context::top_function_codegen(
   // For main function, initialize global array variables
   // Use a set to track which variables have been initialized to avoid duplicates
   if func.name == "main" {
-    let initialized = Map::new()
+    let initialized = Map([])
     fn init_global(
       ctx : Context,
       name : String,
@@ -97,7 +97,7 @@ pub fn Context::top_function_codegen(
         }
       }
 
-      let deps : Array[String] = Array::new()
+      let deps : Array[String] = []
       collect_deps(expr, deps)
 
       // Initialize all dependencies first
@@ -131,18 +131,15 @@ pub fn Context::top_function_codegen(
   match func.body.stmts.last() {
     Some(ExprStmt(Unit)) => {
       let _ = self.builder.createRetVoid()
-
     }
     Some(ExprStmt(expr)) =>
       match self.expr_codegen(expr) {
         Some(ret_val) => {
           let _ = self.builder.createRet(ret_val)
-
         }
         None =>
           if fty.returnType.asTypeEnum() is VoidType(_) {
             let _ = self.builder.createRetVoid()
-
           }
       }
     Some(Return(expr)) => {
@@ -150,22 +147,18 @@ pub fn Context::top_function_codegen(
         raise CodegenError("Return expression did not yield a value")
       }
       let _ = self.builder.createRet(ret_value)
-
     }
     Some(ReturnUnit) => {
       let _ = self.builder.createRetVoid()
-
     }
     Some(stmt) => {
       self.stmt_codegen(stmt)
       if fty.returnType.asTypeEnum() is VoidType(_) {
         let _ = self.builder.createRetVoid()
-
       }
     }
     None => {
       let _ = self.builder.createRetVoid()
-
     }
   }
 

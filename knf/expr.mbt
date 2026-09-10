@@ -112,7 +112,7 @@ pub fn KnfExpr::to_string(self : KnfExpr, ident? : Int = 0) -> String {
 }
 
 ///|
-pub impl Show for KnfExpr with output(self, logger) {
+pub impl Show for KnfExpr with fn output(self, logger) {
   logger.write_string(self.to_string(ident=0))
 }
 
@@ -138,7 +138,7 @@ pub(all) enum BinaryOp {
 } derive(Eq)
 
 ///|
-pub impl Show for BinaryOp with output(self, logger) {
+pub impl Show for BinaryOp with fn output(self, logger) {
   let s = match self {
     Add => "+"
     Sub => "-"
@@ -214,7 +214,7 @@ pub fn Context::expr_to_knf(
       (stmts, Neg(tmp_name))
     }
     BinaryExpr(bin_op, left_expr, right_expr) => {
-      let stmts : Array[KnfStmt] = Array::new()
+      let stmts : Array[KnfStmt] = []
       let (left_stmts, left_knf_expr) = self.expr_to_knf(left_expr)
       let (right_stmts, right_knf_expr) = self.expr_to_knf(right_expr)
       stmts.append(left_stmts)
@@ -242,13 +242,13 @@ pub fn Context::expr_to_knf(
 
       // Handle String concatenation
       if bin_op is Add && left_expr.ty is String {
-        let concat_func = Name::{ id: "__builtin_string_concat", slot: 0 }
+        let concat_func = Name::{ id: "__builtin_string_concat", slot: 0, }
         return (stmts, Call(concat_func, [lhs_name, rhs_name]))
       }
 
       // Handle String comparison
       if bin_op is Eq && left_expr.ty is String {
-        let strcmp_func = Name::{ id: "moonbit_string_eq", slot: 0 }
+        let strcmp_func = Name::{ id: "moonbit_string_eq", slot: 0, }
         return (stmts, Call(strcmp_func, [lhs_name, rhs_name]))
       }
       let rhs_name_adjusted = if bin_op is (ShiftLeft | ShiftRight) {
@@ -300,3 +300,12 @@ fn Context::expr_to_knf_name(
     }
   }
 }
+
+///|
+pub extend KnfExpr with Show::{output}
+
+///|
+pub extend BinaryOp with Eq::{not_equal, equal}
+
+///|
+pub extend BinaryOp with Show::{to_string, output}

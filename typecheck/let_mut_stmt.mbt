@@ -6,7 +6,7 @@ pub(all) struct LetMutStmt {
 }
 
 ///|
-pub impl Show for LetMutStmt with output(self, logger) {
+pub impl Show for LetMutStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -34,10 +34,7 @@ pub fn LetMutStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = @parser.format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -62,7 +59,7 @@ pub fn Context::check_let_mut_stmt(
     }
   }
   let type_kind = self.ensure_type(type_kind)
-  let ty = Type::{ kind: type_kind, mutable: true }
+  let ty = Type::{ kind: type_kind, mutable: true, }
   let checked_stmt = LetMutStmt::{
     name: stmt.name,
     ty: type_kind,
@@ -98,7 +95,7 @@ test "LetMutStmt to_string Test - Basic" {
 test "LetMutStmt to_string Test - Complex" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("a", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("a", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|let mut sum = a + 1 ;
   let tokens = @lexer.tokenize(code)
@@ -118,3 +115,6 @@ test "LetMutStmt to_string Test - Complex" {
     ),
   )
 }
+
+///|
+pub extend LetMutStmt with Show::{output}

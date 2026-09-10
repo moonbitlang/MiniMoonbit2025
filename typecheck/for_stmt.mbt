@@ -7,7 +7,7 @@ pub(all) struct ForStmt {
 }
 
 ///|
-pub impl Show for ForStmt with output(self, logger) {
+pub impl Show for ForStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -32,7 +32,7 @@ pub fn ForStmt::to_string(self : Self, color? : Bool = true) -> String {
       let expr_str = expr.to_string(color~)
       let expr_lines = expr_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let is_last_init = i == self.inits.length() - 1
       let expr_formatted = if is_last_init {
@@ -54,10 +54,7 @@ pub fn ForStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format condition
   let cond_str = self.cond.to_string(color~)
-  let cond_lines = cond_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let cond_lines = cond_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let cond_formatted = @parser.format_lines(
     cond_lines,
     head_with="├-cond: ",
@@ -87,7 +84,7 @@ pub fn ForStmt::to_string(self : Self, color? : Bool = true) -> String {
       let expr_str = expr.to_string(color~)
       let expr_lines = expr_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let is_last_step = i == self.steps.length() - 1
       let expr_formatted = if is_last_step {
@@ -109,10 +106,7 @@ pub fn ForStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = @parser.format_lines(
     body_lines,
     head_with="└-body: ",
@@ -131,12 +125,12 @@ pub fn Context::check_for_stmt(
   self.enter_scope()
 
   // Check and bind init variables (they are mutable)
-  let checked_inits : Array[(String, Expr)] = Array::new()
+  let checked_inits : Array[(String, Expr)] = []
   for init in for_stmt.inits {
     let (name, init_expr) = init
     let checked_expr = self.check_expr(init_expr)
     let type_kind = self.ensure_type(checked_expr.ty)
-    let ty = Type::{ kind: type_kind, mutable: true }
+    let ty = Type::{ kind: type_kind, mutable: true, }
     self.type_env.set(name, ty)
     checked_inits.push((name, checked_expr))
   }
@@ -166,7 +160,7 @@ pub fn Context::check_for_stmt(
   }
 
   // Check step statements
-  let checked_steps : Array[(String, AssignOp, Expr)] = Array::new()
+  let checked_steps : Array[(String, AssignOp, Expr)] = []
   for step in for_stmt.steps {
     let (name, op, step_expr) = step
     // Verify the variable exists in the current scope
@@ -274,3 +268,6 @@ test "ForStmt to_string Test - Multiple Inits and Steps" {
     ),
   )
 }
+
+///|
+pub extend ForStmt with Show::{output}

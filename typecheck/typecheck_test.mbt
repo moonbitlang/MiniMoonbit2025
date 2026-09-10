@@ -53,19 +53,19 @@ test "Apply Expression Type Check" {
     #|mat[3][4] ; sum(arr); max(x, y);
     #|arr.push(10); mat.length();
   let ctx = Context::new()
-  ctx.type_env.set("arr", { kind: Array(Int), mutable: false })
-  ctx.type_env.set("mat", { kind: Array(Array(Int)), mutable: false })
-  ctx.type_env.set("fact", { kind: Function([Int], Int), mutable: false })
-  ctx.type_env.set("print", { kind: Function([String], Unit), mutable: false })
-  ctx.type_env.set("sum", { kind: Function([Array(Int)], Int), mutable: false })
+  ctx.type_env.set("arr", { kind: Array(Int), mutable: false, })
+  ctx.type_env.set("mat", { kind: Array(Array(Int)), mutable: false, })
+  ctx.type_env.set("fact", { kind: Function([Int], Int), mutable: false, })
+  ctx.type_env.set("print", { kind: Function([String], Unit), mutable: false, })
+  ctx.type_env.set("sum", { kind: Function([Array(Int)], Int), mutable: false, })
   // Note: max is local function without type annotations
   // like: fn max(a, b) { ... }
   ctx.type_env.set("max", {
     kind: Function([TypeVar(0), TypeVar(1)], TypeVar(2)),
     mutable: false,
   })
-  ctx.type_env.set("x", { kind: Double, mutable: true })
-  ctx.type_env.set("y", { kind: Double, mutable: true })
+  ctx.type_env.set("x", { kind: Double, mutable: true, })
+  ctx.type_env.set("y", { kind: Double, mutable: true, })
   ctx.type_vars.set(0, TypeVar(0))
   ctx.type_vars.set(1, TypeVar(0))
   ctx.type_vars.set(2, TypeVar(0))
@@ -174,11 +174,14 @@ test "Assign Stmt Type Check" {
   assert_true(a.expr.ty is Int)
   // Type of `x += true;` should fail
   let (a, tok_view) = @parser.parse_assign_stmt(tok_view)
-  let t = try? ctx.check_assign_stmt(a)
-  assert_true(t is Err(_))
+  try ctx.check_assign_stmt(a) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected type checking to fail")
+  }
   // Type of `let mut a = xxx; a += 33;`
   ctx.type_vars.set(0, TypeVar(0))
-  ctx.type_env.set("xxx", { kind: TypeVar(0), mutable: false })
+  ctx.type_env.set("xxx", { kind: TypeVar(0), mutable: false, })
   let (s, tok_view) = @parser.parse_let_mut_stmt(tok_view)
   let _ = ctx.check_let_mut_stmt(s)
   let (a, _) = @parser.parse_assign_stmt(tok_view)
@@ -239,9 +242,9 @@ test "Atom Expression Type Check" {
   let code =
     #|[1, 2+3, 3+4+5, 6*7+8] (1+3, !y, "Hello") Array::make(5, 0) []
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: Double, mutable: false })
-  ctx.type_env.set("y", { kind: Bool, mutable: false })
-  ctx.type_env.set("z", { kind: String, mutable: false })
+  ctx.type_env.set("x", { kind: Double, mutable: false, })
+  ctx.type_env.set("y", { kind: Bool, mutable: false, })
+  ctx.type_env.set("z", { kind: String, mutable: false, })
   // Parse
   let tokens = @lexer.tokenize(code)
   // Type of [1, 2+3, 3+4+5, 6*7+8]
@@ -411,26 +414,31 @@ test "Expr TypeCheck Test" {
   let ctx = Context::new()
   ctx.struct_defs.set("Matrix", StructDef::{
     name: "Matrix",
-    fields: [{ name: "data", ty: { kind: Array(Array(Int)), mutable: false } }],
-    methods: Map::new(),
+    fields: [
+      { name: "data", ty: { kind: Array(Array(Int)), mutable: false, }, },
+    ],
+    methods: Map([]),
   })
-  ctx.type_env.set("arr", { kind: Array(Int), mutable: false })
-  ctx.type_env.set("mat", { kind: Struct("Matrix"), mutable: false })
+  ctx.type_env.set("arr", { kind: Array(Int), mutable: false, })
+  ctx.type_env.set("mat", { kind: Struct("Matrix"), mutable: false, })
   // Note: Matrix struct has a field `data` of type Array(Array(Int))
-  ctx.type_env.set("fact", { kind: Function([TypeVar(0)], Int), mutable: false })
-  ctx.type_env.set("fib", { kind: Function([Int], Int), mutable: false })
+  ctx.type_env.set("fact", {
+    kind: Function([TypeVar(0)], Int),
+    mutable: false,
+  })
+  ctx.type_env.set("fib", { kind: Function([Int], Int), mutable: false, })
   ctx.type_env.set("print_string", {
     kind: Function([String], Unit),
     mutable: false,
   })
-  ctx.type_env.set("sum", { kind: Function([Array(Int)], Int), mutable: false })
+  ctx.type_env.set("sum", { kind: Function([Array(Int)], Int), mutable: false, })
   // Note: max is local function without type annotations
   ctx.type_env.set("max", {
     kind: Function([TypeVar(1), TypeVar(2)], TypeVar(3)),
     mutable: false,
   })
-  ctx.type_env.set("x", { kind: Double, mutable: true })
-  ctx.type_env.set("y", { kind: Double, mutable: true })
+  ctx.type_env.set("x", { kind: Double, mutable: true, })
+  ctx.type_env.set("y", { kind: Double, mutable: true, })
   ctx.type_vars.set(0, TypeVar(0))
   ctx.type_vars.set(1, TypeVar(1))
   ctx.type_vars.set(2, TypeVar(1))
@@ -530,8 +538,8 @@ test "If Expr TypeCheck Test" {
   let ctx = Context::new()
   ctx.type_vars.set(0, TypeVar(0))
   ctx.type_vars.set(1, TypeVar(1))
-  ctx.type_env.set("a", { kind: TypeVar(0), mutable: false })
-  ctx.type_env.set("b", { kind: TypeVar(1), mutable: false })
+  ctx.type_env.set("a", { kind: TypeVar(0), mutable: false, })
+  ctx.type_env.set("b", { kind: TypeVar(1), mutable: false, })
   // Parse
   let tokens = @lexer.tokenize(code)
   let (let_stmt, tok_view) = @parser.parse_let_stmt(tokens[:])
@@ -710,7 +718,7 @@ test "Let Stmt Type Check" {
   let zty = ctx.lookup_type("z")
   assert_true(
     ctx.lookup_type("z") is Some({ kind: Array(Int), .. }),
-    msg="Type of z is \{zty}",
+    msg="Type of z is \{zty.map(t => t.to_string()).unwrap_or("<missing>")}",
   )
 }
 /// ================================================================================
@@ -914,20 +922,16 @@ test "TypeCheck Normal Type Test" {
 ///|
 test "TypeCheck Defined Type Test" {
   let ctx = Context::new()
-  ctx.struct_defs.set("Point", {
-    name: "Point",
-    fields: [],
-    methods: Map::new(),
-  })
+  ctx.struct_defs.set("Point", { name: "Point", fields: [], methods: Map([]), })
   ctx.struct_defs.set("Circle", {
     name: "Circle",
     fields: [],
-    methods: Map::new(),
+    methods: Map([]),
   })
   ctx.struct_defs.set("Rectangle", {
     name: "Rectangle",
     fields: [],
-    methods: Map::new(),
+    methods: Map([]),
   })
   // Note: No Triangle
   let code =
@@ -946,8 +950,11 @@ test "TypeCheck Defined Type Test" {
   let t = ctx.check_parser_type(t)
   assert_true(t.kind is Struct("Rectangle"))
   let (t, tok_view) = @parser.parse_type(tok_view)
-  let t = try? ctx.check_parser_type(t)
-  assert_true(t is Err(_)) // Triangle is not defined
+  try ctx.check_parser_type(t) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected type checking to fail")
+  } // Triangle is not defined
   let (t, tok_view) = @parser.parse_type(tok_view)
   let t = ctx.check_parser_type(t)
   assert_true(t.kind is Array(t1) && t1 is Struct("Point"))
@@ -965,8 +972,11 @@ test "TypeCheck Defined Type Test" {
     t3 is Struct("Circle"),
   )
   let (t, _) = @parser.parse_type(tok_view)
-  let t = try? ctx.check_parser_type(t)
-  assert_true(t is Err(_)) // Triangle is not defined
+  try ctx.check_parser_type(t) catch {
+    _ => ()
+  } noraise {
+    _ => fail("expected type checking to fail")
+  } // Triangle is not defined
 }
 /// ================================================================================
 /// # 倒数第二章：检查整个程序
@@ -1057,7 +1067,6 @@ test "Program TypeCheck Test" {
   let tokens = @lexer.tokenize(code)
   let program = @parser.parse(tokens)
   let _ = ctx.check_program(program)
-
 }
 /// ================================================================================
 /// # 类型检查表达式：ApplyExpr
@@ -1102,9 +1111,9 @@ test "Simple Apply Expression Type Check" {
   let code =
     #|42 3.14 true "Hello" x y z
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false })
-  ctx.type_env.set("y", { kind: TypeKind::Bool, mutable: false })
-  ctx.type_env.set("z", { kind: TypeKind::String, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false, })
+  ctx.type_env.set("y", { kind: TypeKind::Bool, mutable: false, })
+  ctx.type_env.set("z", { kind: TypeKind::String, mutable: false, })
   // Parse
   let tokens = @lexer.tokenize(code)
   // Type of 42
@@ -1189,9 +1198,9 @@ test "Simple Atom Expression Type Check" {
   let code =
     #|42 3.14 true "Hello" x y z
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false })
-  ctx.type_env.set("y", { kind: TypeKind::Bool, mutable: false })
-  ctx.type_env.set("z", { kind: TypeKind::String, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false, })
+  ctx.type_env.set("y", { kind: TypeKind::Bool, mutable: false, })
+  ctx.type_env.set("z", { kind: TypeKind::String, mutable: false, })
   // Parse
   let tokens = @lexer.tokenize(code)
   // Type of 42
@@ -1284,8 +1293,8 @@ test "Simple Expression Type Check" {
     #|1 + 3; 4 - 5 ; 6 * 7; 8.0 / 2.0; 9 % 4;
     #|1 > 2; 42.0 >= y; x == true ;
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false })
-  ctx.type_env.set("y", { kind: TypeKind::Double, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false, })
+  ctx.type_env.set("y", { kind: TypeKind::Double, mutable: false, })
   // Parse
   let tokens = @lexer.tokenize(code)
   // Type of 42
@@ -1501,8 +1510,8 @@ test "Struct Definition Typecheck" {
   assert_true(struct_def.fields.length() is 2)
   assert_true(
     struct_def.fields is [f1, f2] &&
-    f1 is { name: "x", ty: { kind: Int, mutable: false } } &&
-    f2 is { name: "y", ty: { kind: Int, mutable: true } },
+    f1 is { name: "x", ty: { kind: Int, mutable: false, }, } &&
+    f2 is { name: "y", ty: { kind: Int, mutable: true, }, },
   )
   // Typecheck for `struct Queue { data: Array[Int]; mut front: Int; mut back: Int }`
   let (struct_def, _) = @parser.parse_struct_def(tok_view)
@@ -1511,9 +1520,9 @@ test "Struct Definition Typecheck" {
   assert_true(struct_def.fields.length() is 3)
   assert_true(
     struct_def.fields is [f1, f2, f3] &&
-    f1 is { name: "data", ty: { kind: Array(Int), mutable: false } } &&
-    f2 is { name: "front", ty: { kind: Int, mutable: true } } &&
-    f3 is { name: "back", ty: { kind: Int, mutable: true } },
+    f1 is { name: "data", ty: { kind: Array(Int), mutable: false, }, } &&
+    f2 is { name: "front", ty: { kind: Int, mutable: true, }, } &&
+    f3 is { name: "back", ty: { kind: Int, mutable: true, }, },
   )
 }
 /// ================================================================================
@@ -1575,12 +1584,11 @@ test "Top Function TypeCheck Test" {
     #|}
   let ctx = Context::new()
   ctx.func_types.set("fib", Function([Int], Int))
-  ctx.type_env.set("fib", { kind: Function([Int], Int), mutable: false })
+  ctx.type_env.set("fib", { kind: Function([Int], Int), mutable: false, })
   // parse
   let tokens = @lexer.tokenize(code)
   let (top_func, _) = @parser.parse_top_function(tokens[:])
   let _ = ctx.check_top_function(top_func)
-
 }
 /// ================================================================================
 /// # 类型检查语句：顶层 let
@@ -1807,7 +1815,6 @@ test "While Stmt TypeCheck Test" {
   let _ = ctx.check_let_mut_stmt(let_stmt)
   let (while_stmt, _) = @parser.parse_while_stmt(tok_view)
   let _ = ctx.check_while_stmt(while_stmt)
-
 }
 /// ================================================================================
 /// # 🎉 终章：完成类型检查器

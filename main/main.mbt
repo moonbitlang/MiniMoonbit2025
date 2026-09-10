@@ -6,11 +6,11 @@ suberror ArgError {
   MultipleInputFiles(String)
   InValidFile(String)
   InValidOutput(String)
-} derive(Show)
+} derive(Debug)
 
 ///|
 fn main_err() -> Unit raise {
-  let files : Array[String] = Array::new()
+  let files : Array[String] = []
   let output : Ref[String] = @ref.new("")
   let print_tokens : Ref[Bool] = @ref.new(false)
   let print_ast : Ref[Bool] = @ref.new(false)
@@ -75,7 +75,7 @@ fn main_err() -> Unit raise {
     #|MiniMoonBit Compiler
     #|
     #|Usage: minimoonc [options] <source files>"
-  let args = @env.args()[1:].to_array()
+  let args = @env.args()[1:].to_owned()
   @ArgParser.parse(spec, file => files.push(file), usage, args)
   let print_tokens = print_tokens.val || print_all.val
   let print_ast = print_ast.val || print_all.val
@@ -90,7 +90,7 @@ fn main_err() -> Unit raise {
     let opt = files[1]
     if opt.has_suffix(".mbt") {
       raise MultipleInputFiles(
-        "Multiple input files specified. Only one input file is allowed! while got \{files}",
+        "Multiple input files specified. Only one input file is allowed! while got \{files.join(", ")}",
       )
     } else {
       raise InValidOption("Invalid option `\{opt}` detected!")
@@ -106,7 +106,7 @@ fn main_err() -> Unit raise {
   }
 
   // 3. emit-llvm, target=riscv64, target=aarch64, only one can be specified
-  let target_specified : Array[String] = Array::new()
+  let target_specified : Array[String] = []
   if emit_llvm.val {
     target_specified.push("--emit-llvm")
   }

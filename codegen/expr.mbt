@@ -319,7 +319,7 @@ pub fn Context::expr_codegen(
           "Failed to get KNF type by name \{struct_name} for field access",
         )
       }
-      guard struct_knf_type is Struct(struct_name_str)
+      guard! struct_knf_type is Struct(struct_name_str)
       guard self.knf_struct_types.get(struct_name_str) is Some(knf_struct_def) else {
         raise CodegenError(
           "Failed to get KNF struct definition for \{struct_name_str}",
@@ -363,7 +363,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -380,7 +379,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -397,7 +395,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -416,7 +413,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -433,7 +429,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -452,7 +447,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -469,7 +463,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -486,7 +479,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -505,7 +497,6 @@ pub fn Context::expr_codegen(
       for i, elem_value in elem_values {
         let index_value = self.llvm_ctx.getConstInt32(i)
         let _ = self.builder.createCall(array_put, [v, index_value, elem_value])
-
       }
       Some(v)
     }
@@ -537,7 +528,6 @@ pub fn Context::expr_codegen(
           zero, field_index_val,
         ])
         let _ = self.builder.createStore(field_value, field_ptr)
-
       }
       Some(struct_ptr)
     }
@@ -558,7 +548,6 @@ pub fn Context::expr_codegen(
           zero, field_index_val,
         ])
         let _ = self.builder.createStore(elem_value, field_ptr)
-
       }
       Some(tuple_ptr)
     }
@@ -570,7 +559,7 @@ pub fn Context::expr_codegen(
         )
       }
       let tuple_ty = self.type_codegen_concrete(tuple_knf_type)
-      guard tuple_knf_type is Tuple(elem_types)
+      guard! tuple_knf_type is Tuple(elem_types)
       guard elem_types.get(index) is Some(elem_type) else {
         raise CodegenError(
           "Tuple index \{index} out of bounds for tuple type \{tuple_knf_type}",
@@ -627,8 +616,8 @@ pub fn Context::expr_codegen(
       )
       let func_ptr = self.builder.createLoad(ptrty, func_ptr_ptr)
       let arg_values = arg_names.map(n => self.get_value_by_name_or_load(n))
-      let all_args : Array[&@llvm.Value] = Array::new()
-      all_args..push(closure_struct_value)..append(arg_values)
+      let all_args : Array[&@llvm.Value] = []
+      all_args..push(closure_struct_value).append(arg_values)
       let v = self.builder.createCallPtr(func_ptr, func_ty, all_args)
       Some(v)
     }

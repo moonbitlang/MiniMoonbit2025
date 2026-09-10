@@ -6,7 +6,7 @@ pub(all) struct StructConstructExpr {
 }
 
 ///|
-pub impl Show for StructConstructExpr with output(self, logger) {
+pub impl Show for StructConstructExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -33,7 +33,7 @@ pub fn StructConstructExpr::to_string(
     let expr_str = expr.to_string(color~)
     let expr_lines = expr_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.fields.length() - 1
 
@@ -76,7 +76,7 @@ pub fn Context::check_struct_construct_expr(
     self.throw_(sc_expr.toks[0], msg, Error)
   }
   let len = min(sc_expr.fields.length(), struct_def.fields.length())
-  let checked_fields : Array[(String, Expr)] = Array::new()
+  let checked_fields : Array[(String, Expr)] = []
   for i in 0..<len {
     let (field_name, field_expr) = sc_expr.fields[i]
     let field_type = match struct_def.get_field_type(field_name) {
@@ -115,10 +115,10 @@ test "StructConstructExpr to_string Test - Simple" {
   ctx.struct_defs.set("Point", {
     name: "Point",
     fields: [
-      { name: "x", ty: { kind: TypeKind::Int, mutable: false } },
-      { name: "y", ty: { kind: TypeKind::Int, mutable: false } },
+      { name: "x", ty: { kind: TypeKind::Int, mutable: false, }, },
+      { name: "y", ty: { kind: TypeKind::Int, mutable: false, }, },
     ],
-    methods: Map::new(),
+    methods: Map([]),
   })
   let code =
     #|Point::{ x: 1, y: 2 }
@@ -145,11 +145,7 @@ test "StructConstructExpr to_string Test - Simple" {
 test "StructConstructExpr to_string Test - Empty" {
   let color = false
   let ctx = Context::new()
-  ctx.struct_defs.set("Point", {
-    name: "Point",
-    fields: [],
-    methods: Map::new(),
-  })
+  ctx.struct_defs.set("Point", { name: "Point", fields: [], methods: Map([]), })
   let code =
     #|Point::{}
   let tokens = @lexer.tokenize(code)
@@ -171,7 +167,7 @@ test "StructConstructExpr to_string Test - Empty" {
 test "StructConstructExpr to_string Test - Complex Fields" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   ctx.type_env.set("get_next", {
     kind: TypeKind::Function([], TypeKind::Int),
     mutable: false,
@@ -179,11 +175,11 @@ test "StructConstructExpr to_string Test - Complex Fields" {
   ctx.struct_defs.set("Node", {
     name: "Node",
     fields: [
-      { name: "data", ty: { kind: TypeKind::Int, mutable: false } },
-      { name: "next", ty: { kind: TypeKind::Int, mutable: false } },
-      { name: "is_valid", ty: { kind: TypeKind::Bool, mutable: false } },
+      { name: "data", ty: { kind: TypeKind::Int, mutable: false, }, },
+      { name: "next", ty: { kind: TypeKind::Int, mutable: false, }, },
+      { name: "is_valid", ty: { kind: TypeKind::Bool, mutable: false, }, },
     ],
-    methods: Map::new(),
+    methods: Map([]),
   })
   let code =
     #|Node::{ data: x + 1, next: get_next(), is_valid: true }
@@ -209,3 +205,6 @@ test "StructConstructExpr to_string Test - Complex Fields" {
     _ => panic()
   }
 }
+
+///|
+pub extend StructConstructExpr with Show::{output}

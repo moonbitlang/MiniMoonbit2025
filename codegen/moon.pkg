@@ -1,0 +1,7 @@
+import {
+  "Kaida-Amethyst/MiniMoonBit/knf",
+  "Kaida-Amethyst/MiniMoonBit/lexer",
+  "Kaida-Amethyst/MiniMoonBit/parser",
+  "Kaida-Amethyst/MiniMoonBit/typecheck",
+  "Kaida-Amethyst/MoonLLVM/IR" @llvm,
+}

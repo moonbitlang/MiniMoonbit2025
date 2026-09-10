@@ -7,7 +7,7 @@ pub(all) struct ExternFunction {
 }
 
 ///|
-pub impl Show for ExternFunction with output(self, logger) {
+pub impl Show for ExternFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -78,12 +78,12 @@ pub fn Context::check_extern_function(
   guard self.func_types.get(func.fname) is Some(Function(param_types, ret_ty)) else {
     raise TypeCheckError("Function not found in environment: \{func.fname}")
   }
-  let param_list = Array::new()
+  let param_list = []
   for i, param in func.param_list {
     let { name, .. } = param
-    let param_ty = { kind: param_types[i], mutable: false }
+    let param_ty = { kind: param_types[i], mutable: false, }
     self.type_env.set(name, param_ty)
-    param_list.push(Param::{ name, ty: param_ty.kind })
+    param_list.push(Param::{ name, ty: param_ty.kind, })
   }
   ExternFunction::{
     fname: func.fname,
@@ -145,3 +145,6 @@ test "ExternFunction to_string Test - Multiple Params" {
     ),
   )
 }
+
+///|
+pub extend ExternFunction with Show::{output}

@@ -6,7 +6,7 @@ pub(all) struct AssignStmt {
 } derive(Eq)
 
 ///|
-pub impl Show for AssignStmt with output(self, logger) {
+pub impl Show for AssignStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -28,7 +28,7 @@ pub fn AssignStmt::to_string(self : Self, color? : Bool = true) -> String {
   let lvalue_str = self.left_value.to_string(color~)
   let lvalue_lines = lvalue_str
     .split("\n")
-    .map(fn(sv) { sv.to_string() })
+    .map(fn(sv) { sv.to_owned() })
     .to_array()
   let lvalue_formatted = format_lines(
     lvalue_lines,
@@ -38,10 +38,7 @@ pub fn AssignStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -61,7 +58,7 @@ pub(all) enum AssignOp {
 } derive(Eq)
 
 ///|
-pub impl Show for AssignOp with output(self, logger) {
+pub impl Show for AssignOp with fn output(self, logger) {
   let s = match self {
     Assign => "="
     PlusAssign => "+="
@@ -96,7 +93,7 @@ pub fn parse_assign_stmt(
   }
   let op = AssignOp::from_tok_assign_op(op)
   let (expr, tokens) = parse_expr(tokens)
-  let assign_stmt = AssignStmt::{ left_value, op, expr }
+  let assign_stmt = AssignStmt::{ left_value, op, expr, }
   let tokens = if tokens is [{ kind: Symbol(";"), .. }, .. tokens] {
     tokens
   } else if tokens is [tok, ..] &&
@@ -276,3 +273,15 @@ test "AssignStmt to_string Test - Complex" {
     ),
   )
 }
+
+///|
+pub extend AssignStmt with Eq::{not_equal, equal}
+
+///|
+pub extend AssignStmt with Show::{output}
+
+///|
+pub extend AssignOp with Eq::{not_equal, equal}
+
+///|
+pub extend AssignOp with Show::{to_string, output}

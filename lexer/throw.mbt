@@ -1,7 +1,7 @@
 ///|
 pub fn throw_(tok : Token, msg : String, level : ThrowLevel) -> Unit {
   let { line, col, code, file, .. } = tok
-  let str_builder = StringBuilder::new()
+  let str_builder = StringBuilder()
   let color = match level {
     Error => @color.Color::Red
     Warning => @color.Color::Yellow
@@ -39,12 +39,12 @@ pub fn throw_(tok : Token, msg : String, level : ThrowLevel) -> Unit {
 pub(all) enum ThrowLevel {
   Error
   Warning
-} derive(Show)
+}
 
 ///|
 fn get_code_line(code : String, line : Int) -> String {
   let mut lineno = line
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for c in code {
     if c == '\n' {
       lineno -= 1
@@ -56,4 +56,15 @@ fn get_code_line(code : String, line : Int) -> String {
     }
   }
   sb.to_string()
+}
+
+///|
+pub extend ThrowLevel with Show::{to_string, output}
+
+///|
+pub impl Show for ThrowLevel with fn output(self, logger) {
+  match self {
+    Error => logger.write_string("Error")
+    Warning => logger.write_string("Warning")
+  }
 }

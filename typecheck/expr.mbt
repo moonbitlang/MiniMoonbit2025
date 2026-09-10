@@ -6,7 +6,7 @@ pub(all) struct Expr {
 }
 
 ///|
-pub impl Show for Expr with output(self, logger) {
+pub impl Show for Expr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -23,10 +23,7 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let ty_str = if color { @color.taint(ty_str, Green) } else { ty_str }
       let prefix_with_type = "\{prefix} (\{ty_str})"
       let inner_str = expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix_with_type}\n\{formatted}"
     }
@@ -37,10 +34,7 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let ty_str = if color { @color.taint(ty_str, Green) } else { ty_str }
       let prefix_with_type = "\{prefix} (\{ty_str})"
       let inner_str = expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix_with_type}\n\{formatted}"
     }
@@ -73,11 +67,11 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let right_str = right.to_string(color~)
       let left_lines = left_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let right_lines = right_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let left_formatted = @parser.format_lines(
         left_lines,
@@ -106,7 +100,7 @@ pub(all) enum ExprKind {
   BinaryExpr(BinaryOp, Expr, Expr)
   IfExpr(IfExpr)
   MatchExpr(MatchExpr)
-} derive(Show)
+}
 
 ///|
 pub(all) enum BinaryOp {
@@ -127,7 +121,7 @@ pub(all) enum BinaryOp {
   Or // ||
   BitAnd // &
   BitOr // |
-} derive(Show, Eq)
+} derive(Eq)
 
 ///|
 fn binop_is_cmp(bin_op : BinaryOp) -> Bool {
@@ -197,7 +191,7 @@ pub fn Context::check_expr(self : Self, expr : @parser.Expr) -> Expr {
   match expr.kind {
     ApplyExpr(apply_expr) => {
       let apply_expr = self.check_apply_expr(apply_expr)
-      Expr::{ kind: ApplyExpr(apply_expr), ty: apply_expr.ty, toks: expr.toks }
+      Expr::{ kind: ApplyExpr(apply_expr), ty: apply_expr.ty, toks: expr.toks, }
     }
     NotExpr(inner_expr) => {
       let checked_inner = self.check_expr(inner_expr)
@@ -209,7 +203,7 @@ pub fn Context::check_expr(self : Self, expr : @parser.Expr) -> Expr {
         println(msg)
         panic()
       }
-      Expr::{ kind: NotExpr(checked_inner), ty: Bool, toks: expr.toks }
+      Expr::{ kind: NotExpr(checked_inner), ty: Bool, toks: expr.toks, }
     }
     NegExpr(inner_expr) => {
       let checked_inner = self.check_expr(inner_expr)
@@ -367,9 +361,9 @@ pub fn Context::check_expr(self : Self, expr : @parser.Expr) -> Expr {
 test "Expr to_string Test - Basic" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false })
-  ctx.type_env.set("y", { kind: TypeKind::Int, mutable: false })
-  ctx.type_env.set("z", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false, })
+  ctx.type_env.set("y", { kind: TypeKind::Int, mutable: false, })
+  ctx.type_env.set("z", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|42 ; !x ; -y ; 1 + 2 ; y == z
   let tokens = @lexer.tokenize(code)
@@ -454,7 +448,7 @@ test "Expr to_string Test - BlockExpr" {
 test "Expr to_string Test - IfExpr" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|if x > 0 { 1 } else { 0 }
   let tokens = @lexer.tokenize(code)
@@ -477,4 +471,84 @@ test "Expr to_string Test - IfExpr" {
       #|        
     ),
   )
+}
+
+///|
+pub extend Expr with Show::{output}
+
+///|
+pub extend ExprKind with Show::{to_string, output}
+
+///|
+pub extend BinaryOp with Show::{to_string, output}
+
+///|
+pub extend BinaryOp with Eq::{not_equal, equal}
+
+///|
+pub impl Show for ExprKind with fn output(self, logger) {
+  match self {
+    ApplyExpr(v0) => {
+      logger.write_string("ApplyExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    BlockExpr(v0) => {
+      logger.write_string("BlockExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    NotExpr(v0) => {
+      logger.write_string("NotExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    NegExpr(v0) => {
+      logger.write_string("NegExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    BinaryExpr(v0, v1, v2) => {
+      logger.write_string("BinaryExpr(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(", ")
+      logger.write_object(v2)
+      logger.write_string(")")
+    }
+    IfExpr(v0) => {
+      logger.write_string("IfExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    MatchExpr(v0) => {
+      logger.write_string("MatchExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+  }
+}
+
+///|
+pub impl Show for BinaryOp with fn output(self, logger) {
+  match self {
+    Add => logger.write_string("Add")
+    Sub => logger.write_string("Sub")
+    Mul => logger.write_string("Mul")
+    Div => logger.write_string("Div")
+    Mod => logger.write_string("Mod")
+    ShiftLeft => logger.write_string("ShiftLeft")
+    ShiftRight => logger.write_string("ShiftRight")
+    Eq => logger.write_string("Eq")
+    NE => logger.write_string("NE")
+    LT => logger.write_string("LT")
+    GT => logger.write_string("GT")
+    LE => logger.write_string("LE")
+    GE => logger.write_string("GE")
+    And => logger.write_string("And")
+    Or => logger.write_string("Or")
+    BitAnd => logger.write_string("BitAnd")
+    BitOr => logger.write_string("BitOr")
+  }
 }

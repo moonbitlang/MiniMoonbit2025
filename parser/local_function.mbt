@@ -7,7 +7,7 @@ pub(all) struct LocalFunction {
 } derive(Eq)
 
 ///|
-pub impl Show for LocalFunction with output(self, logger) {
+pub impl Show for LocalFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -59,10 +59,7 @@ pub fn LocalFunction::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = format_lines(
     body_lines,
     head_with="└-body: ",
@@ -91,37 +88,39 @@ pub fn parse_local_function(
   guard tokens is [{ kind: Bracket('('), .. }, .. tokens] else {
     raise ParseError("Expect '('")
   }
-  let params : Array[(String, Type?)] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
-    [{ kind: Lower(name), .. }, { kind: Symbol(":"), .. }, .. tokens] => {
-      let (ty, tokens) = parse_type(tokens)
-      params.push((name, Some(ty)))
-      continue tokens
+  let params : Array[(String, Type?)] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
+      [{ kind: Lower(name), .. }, { kind: Symbol(":"), .. }, .. tokens] => {
+        let (ty, tokens) = parse_type(tokens)
+        params.push((name, Some(ty)))
+        continue tokens
+      }
+      [
+        { kind: Symbol(","), .. },
+        { kind: Lower(name), .. },
+        { kind: Symbol(":"), .. },
+        .. tokens,
+      ] => {
+        let (ty, tokens) = parse_type(tokens)
+        params.push((name, Some(ty)))
+        continue tokens
+      }
+      [{ kind: Lower(name), .. }, .. tokens] => {
+        params.push((name, None))
+        continue tokens
+      }
+      [{ kind: Symbol(","), .. }, { kind: Lower(name), .. }, .. tokens] => {
+        params.push((name, None))
+        continue tokens
+      }
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tok => raise ParseError("InValid Param List Parsing: \{tok[0]}")
     }
-    [
-      { kind: Symbol(","), .. },
-      { kind: Lower(name), .. },
-      { kind: Symbol(":"), .. },
-      .. tokens,
-    ] => {
-      let (ty, tokens) = parse_type(tokens)
-      params.push((name, Some(ty)))
-      continue tokens
-    }
-    [{ kind: Lower(name), .. }, .. tokens] => {
-      params.push((name, None))
-      continue tokens
-    }
-    [{ kind: Symbol(","), .. }, { kind: Lower(name), .. }, .. tokens] => {
-      params.push((name, None))
-      continue tokens
-    }
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tok => raise ParseError("InValid Param List Parsing: \{tok[0]}")
   }
   let (ret_ty, tokens) = if tokens is [{ kind: Symbol("->"), .. }, .. tokens] {
     let (ty, tokens) = parse_type(tokens)
@@ -242,3 +241,9 @@ test "LocalFunction to_string Test - Complex Body" {
     ),
   )
 }
+
+///|
+pub extend LocalFunction with Eq::{not_equal, equal}
+
+///|
+pub extend LocalFunction with Show::{output}

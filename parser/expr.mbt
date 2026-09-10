@@ -5,7 +5,7 @@ pub(all) struct Expr {
 } derive(Eq)
 
 ///|
-pub impl Show for Expr with output(self, logger) {
+pub impl Show for Expr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -18,10 +18,7 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let prefix = "unary operator !"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       let inner_str = expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = format_lines(lines)
       "\{prefix}\n\{formatted}"
     }
@@ -29,10 +26,7 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let prefix = "unary operator -"
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       let inner_str = expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = format_lines(lines)
       "\{prefix}\n\{formatted}"
     }
@@ -62,11 +56,11 @@ pub fn Expr::to_string(self : Self, color? : Bool = true) -> String {
       let right_str = right.to_string(color~)
       let left_lines = left_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let right_lines = right_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let left_formatted = format_lines(
         left_lines,
@@ -98,7 +92,7 @@ pub(all) enum ExprKind {
 } derive(Eq)
 
 ///|
-pub impl Show for ExprKind with output(self, logger) {
+pub impl Show for ExprKind with fn output(self, logger) {
   let s = match self {
     ApplyExpr(apply_expr) => apply_expr.to_string()
     NotExpr(expr) => "!\{expr}"
@@ -114,7 +108,7 @@ pub impl Show for ExprKind with output(self, logger) {
 ///|
 fn Expr::unit() -> Expr {
   let apply_unit = ApplyExpr::unit()
-  Expr::{ kind: ApplyExpr(apply_unit), toks: apply_unit.toks }
+  Expr::{ kind: ApplyExpr(apply_unit), toks: apply_unit.toks, }
 }
 
 ///|
@@ -125,7 +119,7 @@ pub fn Expr::new(
 ) -> Expr {
   let len = rest_tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  Expr::{ kind, toks }
+  Expr::{ kind, toks, }
 }
 
 ///|
@@ -140,7 +134,7 @@ pub fn Expr::new_binary(
   let total_len = left.toks.length() + right.toks.length()
   let lhs_init_offset = lhs_offset - init_offset
   let toks = init_tokens[lhs_init_offset:lhs_init_offset + total_len]
-  Expr::{ kind: ExprKind::BinaryExpr(bop, left, right), toks }
+  Expr::{ kind: ExprKind::BinaryExpr(bop, left, right), toks, }
 }
 
 ///|
@@ -165,7 +159,7 @@ pub(all) enum BinaryOp {
 } derive(Eq)
 
 ///|
-pub impl Show for BinaryOp with output(self, logger) {
+pub impl Show for BinaryOp with fn output(self, logger) {
   let s = match self {
     Add => "+"
     Sub => "-"
@@ -238,8 +232,8 @@ pub fn parse_expr(
     }
     _ => ()
   }
-  let op_stack : @deque.Deque[BinaryOp] = @deque.Deque::new()
-  let expr_stack : @deque.Deque[Expr] = @deque.Deque::new()
+  let op_stack : @deque.Deque[BinaryOp] = @deque.Deque([])
+  let expr_stack : @deque.Deque[Expr] = @deque.Deque([])
 
   // Parse unary expression (Not or Neg) or apply expression
   let (head_expr, tokens) = match tokens {
@@ -333,24 +327,26 @@ fn BinaryOp::precedence(self : Self) -> Int {
 fn parse_expr_list(
   tokens : ArrayView[Token],
 ) -> (Array[Expr], ArrayView[Token]) raise ParseError {
-  let exprs : Array[Expr] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Bracket(')'), .. }, ..] as tokens => break tokens
-    [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, ..] as tokens =>
-      break tokens[1:]
-    [{ kind: Symbol(","), .. }, .. tokens] => {
-      let (expr, rest) = parse_expr(tokens)
-      exprs.push(expr)
-      continue rest
-    }
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tokens => {
-      let (expr, rest) = parse_expr(tokens)
-      exprs.push(expr)
-      continue rest
+  let exprs : Array[Expr] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket(')'), .. }, ..] as tokens => break tokens
+      [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, ..] as tokens =>
+        break tokens[1:]
+      [{ kind: Symbol(","), .. }, .. tokens] => {
+        let (expr, rest) = parse_expr(tokens)
+        exprs.push(expr)
+        continue rest
+      }
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tokens => {
+        let (expr, rest) = parse_expr(tokens)
+        exprs.push(expr)
+        continue rest
+      }
     }
   }
   (exprs, tokens)
@@ -709,3 +705,21 @@ test "Expr to_string Test - Match" {
     ),
   )
 }
+
+///|
+pub extend Expr with Eq::{not_equal, equal}
+
+///|
+pub extend Expr with Show::{output}
+
+///|
+pub extend ExprKind with Eq::{not_equal, equal}
+
+///|
+pub extend ExprKind with Show::{to_string, output}
+
+///|
+pub extend BinaryOp with Eq::{not_equal, equal}
+
+///|
+pub extend BinaryOp with Show::{to_string, output}

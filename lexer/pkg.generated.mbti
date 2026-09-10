@@ -10,6 +10,8 @@ pub fn tokenize(String, source_file? : String) -> Array[Token] raise TokenizeErr
 pub suberror TokenizeError {
   TokenizeError(String)
 }
+pub fn TokenizeError::output(Self, &Logger) -> Unit
+pub fn TokenizeError::to_string(Self) -> String
 pub impl Show for TokenizeError
 
 // Types and methods
@@ -20,10 +22,13 @@ pub(all) enum AssignOp {
   MultAssign
   DivAssign
   ModAssign
-}
-pub impl Eq for AssignOp
+} derive(Eq, ToJson)
+pub fn AssignOp::equal(Self, Self) -> Bool
+pub fn AssignOp::not_equal(Self, Self) -> Bool
+pub fn AssignOp::output(Self, &Logger) -> Unit
+pub fn AssignOp::to_json(Self) -> Json
+pub fn AssignOp::to_string(Self) -> String
 pub impl Show for AssignOp
-pub impl ToJson for AssignOp
 
 pub(all) enum BinaryOp {
   Add
@@ -43,8 +48,11 @@ pub(all) enum BinaryOp {
   Or
   BitAnd
   BitOr
-}
-pub impl Eq for BinaryOp
+} derive(Eq)
+pub fn BinaryOp::equal(Self, Self) -> Bool
+pub fn BinaryOp::not_equal(Self, Self) -> Bool
+pub fn BinaryOp::output(Self, &Logger) -> Unit
+pub fn BinaryOp::to_string(Self) -> String
 pub impl Show for BinaryOp
 
 pub(all) enum Keyword {
@@ -60,14 +68,19 @@ pub(all) enum Keyword {
   Extern
   Enum
   Match
-}
-pub impl Eq for Keyword
+} derive(Eq)
+pub fn Keyword::equal(Self, Self) -> Bool
+pub fn Keyword::not_equal(Self, Self) -> Bool
+pub fn Keyword::output(Self, &Logger) -> Unit
+pub fn Keyword::to_string(Self) -> String
 pub impl Show for Keyword
 
 pub(all) enum ThrowLevel {
   Error
   Warning
 }
+pub fn ThrowLevel::output(Self, &Logger) -> Unit
+pub fn ThrowLevel::to_string(Self) -> String
 pub impl Show for ThrowLevel
 
 pub struct Token {
@@ -77,9 +90,12 @@ pub struct Token {
   idx : Int
   code : String
   file : String
-}
+} derive(Eq)
+pub fn Token::equal(Self, Self) -> Bool
 pub fn Token::new(TokenKind, Int, Int, Int, String, String) -> Self
-pub impl Eq for Token
+pub fn Token::not_equal(Self, Self) -> Bool
+pub fn Token::output(Self, &Logger) -> Unit
+pub fn Token::to_string(Self) -> String
 pub impl Show for Token
 
 pub(all) enum TokenKind {
@@ -102,11 +118,13 @@ pub(all) enum TokenKind {
   Symbol(String)
   Wildcard
   EOF
-}
-pub impl Eq for TokenKind
+} derive(Eq)
+pub fn TokenKind::equal(Self, Self) -> Bool
+pub fn TokenKind::not_equal(Self, Self) -> Bool
+pub fn TokenKind::output(Self, &Logger) -> Unit
+pub fn TokenKind::to_string(Self) -> String
 pub impl Show for TokenKind
 
 // Type aliases
 
 // Traits
-

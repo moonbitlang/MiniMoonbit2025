@@ -6,7 +6,7 @@ pub(all) struct AtomExpr {
 }
 
 ///|
-pub impl Show for AtomExpr with output(self, logger) {
+pub impl Show for AtomExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -81,7 +81,7 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
           let expr_str = exprs[i].to_string(color~)
           let lines = expr_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == exprs.length() - 1
           let formatted = if is_last {
@@ -108,7 +108,7 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
           let expr_str = exprs[i].to_string(color~)
           let lines = expr_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == exprs.length() - 1
           let formatted = if is_last {
@@ -131,11 +131,11 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
       let init_str = init_expr.to_string(color~)
       let size_lines = size_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let init_lines = init_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let size_formatted = @parser.format_lines(
         size_lines,
@@ -162,7 +162,7 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
           let expr_str = exprs[i].to_string(color~)
           let lines = expr_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == exprs.length() - 1
           let formatted = if is_last {
@@ -183,7 +183,7 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       let ty_str = ty.to_string()
       let expr_str = expr.to_string(color~)
-      let lines = expr_str.split("\n").map(fn(sv) { sv.to_string() }).to_array()
+      let lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix} to \{ty_str}\n\{formatted}"
     }
@@ -192,7 +192,7 @@ pub fn AtomExpr::to_string(self : Self, color? : Bool = true) -> String {
       let prefix = if color { @color.taint(prefix, Magenta) } else { prefix }
       let ty_str = ty.to_string()
       let expr_str = expr.to_string(color~)
-      let lines = expr_str.split("\n").map(fn(sv) { sv.to_string() }).to_array()
+      let lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix} to \{ty_str}\n\{formatted}"
     }
@@ -224,7 +224,7 @@ pub(all) enum AtomExprKind {
   EnumConstruct(String, String, Array[Expr]) // [Tag::]Variant(expr, ...)
   Cast(TypeKind, Expr) // Type cast: e.g., n.to_int()
   BitCast(TypeKind, Expr) // Bitcast: e.g., n.reinterpret_as_float()
-} derive(Show)
+}
 
 ///|
 pub fn Context::check_atom_expr(
@@ -247,7 +247,7 @@ pub fn Context::check_atom_expr(
         Some(ty) => ty
         None => {
           self.throw_(atom_expr.toks[0], "Undefined identifier: \{name}", Error)
-          { kind: TypeKind::Unit, mutable: false }
+          { kind: TypeKind::Unit, mutable: false, }
         }
       }
       (Ident(name), ty.kind)
@@ -262,7 +262,7 @@ pub fn Context::check_atom_expr(
             "Undefined identifier: \{tag}::\{name}",
             Error,
           )
-          { kind: TypeKind::Unit, mutable: false }
+          { kind: TypeKind::Unit, mutable: false, }
         }
       }
       // Use the mangled name (whole_name) instead of just name
@@ -280,7 +280,7 @@ pub fn Context::check_atom_expr(
       self.check_enum_constuct_expr(tag, variant_name, exprs, atom_expr)
     StructConstruct(sc_expr) => self.check_struct_construct_expr(sc_expr)
   }
-  AtomExpr::{ kind: typed_atom_expr_kind, ty: type_kind, toks: atom_expr.toks }
+  AtomExpr::{ kind: typed_atom_expr_kind, ty: type_kind, toks: atom_expr.toks, }
 }
 
 ///|
@@ -341,7 +341,7 @@ pub fn Context::check_tuple_expr(
 test "AtomExpr to_string Test" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|42 ; 100L ; 200U ; 300UL ; 3.14 ; 2.5F ; 'c' ; true ; "hello" ; x ; ()
   let tokens = @lexer.tokenize(code)
@@ -403,4 +403,117 @@ test "AtomExpr to_string Test" {
   let (parsed, _) = @parser.parse_atom_expr(rest[1:])
   let checked = ctx.check_atom_expr(parsed)
   inspect(checked.to_string(color~), content="unit () (Unit)")
+}
+
+///|
+pub extend AtomExpr with Show::{output}
+
+///|
+pub extend AtomExprKind with Show::{to_string, output}
+
+///|
+pub impl Show for AtomExprKind with fn output(self, logger) {
+  match self {
+    Int(v0) => {
+      logger.write_string("Int(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Int64(v0) => {
+      logger.write_string("Int64(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    UInt(v0) => {
+      logger.write_string("UInt(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    UInt64(v0) => {
+      logger.write_string("UInt64(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Double(v0) => {
+      logger.write_string("Double(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Float(v0) => {
+      logger.write_string("Float(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Char(v0) => {
+      logger.write_string("Char(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Bool(v0) => {
+      logger.write_string("Bool(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    String(v0) => {
+      logger.write_string("String(")
+      logger.write_string(v0.escape())
+      logger.write_string(")")
+    }
+    Ident(v0) => {
+      logger.write_string("Ident(")
+      logger.write_string(v0.escape())
+      logger.write_string(")")
+    }
+    Unit => logger.write_string("Unit")
+    Paren(v0) => {
+      logger.write_string("Paren(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Tuple(v0) => {
+      logger.write_string("Tuple(")
+      logger.write_iter(v0.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    Array(v0) => {
+      logger.write_string("Array(")
+      logger.write_iter(v0.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    ArrayMake(v0, v1) => {
+      logger.write_string("ArrayMake(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(")")
+    }
+    StructConstruct(v0) => {
+      logger.write_string("StructConstruct(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    EnumConstruct(v0, v1, v2) => {
+      logger.write_string("EnumConstruct(")
+      logger.write_string(v0.escape())
+      logger.write_string(", ")
+      logger.write_string(v1.escape())
+      logger.write_string(", ")
+      logger.write_iter(v2.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    Cast(v0, v1) => {
+      logger.write_string("Cast(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(")")
+    }
+    BitCast(v0, v1) => {
+      logger.write_string("BitCast(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(")")
+    }
+  }
 }

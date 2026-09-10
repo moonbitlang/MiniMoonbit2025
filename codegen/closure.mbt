@@ -10,7 +10,7 @@ pub fn Context::closure_codegen(
   let zero = self.llvm_ctx.getConstInt32(0)
 
   // Generate closure struct
-  let closure_struct_field_types : Array[&@llvm.Type] = Array::new()
+  let closure_struct_field_types : Array[&@llvm.Type] = []
   // first field: function pointer
   closure_struct_field_types.push(ptrty)
   // following fields: captured variables
@@ -66,7 +66,6 @@ pub fn Context::closure_codegen(
       zero, field_index_val,
     ])
     let _ = self.builder.createStore(captured_value, captured_ptr)
-
   }
 }
 
@@ -82,7 +81,7 @@ pub fn Context::closure_func_codegen(
   // Generate closure function declaration
   let ptrty = self.llvm_ctx.getPtrTy()
   let ret_ty = self.type_codegen_opaque(closure_def.ret_ty)
-  let arg_types : Array[&@llvm.Type] = Array::new()
+  let arg_types : Array[&@llvm.Type] = []
   // first argument: closure environment pointer
   arg_types.push(ptrty)
   // following arguments: closure parameters
@@ -102,7 +101,7 @@ pub fn Context::closure_func_codegen(
   let func_value = self.llvm_mod.addFunction(func_ty, func_name)
 
   // Generate closure struct type
-  let closure_struct_ty : Array[&@llvm.Type] = Array::new()
+  let closure_struct_ty : Array[&@llvm.Type] = []
   closure_struct_ty.push(ptrty) // function pointer
   for _, captured_var in captured_vars {
     let (_, (captured_ty, is_mut)) = captured_var
@@ -119,8 +118,8 @@ pub fn Context::closure_func_codegen(
   // Generate function body
   let old_name_value = self.name_values
   let old_name_knf_type = self.name_types
-  self.name_values = Map::new()
-  self.name_types = Map::new()
+  self.name_values = Map([])
+  self.name_types = Map([])
   let entry_bb = func_value.addBasicBlock(name="entry")
   self.builder.setInsertPoint(entry_bb)
   for i, param in closure_def.params {
@@ -164,12 +163,10 @@ pub fn Context::closure_func_codegen(
         match self.expr_codegen(expr) {
           Some(ret_val) => {
             let _ = self.builder.createRet(ret_val)
-
           }
           None =>
             if func_ty.returnType.asTypeEnum() is VoidType(_) {
               let _ = self.builder.createRetVoid()
-
             }
         }
       Return(expr) => {
@@ -177,23 +174,19 @@ pub fn Context::closure_func_codegen(
           raise CodegenError("Return expression did not produce a value")
         }
         let _ = self.builder.createRet(ret_value)
-
       }
       ReturnUnit => {
         let _ = self.builder.createRetVoid()
-
       }
       stmt => {
         self.stmt_codegen(stmt)
         if func_ty.returnType.asTypeEnum() is VoidType(_) {
           let _ = self.builder.createRetVoid()
-
         }
       }
     }
   } else {
     let _ = self.builder.createRetVoid()
-
   }
 
   // Restore old mappings

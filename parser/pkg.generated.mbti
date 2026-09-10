@@ -1,10 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Kaida-Amethyst/MiniMoonBit/parser"
 
-import(
-  "Kaida-Amethyst/MiniMoonBit/lexer"
-  "Kaida-Amethyst/either"
-)
+import {
+  "Kaida-Amethyst/MiniMoonBit/lexer",
+  "Kaida-Amethyst/either",
+}
 
 // Values
 pub fn format_lines(Array[String], head_with? : String, continue_with? : String) -> String
@@ -71,16 +71,20 @@ pub fn skip_semicolon(ArrayView[@lexer.Token]) -> ArrayView[@lexer.Token]
 pub suberror ParseError {
   ParseError(String)
 }
+pub fn ParseError::output(Self, &Logger) -> Unit
+pub fn ParseError::to_string(Self) -> String
 pub impl Show for ParseError
 
 // Types and methods
 pub(all) struct ApplyExpr {
   kind : ApplyExprKind
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn ApplyExpr::equal(Self, Self) -> Bool
 pub fn ApplyExpr::new(ApplyExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn ApplyExpr::not_equal(Self, Self) -> Bool
+pub fn ApplyExpr::output(Self, &Logger) -> Unit
 pub fn ApplyExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for ApplyExpr
 pub impl Show for ApplyExpr
 
 pub(all) enum ApplyExprKind {
@@ -88,8 +92,11 @@ pub(all) enum ApplyExprKind {
   ArrayAccess(ApplyExpr, Expr)
   FieldAccess(ApplyExpr, String)
   Call(ApplyExpr, Array[Expr])
-}
-pub impl Eq for ApplyExprKind
+} derive(Eq)
+pub fn ApplyExprKind::equal(Self, Self) -> Bool
+pub fn ApplyExprKind::not_equal(Self, Self) -> Bool
+pub fn ApplyExprKind::output(Self, &Logger) -> Unit
+pub fn ApplyExprKind::to_string(Self) -> String
 pub impl Show for ApplyExprKind
 
 pub(all) enum AssignOp {
@@ -99,26 +106,33 @@ pub(all) enum AssignOp {
   MultAssign
   DivAssign
   ModAssign
-}
-pub impl Eq for AssignOp
+} derive(Eq)
+pub fn AssignOp::equal(Self, Self) -> Bool
+pub fn AssignOp::not_equal(Self, Self) -> Bool
+pub fn AssignOp::output(Self, &Logger) -> Unit
+pub fn AssignOp::to_string(Self) -> String
 pub impl Show for AssignOp
 
 pub(all) struct AssignStmt {
   left_value : LeftValue
   op : AssignOp
   expr : Expr
-}
+} derive(Eq)
+pub fn AssignStmt::equal(Self, Self) -> Bool
+pub fn AssignStmt::not_equal(Self, Self) -> Bool
+pub fn AssignStmt::output(Self, &Logger) -> Unit
 pub fn AssignStmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for AssignStmt
 pub impl Show for AssignStmt
 
 pub(all) struct AtomExpr {
   kind : AtomExprKind
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn AtomExpr::equal(Self, Self) -> Bool
 pub fn AtomExpr::new(AtomExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn AtomExpr::not_equal(Self, Self) -> Bool
+pub fn AtomExpr::output(Self, &Logger) -> Unit
 pub fn AtomExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for AtomExpr
 pub impl Show for AtomExpr
 
 pub(all) enum AtomExprKind {
@@ -140,8 +154,11 @@ pub(all) enum AtomExprKind {
   ArrayMake(Expr, Expr)
   EnumConstruct(String?, String, Array[Expr])
   StructConstruct(StructConstructExpr)
-}
-pub impl Eq for AtomExprKind
+} derive(Eq)
+pub fn AtomExprKind::equal(Self, Self) -> Bool
+pub fn AtomExprKind::not_equal(Self, Self) -> Bool
+pub fn AtomExprKind::output(Self, &Logger) -> Unit
+pub fn AtomExprKind::to_string(Self) -> String
 pub impl Show for AtomExprKind
 
 pub(all) enum BinaryOp {
@@ -162,43 +179,54 @@ pub(all) enum BinaryOp {
   Or
   BitAnd
   BitOr
-}
+} derive(Eq)
+pub fn BinaryOp::equal(Self, Self) -> Bool
 pub fn BinaryOp::from_tok_binary_op(@lexer.BinaryOp) -> Self
-pub impl Eq for BinaryOp
+pub fn BinaryOp::not_equal(Self, Self) -> Bool
+pub fn BinaryOp::output(Self, &Logger) -> Unit
+pub fn BinaryOp::to_string(Self) -> String
 pub impl Show for BinaryOp
 
 pub(all) struct BlockExpr {
   stmts : Array[Stmt]
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn BlockExpr::equal(Self, Self) -> Bool
+pub fn BlockExpr::not_equal(Self, Self) -> Bool
+pub fn BlockExpr::output(Self, &Logger) -> Unit
 pub fn BlockExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for BlockExpr
 pub impl Show for BlockExpr
 
 pub struct EnumDef {
   name : String
   enum_fields : Array[EnumField]
-}
+} derive(Eq)
+pub fn EnumDef::equal(Self, Self) -> Bool
+pub fn EnumDef::not_equal(Self, Self) -> Bool
+pub fn EnumDef::output(Self, &Logger) -> Unit
 pub fn EnumDef::to_string(Self, color? : Bool) -> String
-pub impl Eq for EnumDef
 pub impl Show for EnumDef
 
 pub struct EnumField {
   name : String
   types : Array[Type]
-}
+} derive(Eq)
+pub fn EnumField::equal(Self, Self) -> Bool
+pub fn EnumField::not_equal(Self, Self) -> Bool
+pub fn EnumField::output(Self, &Logger) -> Unit
 pub fn EnumField::to_string(Self, color? : Bool) -> String
-pub impl Eq for EnumField
 pub impl Show for EnumField
 
 pub(all) struct Expr {
   kind : ExprKind
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn Expr::equal(Self, Self) -> Bool
 pub fn Expr::new(ExprKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
 pub fn Expr::new_binary(BinaryOp, ArrayView[@lexer.Token], Self, Self) -> Self
+pub fn Expr::not_equal(Self, Self) -> Bool
+pub fn Expr::output(Self, &Logger) -> Unit
 pub fn Expr::to_string(Self, color? : Bool) -> String
-pub impl Eq for Expr
 pub impl Show for Expr
 
 pub(all) enum ExprKind {
@@ -209,8 +237,11 @@ pub(all) enum ExprKind {
   BinaryExpr(BinaryOp, Expr, Expr)
   IfExpr(IfExpr)
   MatchExpr(MatchExpr)
-}
-pub impl Eq for ExprKind
+} derive(Eq)
+pub fn ExprKind::equal(Self, Self) -> Bool
+pub fn ExprKind::not_equal(Self, Self) -> Bool
+pub fn ExprKind::output(Self, &Logger) -> Unit
+pub fn ExprKind::to_string(Self) -> String
 pub impl Show for ExprKind
 
 pub(all) struct ExternFunction {
@@ -218,9 +249,11 @@ pub(all) struct ExternFunction {
   param_list : Array[Param]
   ret_ty : Type?
   ffi_name : String
-}
+} derive(Eq)
+pub fn ExternFunction::equal(Self, Self) -> Bool
+pub fn ExternFunction::not_equal(Self, Self) -> Bool
+pub fn ExternFunction::output(Self, &Logger) -> Unit
 pub fn ExternFunction::to_string(Self, color? : Bool) -> String
-pub impl Eq for ExternFunction
 pub impl Show for ExternFunction
 
 pub struct ForStmt {
@@ -228,9 +261,11 @@ pub struct ForStmt {
   cond : Expr?
   steps : Array[(String, AssignOp, Expr)]
   body : BlockExpr
-}
+} derive(Eq)
+pub fn ForStmt::equal(Self, Self) -> Bool
+pub fn ForStmt::not_equal(Self, Self) -> Bool
+pub fn ForStmt::output(Self, &Logger) -> Unit
 pub fn ForStmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for ForStmt
 pub impl Show for ForStmt
 
 pub(all) struct IfExpr {
@@ -238,42 +273,53 @@ pub(all) struct IfExpr {
   then_block : BlockExpr
   else_block : @either.Either[IfExpr, BlockExpr]?
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn IfExpr::equal(Self, Self) -> Bool
+pub fn IfExpr::not_equal(Self, Self) -> Bool
+pub fn IfExpr::output(Self, &Logger) -> Unit
 pub fn IfExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for IfExpr
 pub impl Show for IfExpr
 
 pub(all) struct LeftValue {
   kind : LeftValueKind
-}
+} derive(Eq)
+pub fn LeftValue::equal(Self, Self) -> Bool
+pub fn LeftValue::not_equal(Self, Self) -> Bool
+pub fn LeftValue::output(Self, &Logger) -> Unit
 pub fn LeftValue::to_string(Self, color? : Bool) -> String
-pub impl Eq for LeftValue
 pub impl Show for LeftValue
 
 pub(all) enum LeftValueKind {
   Ident(String)
   ArrayAccess(LeftValue, Expr)
   FieldAccess(LeftValue, String)
-}
-pub impl Eq for LeftValueKind
+} derive(Eq)
+pub fn LeftValueKind::equal(Self, Self) -> Bool
+pub fn LeftValueKind::not_equal(Self, Self) -> Bool
+pub fn LeftValueKind::output(Self, &Logger) -> Unit
+pub fn LeftValueKind::to_string(Self) -> String
 pub impl Show for LeftValueKind
 
 pub(all) struct LetMutStmt {
   name : String
   ty : Type?
   expr : Expr
-}
+} derive(Eq)
+pub fn LetMutStmt::equal(Self, Self) -> Bool
+pub fn LetMutStmt::not_equal(Self, Self) -> Bool
+pub fn LetMutStmt::output(Self, &Logger) -> Unit
 pub fn LetMutStmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for LetMutStmt
 pub impl Show for LetMutStmt
 
 pub(all) struct LetStmt {
   pattern : Pattern
   ty : Type?
   expr : Expr
-}
+} derive(Eq)
+pub fn LetStmt::equal(Self, Self) -> Bool
+pub fn LetStmt::not_equal(Self, Self) -> Bool
+pub fn LetStmt::output(Self, &Logger) -> Unit
 pub fn LetStmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for LetStmt
 pub impl Show for LetStmt
 
 pub(all) struct LocalFunction {
@@ -281,9 +327,11 @@ pub(all) struct LocalFunction {
   param_list : Array[(String, Type?)]
   ret_ty : Type?
   body : BlockExpr
-}
+} derive(Eq)
+pub fn LocalFunction::equal(Self, Self) -> Bool
+pub fn LocalFunction::not_equal(Self, Self) -> Bool
+pub fn LocalFunction::output(Self, &Logger) -> Unit
 pub fn LocalFunction::to_string(Self, color? : Bool) -> String
-pub impl Eq for LocalFunction
 pub impl Show for LocalFunction
 
 pub struct MatchArm {
@@ -291,32 +339,40 @@ pub struct MatchArm {
   match_guard : Expr?
   body : Expr
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn MatchArm::equal(Self, Self) -> Bool
+pub fn MatchArm::not_equal(Self, Self) -> Bool
+pub fn MatchArm::output(Self, &Logger) -> Unit
 pub fn MatchArm::to_string(Self, color? : Bool) -> String
-pub impl Eq for MatchArm
 pub impl Show for MatchArm
 
 pub struct MatchExpr {
   cond : Expr
   arms : Array[MatchArm]
-}
+} derive(Eq)
+pub fn MatchExpr::equal(Self, Self) -> Bool
+pub fn MatchExpr::not_equal(Self, Self) -> Bool
+pub fn MatchExpr::output(Self, &Logger) -> Unit
 pub fn MatchExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for MatchExpr
 pub impl Show for MatchExpr
 
 pub(all) struct Param {
   name : String
   ty : Type
-}
+} derive(Eq)
+pub fn Param::equal(Self, Self) -> Bool
+pub fn Param::not_equal(Self, Self) -> Bool
+pub fn Param::output(Self, &Logger) -> Unit
 pub fn Param::to_string(Self, color? : Bool) -> String
-pub impl Eq for Param
 pub impl Show for Param
 
 pub(all) struct Pattern {
   kind : PatternKind
-}
+} derive(Eq)
+pub fn Pattern::equal(Self, Self) -> Bool
+pub fn Pattern::not_equal(Self, Self) -> Bool
+pub fn Pattern::output(Self, &Logger) -> Unit
 pub fn Pattern::to_string(Self, color? : Bool) -> String
-pub impl Eq for Pattern
 pub impl Show for Pattern
 
 pub(all) enum PatternKind {
@@ -326,8 +382,11 @@ pub(all) enum PatternKind {
   Ident(String)
   Tuple(Array[Pattern])
   EnumVariant(String?, String, Array[Pattern])
-}
-pub impl Eq for PatternKind
+} derive(Eq)
+pub fn PatternKind::equal(Self, Self) -> Bool
+pub fn PatternKind::not_equal(Self, Self) -> Bool
+pub fn PatternKind::output(Self, &Logger) -> Unit
+pub fn PatternKind::to_string(Self) -> String
 pub impl Show for PatternKind
 
 pub(all) struct Program {
@@ -338,16 +397,19 @@ pub(all) struct Program {
   struct_defs : Map[String, StructDef]
   enum_defs : Map[String, EnumDef]
 }
+pub fn Program::output(Self, &Logger) -> Unit
 pub fn Program::to_string(Self, color? : Bool) -> String
 pub impl Show for Program
 
 pub(all) struct Stmt {
   kind : StmtKind
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn Stmt::equal(Self, Self) -> Bool
 pub fn Stmt::new(StmtKind, ArrayView[@lexer.Token], ArrayView[@lexer.Token]) -> Self
+pub fn Stmt::not_equal(Self, Self) -> Bool
+pub fn Stmt::output(Self, &Logger) -> Unit
 pub fn Stmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for Stmt
 pub impl Show for Stmt
 
 pub(all) enum StmtKind {
@@ -360,34 +422,43 @@ pub(all) enum StmtKind {
   ReturnStmt(Expr?)
   LocalFunction(LocalFunction)
   NoopStmt
-}
-pub impl Eq for StmtKind
+} derive(Eq)
+pub fn StmtKind::equal(Self, Self) -> Bool
+pub fn StmtKind::not_equal(Self, Self) -> Bool
+pub fn StmtKind::output(Self, &Logger) -> Unit
+pub fn StmtKind::to_string(Self) -> String
 pub impl Show for StmtKind
 
 pub(all) struct StructConstructExpr {
   name : String
   fields : Array[(String, Expr)]
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn StructConstructExpr::equal(Self, Self) -> Bool
+pub fn StructConstructExpr::not_equal(Self, Self) -> Bool
+pub fn StructConstructExpr::output(Self, &Logger) -> Unit
 pub fn StructConstructExpr::to_string(Self, color? : Bool) -> String
-pub impl Eq for StructConstructExpr
 pub impl Show for StructConstructExpr
 
 pub struct StructDef {
   name : String
   fields : Array[StructField]
-}
+} derive(Eq)
+pub fn StructDef::equal(Self, Self) -> Bool
+pub fn StructDef::not_equal(Self, Self) -> Bool
+pub fn StructDef::output(Self, &Logger) -> Unit
 pub fn StructDef::to_string(Self, color? : Bool) -> String
-pub impl Eq for StructDef
 pub impl Show for StructDef
 
 pub struct StructField {
   name : String
   is_mut : Bool
   ty : Type
-}
+} derive(Eq)
+pub fn StructField::equal(Self, Self) -> Bool
+pub fn StructField::not_equal(Self, Self) -> Bool
+pub fn StructField::output(Self, &Logger) -> Unit
 pub fn StructField::to_string(Self, color? : Bool) -> String
-pub impl Eq for StructField
 pub impl Show for StructField
 
 pub(all) struct TopFunction {
@@ -396,27 +467,33 @@ pub(all) struct TopFunction {
   param_list : Array[Param]
   ret_ty : Type
   body : BlockExpr
-}
+} derive(Eq)
+pub fn TopFunction::equal(Self, Self) -> Bool
+pub fn TopFunction::not_equal(Self, Self) -> Bool
+pub fn TopFunction::output(Self, &Logger) -> Unit
 pub fn TopFunction::to_string(Self, color? : Bool) -> String
 pub fn TopFunction::whole_name(Self) -> String
-pub impl Eq for TopFunction
 pub impl Show for TopFunction
 
 pub struct TopLet {
   name : String
   ty : Type?
   expr : Expr
-}
+} derive(Eq)
+pub fn TopLet::equal(Self, Self) -> Bool
+pub fn TopLet::not_equal(Self, Self) -> Bool
+pub fn TopLet::output(Self, &Logger) -> Unit
 pub fn TopLet::to_string(Self, color? : Bool) -> String
-pub impl Eq for TopLet
 pub impl Show for TopLet
 
 pub struct Type {
   kind : TypeKind
   toks : ArrayView[@lexer.Token]
-}
+} derive(Eq)
+pub fn Type::equal(Self, Self) -> Bool
+pub fn Type::not_equal(Self, Self) -> Bool
+pub fn Type::output(Self, &Logger) -> Unit
 pub fn Type::to_string(Self, color? : Bool) -> String
-pub impl Eq for Type
 pub impl Show for Type
 
 pub(all) enum TypeKind {
@@ -434,20 +511,25 @@ pub(all) enum TypeKind {
   Array(TypeKind)
   Function(Array[TypeKind], TypeKind)
   Defined(String)
-}
-pub impl Eq for TypeKind
-pub impl Hash for TypeKind
+} derive(Eq, Hash)
+pub fn TypeKind::equal(Self, Self) -> Bool
+pub fn TypeKind::hash(Self) -> Int
+pub fn TypeKind::hash_combine(Self, Hasher) -> Unit
+pub fn TypeKind::not_equal(Self, Self) -> Bool
+pub fn TypeKind::output(Self, &Logger) -> Unit
+pub fn TypeKind::to_string(Self) -> String
 pub impl Show for TypeKind
 
 pub(all) struct WhileStmt {
   cond : Expr
   body : BlockExpr
-}
+} derive(Eq)
+pub fn WhileStmt::equal(Self, Self) -> Bool
+pub fn WhileStmt::not_equal(Self, Self) -> Bool
+pub fn WhileStmt::output(Self, &Logger) -> Unit
 pub fn WhileStmt::to_string(Self, color? : Bool) -> String
-pub impl Eq for WhileStmt
 pub impl Show for WhileStmt
 
 // Type aliases
 
 // Traits
-

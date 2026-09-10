@@ -6,7 +6,7 @@ pub struct MatchExpr {
 }
 
 ///|
-pub impl Show for MatchExpr with output(self, logger) {
+pub impl Show for MatchExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -21,10 +21,7 @@ pub fn MatchExpr::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format condition
   let cond_str = self.cond.to_string(color~)
-  let cond_lines = cond_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let cond_lines = cond_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let cond_formatted = @parser.format_lines(
     cond_lines,
     head_with="├-cond: ",
@@ -36,10 +33,7 @@ pub fn MatchExpr::to_string(self : Self, color? : Bool = true) -> String {
   for i = 0; i < self.arms.length(); i = i + 1 {
     let arm = self.arms[i]
     let arm_str = arm.to_string(color~)
-    let arm_lines = arm_str
-      .split("\n")
-      .map(fn(sv) { sv.to_string() })
-      .to_array()
+    let arm_lines = arm_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
     let is_last = i == self.arms.length() - 1
     let arm_formatted = if is_last {
       @parser.format_lines(arm_lines, head_with="└-", continue_with="  ")
@@ -60,7 +54,7 @@ pub struct MatchArm {
 }
 
 ///|
-pub impl Show for MatchArm with output(self, logger) {
+pub impl Show for MatchArm with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -74,7 +68,7 @@ pub fn MatchArm::to_string(self : Self, color? : Bool = true) -> String {
   let pattern_str = self.pattern.to_string(color~)
   let pattern_lines = pattern_str
     .split("\n")
-    .map(fn(sv) { sv.to_string() })
+    .map(fn(sv) { sv.to_owned() })
     .to_array()
   match self.match_guard {
     None => {
@@ -86,7 +80,7 @@ pub fn MatchArm::to_string(self : Self, color? : Bool = true) -> String {
       let body_str = self.body.to_string(color~)
       let body_lines = body_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let body_formatted = @parser.format_lines(
         body_lines,
@@ -104,7 +98,7 @@ pub fn MatchArm::to_string(self : Self, color? : Bool = true) -> String {
       let guard_str = guard_expr.to_string(color~)
       let guard_lines = guard_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let guard_formatted = @parser.format_lines(
         guard_lines,
@@ -114,7 +108,7 @@ pub fn MatchArm::to_string(self : Self, color? : Bool = true) -> String {
       let body_str = self.body.to_string(color~)
       let body_lines = body_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let body_formatted = @parser.format_lines(
         body_lines,
@@ -155,7 +149,7 @@ pub fn Context::check_match_expr_type(
       Error,
     )
   }
-  let checked_arms : Array[MatchArm] = Array::new()
+  let checked_arms : Array[MatchArm] = []
   for arm in match_expr.arms {
     let pattern = try self.from_parser_pattern(arm.pattern) catch {
       err => {
@@ -164,7 +158,7 @@ pub fn Context::check_match_expr_type(
           "Failed to parse pattern in match arm: \{err}",
           Error,
         )
-        Pattern::{ kind: Wildcard }
+        Pattern::{ kind: Wildcard, }
       }
     } noraise {
       pat => pat
@@ -220,7 +214,7 @@ pub fn Context::check_match_expr_type(
     }
     self.ensure_type(arm_types[0])
   }
-  MatchExpr::{ cond: checked_cond, arms: checked_arms, ty: tykind }
+  MatchExpr::{ cond: checked_cond, arms: checked_arms, ty: tykind, }
 }
 
 ///|
@@ -240,7 +234,7 @@ pub(all) enum PatternSet {
   // tag, name, subpatterns
   EnumConstructor(String, String, Array[PatternSet])
   TupleConstructor(Array[PatternSet])
-} derive(Show, Eq)
+} derive(Eq)
 
 ///|
 fn Context::full_pattern_set_of_type(
@@ -248,7 +242,7 @@ fn Context::full_pattern_set_of_type(
   ty : TypeKind,
 ) -> PatternSet raise TypeCheckError {
   // Use a set to track types being processed to detect cycles
-  let visiting : @hashset.HashSet[String] = @hashset.HashSet::new()
+  let visiting : @hashset.HashSet[String] = @hashset.HashSet([])
   self.full_pattern_set_of_type_impl(ty, visiting)
 }
 
@@ -271,12 +265,12 @@ fn Context::full_pattern_set_of_type_impl(
         Some(enum_def) => {
           // Mark this enum as being visited
           visiting.add(enum_name)
-          let variants = Array::new()
+          let variants = []
           for field in enum_def.enum_fields {
-            let { name, types } = field
-            let sub_pattern_sets = types.map(t => self.full_pattern_set_of_type_impl(
-              t, visiting,
-            ))
+            let { name, types, } = field
+            let sub_pattern_sets = types.map(t => {
+              self.full_pattern_set_of_type_impl(t, visiting)
+            })
             variants.push(EnumConstructor(enum_name, name, sub_pattern_sets))
           }
           // Remove from visiting set after processing
@@ -290,9 +284,9 @@ fn Context::full_pattern_set_of_type_impl(
       }
     }
     Tuple(elem_types) => {
-      let sub_pattern_sets = elem_types.map(t => self.full_pattern_set_of_type_impl(
-        t, visiting,
-      ))
+      let sub_pattern_sets = elem_types.map(t => {
+        self.full_pattern_set_of_type_impl(t, visiting)
+      })
       TupleConstructor(sub_pattern_sets)
     }
     // For types that cannot be enumerated (Double, String, Float, etc.),
@@ -339,9 +333,9 @@ fn PatternSet::subtract(
           _ => ()
         }
       }
-      let unioned_sets = Array::new()
+      let unioned_sets = []
       for i in 0..<subsets.length() {
-        let new_subsets = Array::new()
+        let new_subsets = []
         for k in 0..<i {
           new_subsets.push(Single(pats[k].kind))
         }
@@ -365,7 +359,7 @@ fn PatternSet::subtract(
       tag2 &&
       name == name2 => {
       // Special case: pattern like Variant(_) matches all fields
-      if pats is [{ kind: Wildcard }] {
+      if pats is [{ kind: Wildcard, }] {
         return Empty
       }
       // Check if pattern length matches subset length
@@ -386,9 +380,9 @@ fn PatternSet::subtract(
           _ => ()
         }
       }
-      let unioned_sets = Array::new()
+      let unioned_sets = []
       for i in 0..<subsets.length() {
-        let new_subsets = Array::new()
+        let new_subsets = []
         for k in 0..<i {
           new_subsets.push(Single(pats[k].kind))
         }
@@ -411,7 +405,7 @@ fn PatternSet::subtract(
     // If enum constructor and variant have different names, they don't overlap
     (EnumConstructor(_, _, _), EnumVariant(_, _, _)) => self
     (Union(sets), pat) => {
-      let new_sets = Array::new()
+      let new_sets = []
       for s in sets {
         let subtracted = s.subtract(pat)
         if subtracted is Empty {
@@ -554,7 +548,7 @@ fn MatchExpr::check_match_exhaustiveness(
 test "MatchExpr to_string Test - Simple" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|match x { 0 => 1 ; 1 => 2 ; _ => 3 }
   let tokens = @lexer.tokenize(code)
@@ -584,7 +578,7 @@ test "MatchExpr to_string Test - Simple" {
 test "MatchExpr to_string Test - With Guard" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|match x { n if n > 0 => 1 ; _ => 0 }
   let tokens = @lexer.tokenize(code)
@@ -642,4 +636,57 @@ test "MatchExpr to_string Test - Tuple Pattern" {
       #|  └-body: int literal 0 (Int)
     ),
   )
+}
+
+///|
+pub extend MatchExpr with Show::{output}
+
+///|
+pub extend MatchArm with Show::{output}
+
+///|
+pub extend PatternSet with Show::{to_string, output}
+
+///|
+pub extend PatternSet with Eq::{not_equal, equal}
+
+///|
+pub impl Show for PatternSet with fn output(self, logger) {
+  match self {
+    Empty => logger.write_string("Empty")
+    Single(v0) => {
+      logger.write_string("Single(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    Universal(v0) => {
+      logger.write_string("Universal(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    NumberComplement(v0) => {
+      logger.write_string("NumberComplement(")
+      logger.write_iter(v0.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    Union(v0) => {
+      logger.write_string("Union(")
+      logger.write_iter(v0.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    EnumConstructor(v0, v1, v2) => {
+      logger.write_string("EnumConstructor(")
+      logger.write_string(v0.escape())
+      logger.write_string(", ")
+      logger.write_string(v1.escape())
+      logger.write_string(", ")
+      logger.write_iter(v2.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+    TupleConstructor(v0) => {
+      logger.write_string("TupleConstructor(")
+      logger.write_iter(v0.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+  }
 }

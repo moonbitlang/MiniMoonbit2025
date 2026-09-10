@@ -6,7 +6,7 @@ pub struct TopLet {
 } derive(Eq)
 
 ///|
-pub impl Show for TopLet with output(self, logger) {
+pub impl Show for TopLet with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -27,10 +27,7 @@ pub fn TopLet::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -64,15 +61,17 @@ pub fn parse_top_let(
   guard tokens is [{ kind: AssignOp(Assign), .. }, .. tokens] else {
     @lexer.throw_(tokens[0], "Parse Error: Expect '=' after top let", Error)
     let line = tokens[0].line
-    let rest = loop tokens {
-      [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
-      [tok, ..] as tokens if tok.line != line => break tokens
-      [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
-      [] as tokens => break tokens
-      [_, .. tokens] => continue tokens
+    let rest = for tokens = tokens {
+      match tokens {
+        [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
+        [tok, ..] as tokens if tok.line != line => break tokens
+        [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
+        [] as tokens => break tokens
+        [_, .. tokens] => continue tokens
+      }
     }
     let expr = Expr::unit()
-    let top_let = TopLet::{ name, ty, expr }
+    let top_let = TopLet::{ name, ty, expr, }
     return (top_let, rest)
   }
   let (expr, tokens) = parse_expr(tokens)
@@ -89,7 +88,7 @@ pub fn parse_top_let(
     )
     tokens
   }
-  let top_let = TopLet::{ name, ty, expr }
+  let top_let = TopLet::{ name, ty, expr, }
   (top_let, tokens)
 }
 
@@ -150,3 +149,9 @@ test "TopLet to_string Test - Complex Expression" {
     ),
   )
 }
+
+///|
+pub extend TopLet with Eq::{not_equal, equal}
+
+///|
+pub extend TopLet with Show::{output}

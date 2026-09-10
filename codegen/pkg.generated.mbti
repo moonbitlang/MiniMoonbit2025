@@ -1,10 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Kaida-Amethyst/MiniMoonBit/codegen"
 
-import(
-  "Kaida-Amethyst/MiniMoonBit/knf"
-  "Kaida-Amethyst/MoonLLVM/IR"
-)
+import {
+  "Kaida-Amethyst/MiniMoonBit/knf",
+  "Kaida-Amethyst/MoonLLVM/IR",
+}
 
 // Values
 pub fn codegen(@knf.KnfProgram) -> @IR.Module raise
@@ -16,6 +16,8 @@ pub fn compile(String, source_file? : String) -> @IR.Module raise
 pub(all) suberror CodegenError {
   CodegenError(String)
 }
+pub fn CodegenError::output(Self, &Logger) -> Unit
+pub fn CodegenError::to_string(Self) -> String
 pub impl Show for CodegenError
 
 // Types and methods
@@ -74,4 +76,3 @@ pub fn Context::type_codegen_opaque(Self, @knf.Type) -> &@IR.Type
 // Type aliases
 
 // Traits
-

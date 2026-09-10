@@ -5,7 +5,7 @@ pub(all) struct LeftValue {
 }
 
 ///|
-pub impl Show for LeftValue with output(self, logger) {
+pub impl Show for LeftValue with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -29,7 +29,7 @@ pub fn LeftValue::to_string(self : Self, color? : Bool = true) -> String {
       let lvalue_str = left_value.to_string(color~)
       let lvalue_lines = lvalue_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let lvalue_formatted = @parser.format_lines(
         lvalue_lines,
@@ -39,7 +39,7 @@ pub fn LeftValue::to_string(self : Self, color? : Bool = true) -> String {
       let index_str = index_expr.to_string(color~)
       let index_lines = index_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let index_formatted = @parser.format_lines(
         index_lines,
@@ -55,10 +55,7 @@ pub fn LeftValue::to_string(self : Self, color? : Bool = true) -> String {
       let ty_str = if color { @color.taint(ty_str, Green) } else { ty_str }
       let prefix_with_type = "\{prefix} .\{field} (\{ty_str})"
       let inner_str = left_value.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix_with_type}\n\{formatted}"
     }
@@ -70,7 +67,7 @@ pub(all) enum LeftValueKind {
   Ident(String)
   ArrayAccess(LeftValue, Expr)
   FieldAccess(LeftValue, String)
-} derive(Show)
+}
 
 ///|
 pub(all) struct AssignStmt {
@@ -80,7 +77,7 @@ pub(all) struct AssignStmt {
 }
 
 ///|
-pub impl Show for AssignStmt with output(self, logger) {
+pub impl Show for AssignStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -102,7 +99,7 @@ pub fn AssignStmt::to_string(self : Self, color? : Bool = true) -> String {
   let lvalue_str = self.left_value.to_string(color~)
   let lvalue_lines = lvalue_str
     .split("\n")
-    .map(fn(sv) { sv.to_string() })
+    .map(fn(sv) { sv.to_owned() })
     .to_array()
   let lvalue_formatted = @parser.format_lines(
     lvalue_lines,
@@ -112,10 +109,7 @@ pub fn AssignStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = @parser.format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -132,7 +126,7 @@ pub(all) enum AssignOp {
   MultAssign // *=
   DivAssign // /=
   ModAssign // %=
-} derive(Show, Eq)
+} derive(Eq)
 
 ///|
 fn AssignOp::from_parser_assign_op(op : @parser.AssignOp) -> AssignOp {
@@ -156,7 +150,7 @@ pub fn Context::check_left_value(
       guard self.type_env.get(name) is Some(ty) else {
         raise TypeCheckError("Undefined variable: \{name}")
       }
-      LeftValue::{ kind: LeftValueKind::Ident(name), ty }
+      LeftValue::{ kind: LeftValueKind::Ident(name), ty, }
     }
     ArrayAccess(array_lv, index_expr) => {
       let checked_array_lv = self.check_left_value(array_lv)
@@ -173,7 +167,7 @@ pub fn Context::check_left_value(
             kind: LeftValueKind::ArrayAccess(
               checked_array_lv, checked_index_expr,
             ),
-            ty: Type::{ kind: element_type, mutable: true },
+            ty: Type::{ kind: element_type, mutable: true, },
           }
         }
         _ => raise TypeCheckError("Attempted to index a non-array type")
@@ -191,7 +185,7 @@ pub fn Context::check_left_value(
         if field.name == field_name {
           break field.ty
         }
-      } else {
+      } nobreak {
         raise TypeCheckError(
           "Struct \{struct_type_name} has no field named \{field_name}",
         )
@@ -226,14 +220,14 @@ pub fn Context::check_assign_stmt(
       "Compound assignment operators can only be used with Int or Double types",
     )
   }
-  AssignStmt::{ left_value: checked_left_value, op, expr: checked_expr }
+  AssignStmt::{ left_value: checked_left_value, op, expr: checked_expr, }
 }
 
 ///|
 test "AssignStmt to_string Test - Basic" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: true })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: true, })
 
   // Test simple assign: x = 42
   let code1 = "x = 42 ;"
@@ -272,14 +266,14 @@ test "AssignStmt to_string Test - Complex" {
     kind: TypeKind::Array(TypeKind::Int),
     mutable: true,
   })
-  ctx.type_env.set("point", { kind: TypeKind::Struct("Point"), mutable: true })
+  ctx.type_env.set("point", { kind: TypeKind::Struct("Point"), mutable: true, })
   ctx.struct_defs.set("Point", {
     name: "Point",
     fields: [
-      { name: "x", ty: { kind: TypeKind::Int, mutable: true } },
-      { name: "y", ty: { kind: TypeKind::Int, mutable: true } },
+      { name: "x", ty: { kind: TypeKind::Int, mutable: true, }, },
+      { name: "y", ty: { kind: TypeKind::Int, mutable: true, }, },
     ],
-    methods: Map::new(),
+    methods: Map([]),
   })
 
   // Test array access: arr[0] = 10
@@ -312,4 +306,56 @@ test "AssignStmt to_string Test - Complex" {
       #|└-expr: int literal 20 (Int)
     ),
   )
+}
+
+///|
+pub extend LeftValue with Show::{output}
+
+///|
+pub extend LeftValueKind with Show::{to_string, output}
+
+///|
+pub extend AssignStmt with Show::{output}
+
+///|
+pub extend AssignOp with Show::{to_string, output}
+
+///|
+pub extend AssignOp with Eq::{not_equal, equal}
+
+///|
+pub impl Show for LeftValueKind with fn output(self, logger) {
+  match self {
+    Ident(v0) => {
+      logger.write_string("Ident(")
+      logger.write_string(v0.escape())
+      logger.write_string(")")
+    }
+    ArrayAccess(v0, v1) => {
+      logger.write_string("ArrayAccess(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(")")
+    }
+    FieldAccess(v0, v1) => {
+      logger.write_string("FieldAccess(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_string(v1.escape())
+      logger.write_string(")")
+    }
+  }
+}
+
+///|
+pub impl Show for AssignOp with fn output(self, logger) {
+  match self {
+    Assign => logger.write_string("Assign")
+    PlusAssign => logger.write_string("PlusAssign")
+    MinusAssign => logger.write_string("MinusAssign")
+    MultAssign => logger.write_string("MultAssign")
+    DivAssign => logger.write_string("DivAssign")
+    ModAssign => logger.write_string("ModAssign")
+  }
 }

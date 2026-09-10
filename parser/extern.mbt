@@ -7,7 +7,7 @@ pub(all) struct ExternFunction {
 } derive(Eq)
 
 ///|
-pub impl Show for ExternFunction with output(self, logger) {
+pub impl Show for ExternFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -55,13 +55,13 @@ pub fn ExternFunction::to_string(self : Self, color? : Bool = true) -> String {
   }
 
   // Format FFI name
-  let ffi_text = "ffi: \"\{self.ffi_name}\"\n"
+  let ffi_text = "ffi: \"\{self.ffi_name}\""
   let ffi_formatted = format_lines(
     [ffi_text],
     head_with="└-",
     continue_with="  ",
   )
-  result = "\{result}\n\{ffi_formatted}\n"
+  result = "\{result}\n\{ffi_formatted}"
   result
 }
 
@@ -134,7 +134,7 @@ pub fn parse_extern_function(
     )
     raise ParseError("Expect ';' or '}' or newline after let statement")
   }
-  let extern_function = ExternFunction::{ fname, param_list, ret_ty, ffi_name }
+  let extern_function = ExternFunction::{ fname, param_list, ret_ty, ffi_name, }
   (extern_function, tokens)
 }
 
@@ -200,3 +200,9 @@ test "ExternFunction to_string Test - No Return" {
     ),
   )
 }
+
+///|
+pub extend ExternFunction with Eq::{not_equal, equal}
+
+///|
+pub extend ExternFunction with Show::{output}

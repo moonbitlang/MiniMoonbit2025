@@ -5,7 +5,7 @@ pub(all) struct BlockExpr {
 } derive(Eq)
 
 ///|
-pub impl Show for BlockExpr with output(self, logger) {
+pub impl Show for BlockExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -23,7 +23,7 @@ pub fn BlockExpr::to_string(self : Self, color? : Bool = true) -> String {
     let stmt_str = stmt.to_string(color~)
     let stmt_lines = stmt_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.stmts.length() - 1
     let stmt_formatted = if is_last {
@@ -45,22 +45,24 @@ pub fn parse_block_expr(
     println("Compiler ICE: Misuse parse_block_expr")
     panic()
   }
-  let stmts : Array[Stmt] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Bracket('}'), .. }, .. rest] => break rest
-    [] => {
-      println("Compiler ICE: Failed Parsing BlockExpr, Empty Token ArrayView")
-      panic()
-    }
-    tokens => {
-      let (stmt, tokens) = parse_stmt(tokens)
-      stmts.push(stmt)
-      continue tokens
+  let stmts : Array[Stmt] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket('}'), .. }, .. rest] => break rest
+      [] => {
+        println("Compiler ICE: Failed Parsing BlockExpr, Empty Token ArrayView")
+        panic()
+      }
+      tokens => {
+        let (stmt, tokens) = parse_stmt(tokens)
+        stmts.push(stmt)
+        continue tokens
+      }
     }
   }
   let len = tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  let block_expr = BlockExpr::{ stmts, toks }
+  let block_expr = BlockExpr::{ stmts, toks, }
   (block_expr, tokens)
 }
 
@@ -178,3 +180,9 @@ test "BlockExpr to_string Test - Complex" {
     ),
   )
 }
+
+///|
+pub extend BlockExpr with Eq::{not_equal, equal}
+
+///|
+pub extend BlockExpr with Show::{output}

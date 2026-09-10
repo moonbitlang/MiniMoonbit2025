@@ -1,7 +1,7 @@
 ///|
 pub(all) suberror KnfTransformError {
   KnfTransformError(String)
-} derive(Show)
+}
 
 ///|
 pub(all) struct Name {
@@ -11,11 +11,11 @@ pub(all) struct Name {
 
 ///|
 pub fn Name::wildcard() -> Name {
-  Name::{ id: "_", slot: 0 }
+  Name::{ id: "_", slot: 0, }
 }
 
 ///|
-pub impl Show for Name with output(self, logger) {
+pub impl Show for Name with fn output(self, logger) {
   logger.write_string(self.id)
   if self.slot > 0 {
     logger.write_string("$\{self.slot}")
@@ -31,7 +31,7 @@ pub(all) struct Env {
 
 ///|
 pub fn Env::new(parent? : Env? = None) -> Env {
-  Env::{ local_: Map::new(), capture: Map::new(), parent }
+  Env::{ local_: Map([]), capture: Map([]), parent, }
 }
 
 ///|
@@ -101,11 +101,11 @@ pub(all) struct Context {
 pub fn Context::new() -> Context {
   Context::{
     name_env: Env::new(),
-    capture: Array::new(),
-    global_stmts: Array::new(),
-    globals: Map::new(),
-    unions: Map::new(),
-    struct_defs: Map::new(),
+    capture: [],
+    global_stmts: [],
+    globals: Map([]),
+    unions: Map([]),
+    struct_defs: Map([]),
   }
 }
 
@@ -116,7 +116,7 @@ pub fn Context::lookup_name(self : Context, s : String) -> (Name, Type)? {
     None =>
       match self.globals.get(s) {
         Some(t) => {
-          let name = Name::{ id: s, slot: 0 }
+          let name = Name::{ id: s, slot: 0, }
           Some((name, t))
         }
         None => None
@@ -146,13 +146,13 @@ pub fn Context::add_new_name(
   mutable? : Bool = false,
 ) -> Name {
   match self.name_env.get(s) {
-    Some({ id, slot }) => {
-      let name = Name::{ id, slot: slot + 1 }
+    Some({ id, slot, }) => {
+      let name = Name::{ id, slot: slot + 1, }
       self.name_env.set(s, name, ty, mutable)
       name
     }
     None => {
-      let name = Name::{ id: s, slot: 0 }
+      let name = Name::{ id: s, slot: 0, }
       self.name_env.set(s, name, ty, mutable)
       name
     }
@@ -164,3 +164,21 @@ pub fn Context::add_temp(self : Context, ty : Type) -> Name {
   let temp_id = "tmp"
   self.add_new_name(temp_id, ty)
 }
+
+///|
+pub impl Show for KnfTransformError with fn output(self, logger) {
+  let KnfTransformError(message) = self
+  logger.write_string("KnfTransformError(\{message.escape()})")
+}
+
+///|
+pub extend Name with Hash::{hash, hash_combine}
+
+///|
+pub extend Name with Eq::{not_equal, equal}
+
+///|
+pub extend Name with Show::{to_string, output}
+
+///|
+pub extend KnfTransformError with Show::{to_string, output}

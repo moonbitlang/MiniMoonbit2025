@@ -1,0 +1,6 @@
+import {
+  "moonbitlang/core/deque",
+  "Kaida-Amethyst/MiniMoonBit/lexer",
+  "Kaida-Amethyst/MiniMoonBit/color",
+  "Kaida-Amethyst/either",
+}

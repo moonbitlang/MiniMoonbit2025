@@ -6,7 +6,7 @@ pub(all) struct StructConstructExpr {
 } derive(Eq)
 
 ///|
-pub impl Show for StructConstructExpr with output(self, logger) {
+pub impl Show for StructConstructExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -33,7 +33,7 @@ pub fn StructConstructExpr::to_string(
     let expr_str = expr.to_string(color~)
     let expr_lines = expr_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.fields.length() - 1
 
@@ -79,36 +79,38 @@ pub fn parse_struct_construct(
     println("Compiler ICE: Misuse parse_struct_or_enum_construct, expected '{'")
     panic()
   }
-  let fields : Array[(String, Expr)] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Bracket('}'), .. }, .. rest] => break rest
-    [{ kind: Symbol(","), .. }, { kind: Bracket('}'), .. }, .. rest] =>
-      break rest
-    [{ kind: Symbol(","), .. }, { kind: Lower(field), .. }, .. tokens] => {
-      guard tokens is [{ kind: Symbol(":"), .. }, .. tokens] else {
-        raise ParseError("Expect ':'")
+  let fields : Array[(String, Expr)] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket('}'), .. }, .. rest] => break rest
+      [{ kind: Symbol(","), .. }, { kind: Bracket('}'), .. }, .. rest] =>
+        break rest
+      [{ kind: Symbol(","), .. }, { kind: Lower(field), .. }, .. tokens] => {
+        guard tokens is [{ kind: Symbol(":"), .. }, .. tokens] else {
+          raise ParseError("Expect ':'")
+        }
+        let (expr, rest) = parse_expr(tokens)
+        fields.push((field, expr))
+        continue rest
       }
-      let (expr, rest) = parse_expr(tokens)
-      fields.push((field, expr))
-      continue rest
-    }
-    [{ kind: Lower(field), .. }, .. tokens] => {
-      guard tokens is [{ kind: Symbol(":"), .. }, ..] else {
-        raise ParseError("Expect ':'")
+      [{ kind: Lower(field), .. }, .. tokens] => {
+        guard tokens is [{ kind: Symbol(":"), .. }, ..] else {
+          raise ParseError("Expect ':'")
+        }
+        let (expr, rest) = parse_expr(tokens[1:])
+        fields.push((field, expr))
+        continue rest
       }
-      let (expr, rest) = parse_expr(tokens[1:])
-      fields.push((field, expr))
-      continue rest
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tokens => raise ParseError("InValid Struct Construct: \{tokens[0]}")
     }
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tokens => raise ParseError("InValid Struct Construct: \{tokens[0]}")
   }
   let len = tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  let struct_construct = StructConstructExpr::{ name, fields, toks }
+  let struct_construct = StructConstructExpr::{ name, fields, toks, }
   let atom_expr = AtomExpr::new(
     StructConstruct(struct_construct),
     init_tokens,
@@ -185,3 +187,9 @@ test "StructConstructExpr to_string Test - Complex Fields" {
     _ => panic()
   }
 }
+
+///|
+pub extend StructConstructExpr with Eq::{not_equal, equal}
+
+///|
+pub extend StructConstructExpr with Show::{output}

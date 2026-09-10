@@ -7,10 +7,10 @@ using @either {type Either}
 ///|
 pub suberror ParseError {
   ParseError(String)
-} derive(Show)
+}
 
 ///|
-pub impl Show for TypeKind with output(self, logger) {
+pub impl Show for TypeKind with fn output(self, logger) {
   let s = match self {
     Unit => "Unit"
     Bool => "Bool"
@@ -44,7 +44,7 @@ pub fn format_lines(
   head_with? : String = "└-",
   continue_with? : String = "  ",
 ) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let strs = []
   for i = 0; i < lines.length(); i = i + 1 {
     if i == 0 {
@@ -65,4 +65,16 @@ pub fn skip_semicolon(tokens : ArrayView[Token]) -> ArrayView[Token] {
     [{ kind: Symbol(";"), .. }, .. rest] => rest
     _ => tokens
   }
+}
+
+///|
+pub extend ParseError with Show::{to_string, output}
+
+///|
+pub extend TypeKind with Show::{to_string, output}
+
+///|
+pub impl Show for ParseError with fn output(self, logger) {
+  let ParseError(message) = self
+  logger.write_string("ParseError(\{message.escape()})")
 }

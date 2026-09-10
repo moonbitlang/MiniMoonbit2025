@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Kaida-Amethyst/MiniMoonBit/knf"
 
-import(
-  "Kaida-Amethyst/MiniMoonBit/typecheck"
-)
+import {
+  "Kaida-Amethyst/MiniMoonBit/typecheck",
+}
 
 // Values
 pub fn binop_to_knf(@typecheck.BinaryOp) -> BinaryOp
@@ -14,6 +14,8 @@ pub fn knf_transform(@typecheck.Program) -> KnfProgram raise KnfTransformError
 pub(all) suberror KnfTransformError {
   KnfTransformError(String)
 }
+pub fn KnfTransformError::output(Self, &Logger) -> Unit
+pub fn KnfTransformError::to_string(Self) -> String
 pub impl Show for KnfTransformError
 
 // Types and methods
@@ -35,8 +37,11 @@ pub(all) enum BinaryOp {
   Or
   BitAnd
   BitOr
-}
-pub impl Eq for BinaryOp
+} derive(Eq)
+pub fn BinaryOp::equal(Self, Self) -> Bool
+pub fn BinaryOp::not_equal(Self, Self) -> Bool
+pub fn BinaryOp::output(Self, &Logger) -> Unit
+pub fn BinaryOp::to_string(Self) -> String
 pub impl Show for BinaryOp
 
 pub(all) struct Context {
@@ -96,6 +101,7 @@ pub(all) struct KnfBlock {
   ty : Type
 }
 pub fn KnfBlock::nested_to_string(Self) -> String
+pub fn KnfBlock::output(Self, &Logger) -> Unit
 pub fn KnfBlock::to_string(Self, Int) -> String
 pub impl Show for KnfBlock
 
@@ -139,6 +145,7 @@ pub(all) enum KnfExpr {
   ReInterpretUnion(String, Name)
   Switch(Name, Array[(Int, KnfBlock)], KnfBlock)
 }
+pub fn KnfExpr::output(Self, &Logger) -> Unit
 pub fn KnfExpr::to_string(Self, ident? : Int) -> String
 pub impl Show for KnfExpr
 
@@ -155,6 +162,8 @@ pub(all) struct KnfFunction {
   params : Array[(Name, Type)]
   body : KnfBlock
 }
+pub fn KnfFunction::output(Self, &Logger) -> Unit
+pub fn KnfFunction::to_string(Self) -> String
 pub impl Show for KnfFunction
 
 pub(all) enum KnfLeftValue {
@@ -173,6 +182,8 @@ pub(all) struct KnfProgram {
   functions : Map[String, KnfFunction]
   externs : Map[String, KnfExtern]
 }
+pub fn KnfProgram::output(Self, &Logger) -> Unit
+pub fn KnfProgram::to_string(Self) -> String
 pub impl Show for KnfProgram
 
 pub(all) enum KnfStmt {
@@ -187,6 +198,7 @@ pub(all) enum KnfStmt {
   ReturnUnit
   ClosureDef(KnfClosure)
 }
+pub fn KnfStmt::output(Self, &Logger) -> Unit
 pub fn KnfStmt::to_string(Self, ident? : Int) -> String
 pub impl Show for KnfStmt
 
@@ -195,6 +207,8 @@ pub(all) struct KnfStructDef {
   fields : Array[(String, Bool, Type)]
 }
 pub fn KnfStructDef::get_field_index(Self, String) -> Int?
+pub fn KnfStructDef::output(Self, &Logger) -> Unit
+pub fn KnfStructDef::to_string(Self) -> String
 pub impl Show for KnfStructDef
 
 pub(all) struct KnfTopLet {
@@ -202,6 +216,8 @@ pub(all) struct KnfTopLet {
   ty : Type
   expr : KnfExpr
 }
+pub fn KnfTopLet::output(Self, &Logger) -> Unit
+pub fn KnfTopLet::to_string(Self) -> String
 pub impl Show for KnfTopLet
 
 pub(all) struct KnfUnion {
@@ -212,10 +228,14 @@ pub(all) struct KnfUnion {
 pub(all) struct Name {
   id : String
   slot : Int
-}
+} derive(Eq, Hash)
+pub fn Name::equal(Self, Self) -> Bool
+pub fn Name::hash(Self) -> Int
+pub fn Name::hash_combine(Self, Hasher) -> Unit
+pub fn Name::not_equal(Self, Self) -> Bool
+pub fn Name::output(Self, &Logger) -> Unit
+pub fn Name::to_string(Self) -> String
 pub fn Name::wildcard() -> Self
-pub impl Eq for Name
-pub impl Hash for Name
 pub impl Show for Name
 
 pub(all) enum Type {
@@ -235,9 +255,10 @@ pub(all) enum Type {
   Tuple(Array[Type])
   Function(Array[Type], Type)
 }
+pub fn Type::output(Self, &Logger) -> Unit
+pub fn Type::to_string(Self) -> String
 pub impl Show for Type
 
 // Type aliases
 
 // Traits
-

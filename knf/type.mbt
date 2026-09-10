@@ -18,7 +18,7 @@ pub(all) enum Type {
 }
 
 ///|
-pub impl Show for Type with output(self, logger) {
+pub impl Show for Type with fn output(self, logger) {
   let s = match self {
     Unit => "Unit"
     Int => "Int"
@@ -88,3 +88,6 @@ pub fn Context::type_to_knf(
 ) -> Type raise KnfTransformError {
   self.typekind_to_knf(t.kind)
 }
+
+///|
+pub extend Type with Show::{to_string, output}

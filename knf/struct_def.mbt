@@ -10,14 +10,14 @@ pub fn Context::struct_def_to_knf(
   self : Context,
   struct_def : @typecheck.StructDef,
 ) -> KnfStructDef raise KnfTransformError {
-  let knf_fields : Array[(String, Bool, Type)] = Array::new()
+  let knf_fields : Array[(String, Bool, Type)] = []
   for field in struct_def.fields {
-    let { name, ty } = field
-    let { kind: typekind, mutable: is_mut } = ty
+    let { name, ty, } = field
+    let { kind: typekind, mutable: is_mut, } = ty
     let field_type = self.typekind_to_knf(typekind)
     knf_fields.push((name, is_mut, field_type))
   }
-  let struct_def = KnfStructDef::{ name: struct_def.name, fields: knf_fields }
+  let struct_def = KnfStructDef::{ name: struct_def.name, fields: knf_fields, }
   struct_def
 }
 
@@ -36,8 +36,8 @@ pub fn KnfStructDef::get_field_index(
 }
 
 ///|
-pub impl Show for KnfStructDef with output(self, logger) {
-  let { name, fields } = self
+pub impl Show for KnfStructDef with fn output(self, logger) {
+  let { name, fields, } = self
   logger.write_string("struct \{name} {\n")
   for field in fields {
     let (field_name, is_mut, field_type) = field
@@ -46,3 +46,6 @@ pub impl Show for KnfStructDef with output(self, logger) {
   }
   logger.write_string("}\n")
 }
+
+///|
+pub extend KnfStructDef with Show::{to_string, output}

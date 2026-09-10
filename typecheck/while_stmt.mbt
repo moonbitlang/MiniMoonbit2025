@@ -5,7 +5,7 @@ pub(all) struct WhileStmt {
 }
 
 ///|
-pub impl Show for WhileStmt with output(self, logger) {
+pub impl Show for WhileStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -17,10 +17,7 @@ pub fn WhileStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format condition
   let cond_str = self.cond.to_string(color~)
-  let cond_lines = cond_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let cond_lines = cond_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let cond_formatted = @parser.format_lines(
     cond_lines,
     head_with="├-cond: ",
@@ -29,10 +26,7 @@ pub fn WhileStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = @parser.format_lines(
     body_lines,
     head_with="└-body: ",
@@ -52,14 +46,14 @@ pub fn Context::check_while_stmt(
     raise TypeCheckError("While condition must be of boolean type")
   }
   let checked_body = self.check_block_expr(while_stmt.body)
-  WhileStmt::{ cond: checked_cond, body: checked_body }
+  WhileStmt::{ cond: checked_cond, body: checked_body, }
 }
 
 ///|
 test "WhileStmt to_string Test - Simple" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false, })
   let code =
     #|while x { let y = 1 ; }
   let tokens = @lexer.tokenize(code)
@@ -86,7 +80,7 @@ test "WhileStmt to_string Test - Simple" {
 test "WhileStmt to_string Test - Complex Condition" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("i", { kind: TypeKind::Int, mutable: true })
+  ctx.type_env.set("i", { kind: TypeKind::Int, mutable: true, })
   let code =
     #|while i < 10 { i += 1 ; }
   let tokens = @lexer.tokenize(code)
@@ -114,7 +108,7 @@ test "WhileStmt to_string Test - Complex Condition" {
 test "WhileStmt to_string Test - Multiple Statements" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: true })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: true, })
   let code =
     #|while x > 0 { let a = x ; x = x - 1 ; }
   let tokens = @lexer.tokenize(code)
@@ -143,3 +137,6 @@ test "WhileStmt to_string Test - Multiple Statements" {
     ),
   )
 }
+
+///|
+pub extend WhileStmt with Show::{output}

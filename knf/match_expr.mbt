@@ -34,7 +34,7 @@ pub fn Context::match_bool_expr_to_knf(
   let mut is_last_branch = true
   for match_arm in expr.arms.rev_iter() {
     let { pattern, match_guard, body, .. } = match_arm
-    let branch_stmts : Array[KnfStmt] = Array::new()
+    let branch_stmts : Array[KnfStmt] = []
     if pattern.kind is Ident(name) {
       let pat_name = self.add_new_name(name, Bool)
       let knf_let = KnfStmt::Let(pat_name, Bool, KnfExpr::Ident(cond_name))
@@ -61,7 +61,7 @@ pub fn Context::match_bool_expr_to_knf(
       (stmts, expr) => {
         let last_expr_name = self.expr_to_knf_name(expr, match_expr_ty, stmts)
         stmts.push(ExprStmt(Ident(last_expr_name)))
-        KnfBlock::{ stmts, ty: self.typekind_to_knf(body.ty) }
+        KnfBlock::{ stmts, ty: self.typekind_to_knf(body.ty), }
       }
     }
     match pattern.kind {
@@ -69,7 +69,7 @@ pub fn Context::match_bool_expr_to_knf(
         // since we already ensured that all patterns are covered in typecheck phase,
         // we know the last branch must be `else` branch in if-else chain
         // no matter what pattern it is
-        let final_stmts = Array::new()
+        let final_stmts = []
         final_stmts.append(branch_stmts)
         final_stmts.append(then_block.stmts)
         last_else_block = KnfBlock::{
@@ -129,7 +129,7 @@ pub fn Context::match_bool_expr_to_knf(
       // }
       // ```
       Wildcard | Ident(_) => {
-        let final_stmts = Array::new()
+        let final_stmts = []
         final_stmts.append(branch_stmts)
         final_stmts.append(then_block.stmts)
         last_else_block = KnfBlock::{
@@ -162,14 +162,14 @@ pub fn Context::match_int_expr_to_knf(
   let cond_name = self.expr_to_knf_name(cond_expr, Int, stmts)
   let cases : Array[(Int, KnfBlock)] = []
   let default_arms : Array[@typecheck.MatchArm] = []
-  let cases_map : Map[Int, Array[@typecheck.MatchArm]] = Map::new()
+  let cases_map : Map[Int, Array[@typecheck.MatchArm]] = Map([])
   for arm in expr.arms {
     match arm.pattern.kind {
       Integer(n) =>
         match cases_map.get(n) {
           Some(existing) => existing.push(arm)
           None => {
-            let arr = Array::new()
+            let arr = []
             arr.push(arm)
             cases_map.set(n, arr)
           }
@@ -208,16 +208,16 @@ fn Context::build_int_case_block(
     let then_block = match (body_stmts, body_expr) {
       ([], Block(block)) => block
       (_, Block(block)) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.append(block.stmts)
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
       (_, expr) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.push(ExprStmt(expr))
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
     }
     if arm.match_guard is Some(guard_expr) {
@@ -225,7 +225,7 @@ fn Context::build_int_case_block(
       let guard_name = self.expr_to_knf_name(guard_knf, Bool, guard_stmts)
       let else_block = match current_else_block {
         Some(blk) => blk
-        None => KnfBlock::{ stmts: [], ty: result_ty }
+        None => KnfBlock::{ stmts: [], ty: result_ty, }
       }
       let case_stmts = {
         let arr = guard_stmts
@@ -236,14 +236,14 @@ fn Context::build_int_case_block(
         )
         arr
       }
-      current_else_block = Some(KnfBlock::{ stmts: case_stmts, ty: result_ty })
+      current_else_block = Some(KnfBlock::{ stmts: case_stmts, ty: result_ty, })
     } else {
       current_else_block = Some(then_block)
     }
   }
   match current_else_block {
     Some(block) => block
-    None => KnfBlock::{ stmts: [], ty: result_ty }
+    None => KnfBlock::{ stmts: [], ty: result_ty, }
   }
 }
 
@@ -256,7 +256,7 @@ fn Context::build_default_arms_block(
 ) -> KnfBlock raise KnfTransformError {
   let mut current_else_block : KnfBlock? = None
   for arm in arms.rev_iter() {
-    let branch_stmts : Array[KnfStmt] = Array::new()
+    let branch_stmts : Array[KnfStmt] = []
     if arm.pattern.kind is Ident(name) {
       let pat_name = self.add_new_name(name, Int)
       branch_stmts.push(Let(pat_name, Int, KnfExpr::Ident(cond_name)))
@@ -274,21 +274,21 @@ fn Context::build_default_arms_block(
     let then_block = match (body_stmts, body_expr) {
       ([], Block(block)) => block
       (_, Block(block)) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.append(block.stmts)
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
       (_, expr) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.push(ExprStmt(expr))
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
     }
     let else_block = match current_else_block {
       Some(blk) => blk
-      None => KnfBlock::{ stmts: [], ty: result_ty }
+      None => KnfBlock::{ stmts: [], ty: result_ty, }
     }
     match guard_name_opt {
       Some(guard_name) => {
@@ -313,7 +313,7 @@ fn Context::build_default_arms_block(
   }
   match current_else_block {
     Some(block) => block
-    None => KnfBlock::{ stmts: [], ty: result_ty }
+    None => KnfBlock::{ stmts: [], ty: result_ty, }
   }
 }
 
@@ -348,7 +348,7 @@ pub fn Context::match_enum_expr_to_knf(
   stmts.push(Let(tag_name, Int, GetUnionTag(enum_value_name)))
 
   // Group arms by variant
-  let cases_map : Map[String, Array[@typecheck.MatchArm]] = Map::new()
+  let cases_map : Map[String, Array[@typecheck.MatchArm]] = Map([])
   let default_arms : Array[@typecheck.MatchArm] = []
   for arm in expr.arms {
     match arm.pattern.kind {
@@ -356,7 +356,7 @@ pub fn Context::match_enum_expr_to_knf(
         match cases_map.get(variant_name) {
           Some(existing) => existing.push(arm)
           None => {
-            let arr = Array::new()
+            let arr = []
             arr.push(arm)
             cases_map.set(variant_name, arr)
           }
@@ -370,7 +370,7 @@ pub fn Context::match_enum_expr_to_knf(
   let default_block = if default_arms.is_empty() {
     // If all variants are covered in cases, create an empty default block
     // The type checker should have already verified exhaustiveness
-    KnfBlock::{ stmts: [], ty: match_expr_ty }
+    KnfBlock::{ stmts: [], ty: match_expr_ty, }
   } else {
     self.build_default_arms_block(default_arms, enum_value_name, match_expr_ty)
   }
@@ -384,7 +384,7 @@ pub fn Context::match_enum_expr_to_knf(
     // Extract variant name from "EnumName$VariantName"
     let parts = variant_full_name.split("$").collect()
     let variant_name = if parts.length() == 2 {
-      parts[1].to_string()
+      parts[1].to_owned()
     } else {
       raise KnfTransformError(
         "Invalid variant name format: \{variant_full_name}",
@@ -417,7 +417,7 @@ fn Context::build_enum_case_block(
 ) -> KnfBlock raise KnfTransformError {
   let mut current_else_block : KnfBlock? = None
   for arm in arms.rev_iter() {
-    let branch_stmts : Array[KnfStmt] = Array::new()
+    let branch_stmts : Array[KnfStmt] = []
 
     // Extract pattern info
     let sub_patterns = match arm.pattern.kind {
@@ -461,17 +461,17 @@ fn Context::build_enum_case_block(
       ([], Block(block)) => block
       // If body is a block but has preceding statements, this is unusual but handle it
       (_, Block(block)) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.append(block.stmts)
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
       // Normal case: wrap expression as statement
       (_, expr) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.push(ExprStmt(expr))
-        KnfBlock::{ stmts, ty: result_ty }
+        KnfBlock::{ stmts, ty: result_ty, }
       }
     }
     let else_block = match current_else_block {
@@ -517,7 +517,7 @@ fn Context::build_enum_case_block(
   }
   match current_else_block {
     Some(block) => block
-    None => KnfBlock::{ stmts: [], ty: result_ty }
+    None => KnfBlock::{ stmts: [], ty: result_ty, }
   }
 }
 
@@ -698,7 +698,7 @@ fn Context::build_enum_pattern_condition(
   }
 
   // Merge stmts (conditions) and bindings together
-  let all_stmts = Array::new()
+  let all_stmts = []
   all_stmts.append(stmts)
   all_stmts.append(bindings)
   (final_cond, all_stmts)
@@ -718,7 +718,7 @@ pub fn Context::match_tuple_expr_to_knf(
 
   // Extract tuple types
   let tuple_types = match expr.cond.ty {
-    Tuple(types) => types.map(fn(t) { self.typekind_to_knf(t) })
+    Tuple(types) => types.map(t => self.typekind_to_knf(t))
     _ =>
       raise KnfTransformError("Expected tuple type in match tuple expression")
   }
@@ -744,7 +744,7 @@ pub fn Context::match_tuple_expr_to_knf(
   }
 
   // Build if-else chain for all arms
-  let mut last_else_block = KnfBlock::{ stmts: [], ty: match_expr_ty }
+  let mut last_else_block = KnfBlock::{ stmts: [], ty: match_expr_ty, }
   let mut is_last_branch = true
   for match_arm in expr.arms.rev_iter() {
     let { pattern, match_guard, body, .. } = match_arm
@@ -773,50 +773,50 @@ pub fn Context::match_tuple_expr_to_knf(
     let then_block = match (body_stmts, body_expr) {
       ([], Block(block)) => block
       (_, Block(block)) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.append(block.stmts)
-        KnfBlock::{ stmts, ty: match_expr_ty }
+        KnfBlock::{ stmts, ty: match_expr_ty, }
       }
       (_, expr) => {
-        let stmts = Array::new()
+        let stmts = []
         stmts.append(body_stmts)
         stmts.push(ExprStmt(expr))
-        KnfBlock::{ stmts, ty: match_expr_ty }
+        KnfBlock::{ stmts, ty: match_expr_ty, }
       }
     }
     let else_block = last_else_block
     match (is_last_branch, cond_expr_opt, guard_cond_opt) {
       // Last branch (catch-all)
       (true, _, _) => {
-        let final_stmts = Array::new()
+        let final_stmts = []
         final_stmts.append(cond_stmts)
         final_stmts.append(then_block.stmts)
-        last_else_block = KnfBlock::{ stmts: final_stmts, ty: match_expr_ty }
+        last_else_block = KnfBlock::{ stmts: final_stmts, ty: match_expr_ty, }
         is_last_branch = false
       }
       // Pattern with guard
       (false, Some(cond_name), Some(guard_name)) => {
         let combined_cond = Binary(And, cond_name, guard_name)
         cond_stmts.push(ExprStmt(If(combined_cond, then_block, else_block)))
-        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty }
+        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty, }
       }
       // Only pattern condition
       (false, Some(cond_name), None) => {
         cond_stmts.push(ExprStmt(If(Ident(cond_name), then_block, else_block)))
-        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty }
+        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty, }
       }
       // Wildcard/Ident with guard
       (false, None, Some(guard_name)) => {
         cond_stmts.push(ExprStmt(If(Ident(guard_name), then_block, else_block)))
-        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty }
+        last_else_block = KnfBlock::{ stmts: cond_stmts, ty: match_expr_ty, }
       }
       // Wildcard/Ident without guard (should be caught as last branch)
       (false, None, None) => {
-        let final_stmts = Array::new()
+        let final_stmts = []
         final_stmts.append(cond_stmts)
         final_stmts.append(then_block.stmts)
-        last_else_block = KnfBlock::{ stmts: final_stmts, ty: match_expr_ty }
+        last_else_block = KnfBlock::{ stmts: final_stmts, ty: match_expr_ty, }
       }
     }
   }

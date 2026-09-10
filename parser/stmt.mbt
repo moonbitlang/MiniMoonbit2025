@@ -5,7 +5,7 @@ pub(all) struct Stmt {
 } derive(Eq)
 
 ///|
-pub impl Show for Stmt with output(self, logger) {
+pub impl Show for Stmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -25,7 +25,7 @@ pub fn Stmt::to_string(self : Self, color? : Bool = true) -> String {
           let expr_str = expr.to_string(color~)
           let expr_lines = expr_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let expr_formatted = format_lines(expr_lines)
           "\{prefix}\n\{expr_formatted}"
@@ -61,7 +61,7 @@ pub(all) enum StmtKind {
 } derive(Eq)
 
 ///|
-pub impl Show for StmtKind with output(self, logger) {
+pub impl Show for StmtKind with fn output(self, logger) {
   let s = match self {
     LetStmt(let_stmt) => let_stmt.to_string()
     LetMutStmt(let_mut_stmt) => let_mut_stmt.to_string()
@@ -85,7 +85,7 @@ pub fn Stmt::new(
 ) -> Stmt {
   let len = rest_tokens.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  Stmt::{ kind, toks }
+  Stmt::{ kind, toks, }
 }
 
 ///|
@@ -239,13 +239,15 @@ pub fn parse_stmt(tokens : ArrayView[Token]) -> (Stmt, ArrayView[Token]) {
 ///|
 fn next_stmt_check_point(tokens : ArrayView[Token]) -> ArrayView[Token] {
   let line = tokens[0].line
-  loop tokens {
-    [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
-    [tok, ..] as tokens if tok.line != line => break tokens
-    [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
-    [{ kind: Bracket('{'), .. }, ..] as tokens => break tokens
-    [] as tokens => break tokens
-    [_, .. tokens] => continue tokens
+  for tokens = tokens {
+    match tokens {
+      [{ kind: Symbol(";"), .. }, .. tokens] => break tokens
+      [tok, ..] as tokens if tok.line != line => break tokens
+      [{ kind: Bracket('}'), .. }, ..] as tokens => break tokens
+      [{ kind: Bracket('{'), .. }, ..] as tokens => break tokens
+      [] as tokens => break tokens
+      [_, .. tokens] => continue tokens
+    }
   }
 }
 
@@ -466,3 +468,15 @@ test "Stmt to_string Test - LocalFunction" {
     ),
   )
 }
+
+///|
+pub extend Stmt with Eq::{not_equal, equal}
+
+///|
+pub extend Stmt with Show::{output}
+
+///|
+pub extend StmtKind with Eq::{not_equal, equal}
+
+///|
+pub extend StmtKind with Show::{to_string, output}

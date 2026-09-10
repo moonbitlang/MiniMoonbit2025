@@ -9,7 +9,7 @@ pub(all) struct KnfClosure {
 
 ///|
 pub fn KnfClosure::to_string(self : KnfClosure, ident? : Int = 0) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   let indent_str = " ".repeat(ident)
   if !self.captured_vars.is_empty() {
     sb.write_string("// Captured variables: \n")
@@ -40,7 +40,7 @@ pub fn Context::local_function_to_knf(
   local_function : @typecheck.LocalFunction,
 ) -> KnfClosure raise KnfTransformError {
   // add function type and name to name env
-  let param_types : Array[Type] = Array::new()
+  let param_types : Array[Type] = []
   for param in local_function.param_list {
     let (_, param_ty) = param
     let param_type = self.typekind_to_knf(param_ty.kind)
@@ -51,7 +51,7 @@ pub fn Context::local_function_to_knf(
   let closure_name = self.add_new_name(local_function.fname, closure_type)
   // enter new scope for function body
   self.enter_scope()
-  let knf_params = Array::new()
+  let knf_params = []
   for param in local_function.param_list {
     let (param_name, param_ty) = param
     let param_type = self.typekind_to_knf(param_ty.kind)

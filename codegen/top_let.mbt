@@ -3,7 +3,7 @@ pub fn Context::top_let_codegen(
   self : Self,
   top_let : @knf.KnfTopLet,
 ) -> &@llvm.Value raise {
-  let { name, ty, expr } = top_let
+  let { name, ty, expr, } = top_let
   let name_str = name.to_string()
 
   // For complex types (Array, Tuple, Struct), always use runtime initialization
@@ -84,7 +84,7 @@ pub fn Context::global_expr_codegen(
       }
     }
     ArrayLiteral(Int, element_names) => {
-      let llvm_elements : Array[&@llvm.Constant] = Array::new()
+      let llvm_elements : Array[&@llvm.Constant] = []
       for name in element_names {
         let name = name.to_string()
         match self.global_consts.get(name) {
@@ -99,7 +99,7 @@ pub fn Context::global_expr_codegen(
       self.llvm_ctx.getConstArray(i32_ty, llvm_elements)
     }
     ArrayLiteral(Double, element_names) => {
-      let llvm_elements : Array[&@llvm.Constant] = Array::new()
+      let llvm_elements : Array[&@llvm.Constant] = []
       for name in element_names {
         let name = name.to_string()
         match self.global_consts.get(name) {
@@ -114,7 +114,7 @@ pub fn Context::global_expr_codegen(
       self.llvm_ctx.getConstArray(doublety, llvm_elements)
     }
     ArrayLiteral(Bool, element_names) => {
-      let llvm_elements : Array[&@llvm.Constant] = Array::new()
+      let llvm_elements : Array[&@llvm.Constant] = []
       for name in element_names {
         let name = name.to_string()
         match self.global_consts.get(name) {

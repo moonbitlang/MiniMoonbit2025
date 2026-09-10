@@ -7,7 +7,7 @@ pub(all) struct IfExpr {
 }
 
 ///|
-pub impl Show for IfExpr with output(self, logger) {
+pub impl Show for IfExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -22,10 +22,7 @@ pub fn IfExpr::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format condition
   let cond_str = self.cond.to_string(color~)
-  let cond_lines = cond_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let cond_lines = cond_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let cond_formatted = @parser.format_lines(
     cond_lines,
     head_with="├-cond: ",
@@ -34,10 +31,7 @@ pub fn IfExpr::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format then block
   let then_str = self.then_block.to_string(color~)
-  let then_lines = then_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let then_lines = then_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   match self.else_block {
     None => {
       let then_formatted = @parser.format_lines(
@@ -56,7 +50,7 @@ pub fn IfExpr::to_string(self : Self, color? : Bool = true) -> String {
       let else_if_str = else_if.to_string(color~)
       let else_if_lines = else_if_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let else_if_formatted = @parser.format_lines(
         else_if_lines,
@@ -74,7 +68,7 @@ pub fn IfExpr::to_string(self : Self, color? : Bool = true) -> String {
       let else_str = else_block.to_string(color~)
       let else_lines = else_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let else_formatted = @parser.format_lines(
         else_lines,
@@ -131,7 +125,7 @@ pub fn Context::check_if_expr(
 test "IfExpr to_string Test - Simple" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Bool, mutable: false, })
   let code =
     #|if x { 1 }
   let tokens = @lexer.tokenize(code)
@@ -155,7 +149,7 @@ test "IfExpr to_string Test - Simple" {
 test "IfExpr to_string Test - With Else" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|if x > 0 { 1 } else { 0 }
   let tokens = @lexer.tokenize(code)
@@ -184,7 +178,7 @@ test "IfExpr to_string Test - With Else" {
 test "IfExpr to_string Test - Else If" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Int, mutable: false, })
   let code =
     #|if x > 0 { 1 } else if x < 0 { 2 } else { 0 }
   let tokens = @lexer.tokenize(code)
@@ -215,3 +209,6 @@ test "IfExpr to_string Test - Else If" {
     ),
   )
 }
+
+///|
+pub extend IfExpr with Show::{output}

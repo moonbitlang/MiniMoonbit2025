@@ -6,7 +6,7 @@ pub(all) struct ApplyExpr {
 }
 
 ///|
-pub impl Show for ApplyExpr with output(self, logger) {
+pub impl Show for ApplyExpr with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -25,7 +25,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let apply_str = apply_expr.to_string(color~)
       let apply_lines = apply_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let apply_formatted = @parser.format_lines(
         apply_lines,
@@ -35,7 +35,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let index_str = index_expr.to_string(color~)
       let index_lines = index_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let index_formatted = @parser.format_lines(
         index_lines,
@@ -51,10 +51,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let ty_str = if color { @color.taint(ty_str, Green) } else { ty_str }
       let prefix_with_type = "\{prefix} .\{field} (\{ty_str})"
       let inner_str = apply_expr.to_string(color~)
-      let lines = inner_str
-        .split("\n")
-        .map(fn(sv) { sv.to_string() })
-        .to_array()
+      let lines = inner_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
       let formatted = @parser.format_lines(lines)
       "\{prefix_with_type}\n\{formatted}"
     }
@@ -67,7 +64,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
       let apply_str = apply_expr.to_string(color~)
       let apply_lines = apply_str
         .split("\n")
-        .map(fn(sv) { sv.to_string() })
+        .map(fn(sv) { sv.to_owned() })
         .to_array()
       let apply_formatted = if args.length() > 0 {
         @parser.format_lines(
@@ -84,7 +81,7 @@ pub fn ApplyExpr::to_string(self : Self, color? : Bool = true) -> String {
         let arg_str = arg.to_string(color~)
         let arg_lines = arg_str
           .split("\n")
-          .map(fn(sv) { sv.to_string() })
+          .map(fn(sv) { sv.to_owned() })
           .to_array()
         let is_last = i == args.length() - 1
         let arg_formatted = if is_last {
@@ -109,7 +106,7 @@ pub(all) enum ApplyExprKind {
   ArrayAccess(ApplyExpr, Expr)
   FieldAccess(ApplyExpr, String)
   Call(ApplyExpr, Array[Expr])
-} derive(Show)
+}
 
 ///|
 pub fn Context::check_apply_expr(
@@ -344,7 +341,7 @@ pub fn Context::check_apply_expr(
         }
 
         // Check and collect all arguments (self + user provided args)
-        let all_args = Array::new()
+        let all_args = []
         let base_as_expr = Expr::{
           kind: ExprKind::ApplyExpr(checked_base_expr),
           ty: checked_base_expr.ty,
@@ -423,10 +420,10 @@ pub fn Context::check_apply_expr(
         if field.name == field_name {
           break field.ty.kind
         }
-      } else {
+      } nobreak {
         let msg = "Struct type does not have field: \{field_name}"
         self.throw_(struct_expr.toks[0], msg, Error)
-        Unit
+        TypeKind::Unit
       }
       ApplyExpr::{
         kind: FieldAccess(struct_expr, field_name),
@@ -450,7 +447,7 @@ pub fn Context::check_apply_expr(
         self.throw_(apply_expr.toks[0], msg, Error)
       }
       let arg_len = min(arg_exprs.length(), arg_tys.length())
-      let new_arg_exprs = Array::new()
+      let new_arg_exprs = []
       for i in 0..<arg_len {
         let arg_expr = self.check_expr(arg_exprs[i])
         let expected_ty = arg_tys[i]
@@ -890,8 +887,8 @@ fn handle_primitive_method_call(
 test "ApplyExpr to_string Test" {
   let color = false
   let ctx = Context::new()
-  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false })
-  ctx.type_env.set("point", { kind: TypeKind::Struct("Point"), mutable: false })
+  ctx.type_env.set("x", { kind: TypeKind::Double, mutable: false, })
+  ctx.type_env.set("point", { kind: TypeKind::Struct("Point"), mutable: false, })
   ctx.type_env.set("arr", {
     kind: TypeKind::Array(TypeKind::Int),
     mutable: false,
@@ -903,10 +900,10 @@ test "ApplyExpr to_string Test" {
   ctx.struct_defs.set("Point", {
     name: "Point",
     fields: [
-      { name: "x", ty: { kind: TypeKind::Int, mutable: false } },
-      { name: "y", ty: { kind: TypeKind::Int, mutable: false } },
+      { name: "x", ty: { kind: TypeKind::Int, mutable: false, }, },
+      { name: "y", ty: { kind: TypeKind::Int, mutable: false, }, },
     ],
-    methods: Map::new(),
+    methods: Map([]),
   })
   let code =
     #|42 ; x ; point.x ; arr[0] ; add(1, 2)
@@ -957,4 +954,42 @@ test "ApplyExpr to_string Test" {
       #|└-int literal 2 (Int)
     ),
   )
+}
+
+///|
+pub extend ApplyExpr with Show::{output}
+
+///|
+pub extend ApplyExprKind with Show::{to_string, output}
+
+///|
+pub impl Show for ApplyExprKind with fn output(self, logger) {
+  match self {
+    AtomExpr(v0) => {
+      logger.write_string("AtomExpr(")
+      logger.write_object(v0)
+      logger.write_string(")")
+    }
+    ArrayAccess(v0, v1) => {
+      logger.write_string("ArrayAccess(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_object(v1)
+      logger.write_string(")")
+    }
+    FieldAccess(v0, v1) => {
+      logger.write_string("FieldAccess(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_string(v1.escape())
+      logger.write_string(")")
+    }
+    Call(v0, v1) => {
+      logger.write_string("Call(")
+      logger.write_object(v0)
+      logger.write_string(", ")
+      logger.write_iter(v1.iter(), prefix="[", suffix="]")
+      logger.write_string(")")
+    }
+  }
 }

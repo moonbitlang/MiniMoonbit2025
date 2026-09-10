@@ -5,7 +5,7 @@ pub(all) struct Type {
 }
 
 ///|
-pub impl Show for Type with output(self, logger) {
+pub impl Show for Type with fn output(self, logger) {
   logger.write_object(self.kind)
 }
 
@@ -78,7 +78,7 @@ pub fn Context::check_parser_type(
   mutable? : Bool = false,
 ) -> Type raise TypeCheckError {
   let tk = self.check_parser_typekind(ty.kind)
-  Type::{ kind: tk, mutable }
+  Type::{ kind: tk, mutable, }
 }
 
 ///|
@@ -212,9 +212,9 @@ fn Context::ensure_type(self : Context, ty : TypeKind) -> TypeKind {
       Tuple(ensured_types)
     }
     Function(param_types, return_type) => {
-      let ensured_param_types = param_types.map(typekind => self.ensure_type(
-        typekind,
-      ))
+      let ensured_param_types = param_types.map(typekind => {
+        self.ensure_type(typekind)
+      })
       let ensured_return_type = self.ensure_type(return_type)
       Function(ensured_param_types, ensured_return_type)
     }
@@ -223,7 +223,7 @@ fn Context::ensure_type(self : Context, ty : TypeKind) -> TypeKind {
 }
 
 ///|
-pub impl Show for TypeKind with output(self, logger) {
+pub impl Show for TypeKind with fn output(self, logger) {
   let s = match self {
     Unit => "Unit"
     Bool => "Bool"
@@ -251,3 +251,15 @@ pub impl Show for TypeKind with output(self, logger) {
   }
   logger.write_string(s)
 }
+
+///|
+pub extend Type with Show::{to_string, output}
+
+///|
+pub extend TypeKind with Hash::{hash, hash_combine}
+
+///|
+pub extend TypeKind with Eq::{not_equal, equal}
+
+///|
+pub extend TypeKind with Show::{to_string, output}

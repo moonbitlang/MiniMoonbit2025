@@ -45,7 +45,7 @@ pub fn KnfStmt::to_string(self : KnfStmt, ident? : Int = 0) -> String {
 }
 
 ///|
-pub impl Show for KnfStmt with output(self, logger) {
+pub impl Show for KnfStmt with fn output(self, logger) {
   logger.write_string(self.to_string(ident=0))
 }
 
@@ -81,3 +81,6 @@ pub fn Context::stmt_to_knf(
     }
   }
 }
+
+///|
+pub extend KnfStmt with Show::{output}

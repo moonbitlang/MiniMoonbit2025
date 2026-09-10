@@ -5,7 +5,7 @@ pub(all) struct Param {
 }
 
 ///|
-pub impl Show for Param with output(self, logger) {
+pub impl Show for Param with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -26,7 +26,7 @@ pub(all) struct TopFunction {
 }
 
 ///|
-pub impl Show for TopFunction with output(self, logger) {
+pub impl Show for TopFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -80,10 +80,7 @@ pub fn TopFunction::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = @parser.format_lines(body_lines)
   result = "\{result}\n\{body_formatted}\n"
   result
@@ -100,12 +97,12 @@ pub fn Context::check_top_function(
     raise TypeCheckError("Function not found in environment: \{func.fname}")
   }
   self.enter_scope()
-  let param_list = Array::new()
+  let param_list = []
   for i, param in func.param_list {
     let { name, .. } = param
-    let param_ty = { kind: param_types[i], mutable: false }
+    let param_ty = { kind: param_types[i], mutable: false, }
     self.type_env.set(name, param_ty)
-    param_list.push(Param::{ name, ty: param_ty.kind })
+    param_list.push(Param::{ name, ty: param_ty.kind, })
   }
   if !(func.typeTag is "") {
     guard self.struct_defs.get(func.typeTag) is Some(struct_def) else {
@@ -174,7 +171,7 @@ test "TopFunction to_string Test - Main" {
   let color = false
   let ctx = Context::new()
   ctx.func_types.set("main", Function([], Unit))
-  ctx.type_env.set("main", Type::{ kind: Function([], Unit), mutable: false })
+  ctx.type_env.set("main", Type::{ kind: Function([], Unit), mutable: false, })
   let code =
     #|fn main { let x = 42 ; }
   let tokens = @lexer.tokenize(code)
@@ -197,3 +194,9 @@ test "TopFunction to_string Test - Main" {
     ),
   )
 }
+
+///|
+pub extend Param with Show::{output}
+
+///|
+pub extend TopFunction with Show::{output}

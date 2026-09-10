@@ -1,9 +1,0 @@
-{
-  "import": [
-    "Kaida-Amethyst/MiniMoonBit/lexer",
-    "Kaida-Amethyst/MiniMoonBit/parser",
-    "Kaida-Amethyst/MiniMoonBit/color",
-    "Kaida-Amethyst/either"
-  ]
-}
-

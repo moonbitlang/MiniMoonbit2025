@@ -6,7 +6,7 @@ pub struct TopLet {
 }
 
 ///|
-pub impl Show for TopLet with output(self, logger) {
+pub impl Show for TopLet with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -28,10 +28,7 @@ pub fn TopLet::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = @parser.format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -56,8 +53,8 @@ pub fn Context::check_top_let(
     }
   }
   let type_kind = self.ensure_type(type_kind)
-  let ty = Type::{ kind: type_kind, mutable: false }
-  let checked_top_let = TopLet::{ name: top_let.name, ty, expr: checked_expr }
+  let ty = Type::{ kind: type_kind, mutable: false, }
+  let checked_top_let = TopLet::{ name: top_let.name, ty, expr: checked_expr, }
   self.type_env.set(top_let.name, ty)
   checked_top_let
 }
@@ -105,3 +102,6 @@ test "TopLet to_string Test - With Type" {
     ),
   )
 }
+
+///|
+pub extend TopLet with Show::{output}

@@ -9,18 +9,18 @@ pub fn Context::block_expr_to_knf(
   self : Context,
   expr : @typecheck.BlockExpr,
 ) -> KnfBlock raise KnfTransformError {
-  let stmts = Array::new()
+  let stmts = []
   for stmt in expr.stmts {
     let knf_stmts = self.stmt_to_knf(stmt)
     stmts.append(knf_stmts)
   }
   let ty = self.typekind_to_knf(expr.ty)
-  KnfBlock::{ stmts, ty }
+  KnfBlock::{ stmts, ty, }
 }
 
 ///|
 pub fn KnfBlock::to_string(self : KnfBlock, ident : Int) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{\n")
   for stmt in self.stmts {
     sb.write_string(stmt.to_string(ident=ident + 2))
@@ -33,7 +33,7 @@ pub fn KnfBlock::to_string(self : KnfBlock, ident : Int) -> String {
 
 ///|
 pub fn KnfBlock::nested_to_string(self : KnfBlock) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   sb.write_string("{")
   for stmt in self.stmts {
     sb.write_string(stmt.to_string(ident=0))
@@ -44,6 +44,9 @@ pub fn KnfBlock::nested_to_string(self : KnfBlock) -> String {
 }
 
 ///|
-pub impl Show for KnfBlock with output(self, logger) {
+pub impl Show for KnfBlock with fn output(self, logger) {
   logger.write_string(self.to_string(0))
 }
+
+///|
+pub extend KnfBlock with Show::{output}

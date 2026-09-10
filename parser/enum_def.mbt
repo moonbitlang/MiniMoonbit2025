@@ -5,7 +5,7 @@ pub struct EnumDef {
 } derive(Eq)
 
 ///|
-pub impl Show for EnumDef with output(self, logger) {
+pub impl Show for EnumDef with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -23,7 +23,7 @@ pub fn EnumDef::to_string(self : Self, color? : Bool = true) -> String {
     let field_str = field.to_string(color~)
     let field_lines = field_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.enum_fields.length() - 1
     let field_formatted = if is_last {
@@ -43,7 +43,7 @@ pub struct EnumField {
 } derive(Eq)
 
 ///|
-pub impl Show for EnumField with output(self, logger) {
+pub impl Show for EnumField with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -66,7 +66,7 @@ pub fn parse_enum_field(
       "Expected enum field name, while got \{tokens[0].kind}, \{tokens[1].kind}...",
     )
   }
-  let types : Array[Type] = Array::new()
+  let types : Array[Type] = []
   let mut last_tok = Some(name_tok)
   guard tokens is [{ kind: Bracket('('), .. }, .. rest] else {
     let tokens = if tokens is [{ kind: Symbol(";"), .. }, .. rest] {
@@ -76,28 +76,30 @@ pub fn parse_enum_field(
     } else {
       tokens
     }
-    return (EnumField::{ name, types }, tokens)
+    return (EnumField::{ name, types, }, tokens)
   }
-  let rest = loop rest {
-    [{ kind: Bracket(')'), .. } as rparen_tok, .. rest] => {
-      last_tok = Some(rparen_tok)
-      break rest
-    }
-    [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
-      let (ty, rest) = parse_type(tokens)
-      types.push(ty)
-      if rest is [{ kind: Symbol(","), .. }, .. rest] {
+  let rest = for rest = rest {
+    match rest {
+      [{ kind: Bracket(')'), .. } as rparen_tok, .. rest] => {
+        last_tok = Some(rparen_tok)
+        break rest
+      }
+      [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
+        let (ty, rest) = parse_type(tokens)
+        types.push(ty)
+        if rest is [{ kind: Symbol(","), .. }, .. rest] {
+          continue rest
+        }
         continue rest
       }
-      continue rest
-    }
-    [] => raise ParseError("Unclosed bracket in enum field types")
-    [tok, ..] => {
-      @lexer.throw_(tok, "Expected type in enum field types", Error)
-      raise ParseError("Unexpected token in enum field types")
+      [] => raise ParseError("Unclosed bracket in enum field types")
+      [tok, ..] => {
+        @lexer.throw_(tok, "Expected type in enum field types", Error)
+        raise ParseError("Unexpected token in enum field types")
+      }
     }
   }
-  let enum_field = EnumField::{ name, types }
+  let enum_field = EnumField::{ name, types, }
   let rest = if rest is [{ kind: Symbol(";"), .. }, .. rest] {
     rest
   } else if rest is [tok, ..] && tok.line != last_tok.unwrap().line {
@@ -122,17 +124,19 @@ pub fn parse_enum_def(
   guard tokens is [{ kind: Bracket('{'), .. }, .. rest] else {
     raise ParseError("Expected '{' after enum name")
   }
-  let enum_fields : Array[EnumField] = Array::new()
-  let rest = loop rest {
-    [{ kind: Bracket('}'), .. }, .. rest] => break rest
-    [] => raise ParseError("Unclosed enum definition")
-    tokens => {
-      let (enum_field, rest) = parse_enum_field(tokens)
-      enum_fields.push(enum_field)
-      continue rest
+  let enum_fields : Array[EnumField] = []
+  let rest = for rest = rest {
+    match rest {
+      [{ kind: Bracket('}'), .. }, .. rest] => break rest
+      [] => raise ParseError("Unclosed enum definition")
+      tokens => {
+        let (enum_field, rest) = parse_enum_field(tokens)
+        enum_fields.push(enum_field)
+        continue rest
+      }
     }
   }
-  let enum_def = EnumDef::{ name, enum_fields }
+  let enum_def = EnumDef::{ name, enum_fields, }
   (enum_def, rest)
 }
 
@@ -192,3 +196,15 @@ test "EnumDef to_string Test - Mixed" {
     ),
   )
 }
+
+///|
+pub extend EnumDef with Eq::{not_equal, equal}
+
+///|
+pub extend EnumDef with Show::{output}
+
+///|
+pub extend EnumField with Eq::{not_equal, equal}
+
+///|
+pub extend EnumField with Show::{output}

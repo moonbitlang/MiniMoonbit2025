@@ -57,7 +57,6 @@ pub fn Context::switch_codegen(
     case_terminated.push(terminated)
     if !terminated {
       let _ = self.builder.createBr(merge_bb)
-
     }
     case_values.push(case_value)
     case_end_bbs.push(case_end_bb)
@@ -89,7 +88,6 @@ pub fn Context::switch_codegen(
   let default_is_empty = default_stmt_len == 0
   if !default_terminated {
     let _ = self.builder.createBr(merge_bb)
-
   }
 
   // Check if all branches are terminated

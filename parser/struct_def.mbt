@@ -5,7 +5,7 @@ pub struct StructDef {
 } derive(Eq)
 
 ///|
-pub impl Show for StructDef with output(self, logger) {
+pub impl Show for StructDef with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -23,7 +23,7 @@ pub fn StructDef::to_string(self : Self, color? : Bool = true) -> String {
     let field_str = field.to_string(color~)
     let field_lines = field_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.fields.length() - 1
     let field_formatted = if is_last {
@@ -44,7 +44,7 @@ pub struct StructField {
 } derive(Eq)
 
 ///|
-pub impl Show for StructField with output(self, logger) {
+pub impl Show for StructField with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -71,7 +71,7 @@ pub fn parse_struct_field(
     raise ParseError("Expect ':' after struct field name")
   }
   let (ty, tokens) = parse_type(tokens)
-  let struct_field = StructField::{ is_mut, name, ty }
+  let struct_field = StructField::{ is_mut, name, ty, }
   //guard tokens is [{ kind: Symbol(";"), .. }, .. tokens] else {
   //  raise ParseError("Expect ';' after struct field")
   //}
@@ -100,20 +100,22 @@ pub fn parse_struct_def(
   guard tokens is [{ kind: Bracket('{'), .. }, .. tokens] else {
     raise ParseError("Failed Parsing StructDef: Expect '{'")
   }
-  let fields : Array[StructField] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Bracket('}'), .. }, .. rest] => break rest
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tokens => {
-      let (field, rest) = parse_struct_field(tokens)
-      fields.push(field)
-      continue rest
+  let fields : Array[StructField] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Bracket('}'), .. }, .. rest] => break rest
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tokens => {
+        let (field, rest) = parse_struct_field(tokens)
+        fields.push(field)
+        continue rest
+      }
     }
   }
-  let struct_def = StructDef::{ name, fields }
+  let struct_def = StructDef::{ name, fields, }
   (struct_def, tokens)
 }
 
@@ -173,3 +175,15 @@ test "StructDef to_string Test - Complex Types" {
     ),
   )
 }
+
+///|
+pub extend StructDef with Eq::{not_equal, equal}
+
+///|
+pub extend StructDef with Show::{output}
+
+///|
+pub extend StructField with Eq::{not_equal, equal}
+
+///|
+pub extend StructField with Show::{output}

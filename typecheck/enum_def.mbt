@@ -5,7 +5,7 @@ pub struct EnumDef {
 }
 
 ///|
-pub impl Show for EnumDef with output(self, logger) {
+pub impl Show for EnumDef with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -23,7 +23,7 @@ pub fn EnumDef::to_string(self : Self, color? : Bool = true) -> String {
     let field_str = field.to_string(color~)
     let field_lines = field_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.enum_fields.length() - 1
     let field_formatted = if is_last {
@@ -53,7 +53,7 @@ pub struct EnumField {
 }
 
 ///|
-pub impl Show for EnumField with output(self, logger) {
+pub impl Show for EnumField with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -81,16 +81,16 @@ pub fn Context::check_enum_def(
   self : Self,
   enum_def : @parser.EnumDef,
 ) -> EnumDef raise TypeCheckError {
-  let fields : Array[EnumField] = Array::new()
+  let fields : Array[EnumField] = []
   for field in enum_def.enum_fields {
-    let { name, types } = field
-    let checked_types : Array[TypeKind] = types.map(t => self.check_parser_typekind(
-      t.kind,
-    ))
-    let checked_field = EnumField::{ name, types: checked_types }
+    let { name, types, } = field
+    let checked_types : Array[TypeKind] = types.map(t => {
+      self.check_parser_typekind(t.kind)
+    })
+    let checked_field = EnumField::{ name, types: checked_types, }
     fields.push(checked_field)
   }
-  let enum_def = EnumDef::{ name: enum_def.name, enum_fields: fields }
+  let enum_def = EnumDef::{ name: enum_def.name, enum_fields: fields, }
   self.enum_defs.set(enum_def.name, enum_def)
   enum_def
 }
@@ -140,3 +140,9 @@ test "EnumDef to_string Test - Multiple Types" {
     ),
   )
 }
+
+///|
+pub extend EnumDef with Show::{output}
+
+///|
+pub extend EnumField with Show::{output}

@@ -10,7 +10,7 @@ pub(all) struct KnfProgram {
 }
 
 ///|
-pub impl Show for KnfProgram with output(self, logger) {
+pub impl Show for KnfProgram with fn output(self, logger) {
   logger.write_string(";; KnfProgram: \{self.source_file}\n\n")
   for _, struct_def in self.struct_defs {
     logger.write_object(struct_def)
@@ -36,16 +36,16 @@ pub fn Context::program_to_knf(
   prog : @typecheck.Program,
 ) -> KnfProgram raise KnfTransformError {
   let source_file = prog.source_file
-  let struct_defs = Map::new()
-  let unions = Map::new()
-  let top_lets = Map::new()
-  let functions = Map::new()
-  let externs = Map::new()
+  let struct_defs = Map([])
+  let unions = Map([])
+  let top_lets = Map([])
+  let functions = Map([])
+  let externs = Map([])
 
   // Step 1, process all enum definitions
   for enum_name, enum_def in prog.enum_defs {
     let knf_union = self.enum_to_knf(enum_def)
-    let union_variant_names = Array::new()
+    let union_variant_names = []
     unions.set(enum_name, knf_union)
     for variant in knf_union.variants {
       struct_defs.set(variant.name, variant)
@@ -72,7 +72,7 @@ pub fn Context::program_to_knf(
   // Step - 4, register all function signatures in globals
   // so that top_let expressions can reference them
   for _, func in prog.top_functions {
-    let param_types = func.param_list.map(fn(p) { self.typekind_to_knf(p.ty) })
+    let param_types = func.param_list.map(p => self.typekind_to_knf(p.ty))
     let ret_ty = self.typekind_to_knf(func.ret_ty)
     // Use func.fname which is the mangled name (e.g., Vec2$$new)
     self.globals.set(func.fname, Function(param_types, ret_ty))
@@ -158,3 +158,6 @@ pub fn knf_transform(
   context.globals.set("__builtin_char_to_string", Function([Char], String))
   context.program_to_knf(prog)
 }
+
+///|
+pub extend KnfProgram with Show::{to_string, output}

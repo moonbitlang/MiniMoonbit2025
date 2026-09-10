@@ -6,7 +6,7 @@ pub(all) struct StructDef {
 }
 
 ///|
-pub impl Show for StructDef with output(self, logger) {
+pub impl Show for StructDef with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -24,7 +24,7 @@ pub fn StructDef::to_string(self : Self, color? : Bool = true) -> String {
     let field_str = field.to_string(color~)
     let field_lines = field_str
       .split("\n")
-      .map(fn(sv) { sv.to_string() })
+      .map(fn(sv) { sv.to_owned() })
       .to_array()
     let is_last = i == self.fields.length() - 1
     let field_formatted = if is_last {
@@ -44,7 +44,7 @@ pub(all) struct StructField {
 }
 
 ///|
-pub impl Show for StructField with output(self, logger) {
+pub impl Show for StructField with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -72,18 +72,18 @@ pub fn Context::check_struct_def(
   self : Self,
   struct_def : @parser.StructDef,
 ) -> StructDef raise TypeCheckError {
-  let fields : Array[StructField] = Array::new()
+  let fields : Array[StructField] = []
   for field in struct_def.fields {
-    let { name, is_mut, ty } = field
+    let { name, is_mut, ty, } = field
     let ty = self.check_parser_typekind(ty.kind)
-    let ty = Type::{ kind: ty, mutable: is_mut }
-    let checked_field = StructField::{ name, ty }
+    let ty = Type::{ kind: ty, mutable: is_mut, }
+    let checked_field = StructField::{ name, ty, }
     fields.push(checked_field)
   }
   let struct_def = StructDef::{
     name: struct_def.name,
     fields,
-    methods: Map::new(),
+    methods: Map([]),
   }
   self.struct_defs.set(struct_def.name, struct_def)
   struct_def
@@ -132,3 +132,9 @@ test "StructDef to_string Test - With Mut" {
     ),
   )
 }
+
+///|
+pub extend StructDef with Show::{output}
+
+///|
+pub extend StructField with Show::{output}

@@ -1,0 +1,15 @@
+import {
+  "moonbitlang/core/ref",
+  "moonbitlang/core/env",
+  "Kaida-Amethyst/MoonLLVM/riscv64",
+  "Kaida-Amethyst/MoonLLVM/aarch64",
+  "moonbitlang/x/fs",
+  "Kaida-Amethyst/MiniMoonBit/lexer",
+  "Kaida-Amethyst/MiniMoonBit/parser",
+  "Kaida-Amethyst/MiniMoonBit/typecheck",
+  "Kaida-Amethyst/MiniMoonBit/knf",
+  "Kaida-Amethyst/MiniMoonBit/codegen",
+  "Yoorkin/ArgParser",
+}
+
+pkgtype(kind: "executable")

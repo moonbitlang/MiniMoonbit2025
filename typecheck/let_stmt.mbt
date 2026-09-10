@@ -6,7 +6,7 @@ pub(all) struct LetStmt {
 }
 
 ///|
-pub impl Show for LetStmt with output(self, logger) {
+pub impl Show for LetStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -20,7 +20,7 @@ pub fn LetStmt::to_string(self : Self, color? : Bool = true) -> String {
   let pattern_str = self.pattern.to_string(color~)
   let pattern_lines = pattern_str
     .split("\n")
-    .map(fn(sv) { sv.to_string() })
+    .map(fn(sv) { sv.to_owned() })
     .to_array()
   let pattern_formatted = @parser.format_lines(
     pattern_lines,
@@ -38,10 +38,7 @@ pub fn LetStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format expression
   let expr_str = self.expr.to_string(color~)
-  let expr_lines = expr_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let expr_lines = expr_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let expr_formatted = @parser.format_lines(
     expr_lines,
     head_with="└-expr: ",
@@ -56,7 +53,7 @@ pub(all) struct Pattern {
 } derive(Eq)
 
 ///|
-pub impl Show for Pattern with output(self, logger) {
+pub impl Show for Pattern with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -92,7 +89,7 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
           let pattern_str = patterns[i].to_string(color~)
           let lines = pattern_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == patterns.length() - 1
           let formatted = if is_last {
@@ -120,7 +117,7 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
           let pattern_str = patterns[i].to_string(color~)
           let lines = pattern_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == patterns.length() - 1
           let formatted = if is_last {
@@ -150,7 +147,7 @@ pub(all) enum PatternKind {
 } derive(Eq)
 
 ///|
-pub impl Show for PatternKind with output(self, logger) {
+pub impl Show for PatternKind with fn output(self, logger) {
   let s = match self {
     Wildcard => "_"
     Boolean(b) => b.to_string()
@@ -176,13 +173,13 @@ fn Context::from_parser_pattern(
   pattern : @parser.Pattern,
 ) -> Pattern raise TypeCheckError {
   match pattern.kind {
-    Wildcard => Pattern::{ kind: PatternKind::Wildcard }
-    Boolean(b) => Pattern::{ kind: PatternKind::Boolean(b) }
-    Integer(i) => Pattern::{ kind: PatternKind::Integer(i) }
-    Ident(name) => Pattern::{ kind: PatternKind::Ident(name) }
+    Wildcard => Pattern::{ kind: PatternKind::Wildcard, }
+    Boolean(b) => Pattern::{ kind: PatternKind::Boolean(b), }
+    Integer(i) => Pattern::{ kind: PatternKind::Integer(i), }
+    Ident(name) => Pattern::{ kind: PatternKind::Ident(name), }
     Tuple(sub_patterns) => {
       let patterns = sub_patterns.map(p => self.from_parser_pattern(p))
-      Pattern::{ kind: PatternKind::Tuple(patterns) }
+      Pattern::{ kind: PatternKind::Tuple(patterns), }
     }
     EnumVariant(tag, variant_name, sub_patterns) => {
       let patterns = sub_patterns.map(p => self.from_parser_pattern(p))
@@ -198,7 +195,7 @@ fn Context::from_parser_pattern(
           enum_defs[0].name
         }
       }
-      Pattern::{ kind: PatternKind::EnumVariant(tag, variant_name, patterns) }
+      Pattern::{ kind: PatternKind::EnumVariant(tag, variant_name, patterns), }
     }
   }
 }
@@ -221,7 +218,7 @@ pub fn Context::check_let_stmt(
   let type_kind = self.ensure_type(type_kind)
   let pattern = self.from_parser_pattern(let_stmt.pattern)
   self.bind_pattern_type(pattern, type_kind)
-  LetStmt::{ pattern, ty: type_kind, expr: checked_expr }
+  LetStmt::{ pattern, ty: type_kind, expr: checked_expr, }
 }
 
 ///|
@@ -279,7 +276,7 @@ fn Context::bind_pattern_type(
       }
     }
     Ident(name) =>
-      self.type_env.set(name, Type::{ kind: ty_kind, mutable: false })
+      self.type_env.set(name, Type::{ kind: ty_kind, mutable: false, })
     Tuple(sub_patterns) => {
       guard ty_kind is Tuple(element_types) else {
         raise TypeCheckError("Pattern is a tuple but type is not a tuple")
@@ -343,3 +340,18 @@ test "LetStmt to_string Test - Pattern" {
     ),
   )
 }
+
+///|
+pub extend LetStmt with Show::{output}
+
+///|
+pub extend Pattern with Eq::{not_equal, equal}
+
+///|
+pub extend Pattern with Show::{output}
+
+///|
+pub extend PatternKind with Eq::{not_equal, equal}
+
+///|
+pub extend PatternKind with Show::{to_string, output}

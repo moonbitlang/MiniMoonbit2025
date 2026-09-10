@@ -79,7 +79,6 @@ pub fn Context::collect_top_lets(
 ) -> Unit raise {
   for _, top_let in top_lets {
     let _ = self.top_let_codegen(top_let)
-
   }
 }
 
@@ -90,6 +89,5 @@ pub fn Context::generate_functions(
 ) -> Unit raise {
   for _, knf_func in functions {
     let _ = self.top_function_codegen(knf_func)
-
   }
 }

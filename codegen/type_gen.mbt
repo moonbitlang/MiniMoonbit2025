@@ -40,17 +40,17 @@ pub fn Context::type_codegen_concrete(
     Array(_) => self.llvm_ctx.getPtrTy()
     String(_) => self.llvm_ctx.getPtrTy()
     Tuple(elem_types) => {
-      let llvm_elem_types = elem_types.map(elem_type => self.type_codegen_opaque(
-        elem_type,
-      ))
+      let llvm_elem_types = elem_types.map(elem_type => {
+        self.type_codegen_opaque(elem_type)
+      })
       self.llvm_ctx.getStructType(llvm_elem_types)
     }
     Struct(struct_name) => self.struct_types.get(struct_name).unwrap()
     Union(_) => self.llvm_ctx.getPtrTy()
     Function(param_types, return_type) => {
-      let llvm_param_types = param_types.map(param_type => self.type_codegen_concrete(
-        param_type,
-      ))
+      let llvm_param_types = param_types.map(param_type => {
+        self.type_codegen_concrete(param_type)
+      })
       let llvm_return_type = self.type_codegen_concrete(return_type)
       self.llvm_ctx.getFunctionType(llvm_return_type, llvm_param_types)
     }
@@ -64,7 +64,7 @@ pub fn Context::collect_extern_func_values(
 ) -> Unit raise {
   for fname, ext_func in knf_externs {
     let { params, ret_ty, ffi_name, .. } = ext_func
-    let param_types : Array[&@llvm.Type] = Array::new()
+    let param_types : Array[&@llvm.Type] = []
     for param_type in params {
       let llvm_param_type = match param_type {
         Unit => (self.llvm_ctx.getPtrTy() : &@llvm.Type) // If parameter is Unit, use pointer type
@@ -89,7 +89,7 @@ pub fn Context::collect_func_values(
 ) -> Unit raise {
   for fname, func in knf_funcs {
     let { params, ret_ty, .. } = func
-    let param_types : Array[&@llvm.Type] = Array::new()
+    let param_types : Array[&@llvm.Type] = []
     // Top level functions no longer need closure environment pointer
     for param in params {
       let (_, param_type) = param
@@ -117,7 +117,7 @@ pub fn Context::collect_struct_types(
   knf_structs : Map[String, @knf.KnfStructDef],
 ) -> Unit raise {
   for sname, knf_struct in knf_structs {
-    let field_types : Array[&@llvm.Type] = Array::new()
+    let field_types : Array[&@llvm.Type] = []
     for field in knf_struct.fields {
       let llvm_field_type = self.type_codegen_opaque(field.2)
       field_types.push(llvm_field_type)

@@ -1,15 +1,17 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "Kaida-Amethyst/MiniMoonBit/main"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 
 // Errors
-type ArgError
-pub impl Show for ArgError
+type ArgError derive(@debug.Debug)
 
 // Types and methods
 
 // Type aliases
 
 // Traits
-

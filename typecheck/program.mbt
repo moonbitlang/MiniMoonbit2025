@@ -1,7 +1,7 @@
 ///|
 pub(all) suberror TypeCheckError {
   TypeCheckError(String)
-} derive(Show)
+}
 
 ///|
 pub(all) struct Env {
@@ -11,7 +11,7 @@ pub(all) struct Env {
 
 ///|
 pub fn Env::new(parent? : Env? = None) -> Env {
-  Env::{ local_: Map::new(), parent }
+  Env::{ local_: Map([]), parent, }
 }
 
 ///|
@@ -46,10 +46,10 @@ pub(all) struct Context {
 pub fn Context::new() -> Context {
   let ctx = Context::{
     type_env: Env::new(),
-    type_vars: Map::new(),
-    struct_defs: Map::new(),
-    enum_defs: Map::new(),
-    func_types: Map::new(),
+    type_vars: Map([]),
+    struct_defs: Map([]),
+    enum_defs: Map([]),
+    func_types: Map([]),
     current_func_ret_ty: None,
     error_happened: false,
   }
@@ -82,32 +82,32 @@ pub fn Context::has_error_happened(self : Context) -> Bool {
 ///|
 pub fn Context::lookup_type(self : Context, name : String) -> Type? {
   if name is ("println" | "print") {
-    let t = Type::{ kind: Function([Any], Unit), mutable: false }
+    let t = Type::{ kind: Function([Any], Unit), mutable: false, }
     return Some(t)
   }
   // Handle builtin array/string methods
   if name == "get_array_length" {
     // Array.length() - takes any array type and returns Int
-    return Some(Type::{ kind: Function([Any], Int), mutable: false })
+    return Some(Type::{ kind: Function([Any], Int), mutable: false, })
   }
   if name == "__builtin_get_string_length" {
-    return Some(Type::{ kind: Function([String], Int), mutable: false })
+    return Some(Type::{ kind: Function([String], Int), mutable: false, })
   }
   // Handle builtin array push methods
   if name.has_prefix("array_") && name.has_suffix("_push") {
     // array_int_push, array_double_push, etc. - takes (Array[T], T) and returns Unit
-    return Some(Type::{ kind: Function([Any, Any], Unit), mutable: false })
+    return Some(Type::{ kind: Function([Any, Any], Unit), mutable: false, })
   }
   // Handle builtin to_string functions
   if name.has_prefix("__builtin_") && name.has_suffix("_to_string") {
-    return Some(Type::{ kind: Function([Any], String), mutable: false })
+    return Some(Type::{ kind: Function([Any], String), mutable: false, })
   }
   match self.type_env.get(name) {
     None => None
-    Some({ kind, mutable }) => {
+    Some({ kind, mutable, }) => {
       let t = self.ensure_type(kind)
       // catch { _ => return None }
-      let t = Type::{ kind: t, mutable }
+      let t = Type::{ kind: t, mutable, }
       self.type_env.set(name, t)
       Some(t)
     }
@@ -152,7 +152,7 @@ pub(all) struct Program {
 
 ///|
 pub fn Program::to_string(self : Self, color? : Bool = true) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for _, extern_fn in self.extern_funcions {
     sb.write_string(extern_fn.to_string(color~))
   }
@@ -172,7 +172,7 @@ pub fn Program::to_string(self : Self, color? : Bool = true) -> String {
 }
 
 ///|
-pub impl Show for Program with output(self, logger) {
+pub impl Show for Program with fn output(self, logger) {
   logger.write_string(self.to_string(color=true))
 }
 
@@ -184,11 +184,11 @@ pub fn Context::check_program(
   self.collect_struct_or_enum_names(program)
   self.collect_function_types(program)
   let source_file = program.source_file
-  let struct_defs = Map::new()
-  let top_lets = Map::new()
-  let top_functions = Map::new()
-  let extern_funcions = Map::new()
-  let enum_defs = Map::new()
+  let struct_defs = Map([])
+  let top_lets = Map([])
+  let top_functions = Map([])
+  let extern_funcions = Map([])
+  let enum_defs = Map([])
   for name, ext_func in program.extern_funcions {
     let checked_ext_func = self.check_extern_function(ext_func)
     extern_funcions.set(name, checked_ext_func)
@@ -231,8 +231,8 @@ pub fn Context::collect_struct_or_enum_names(
     } else {
       let struct_def = StructDef::{
         name: struct_def.name,
-        fields: Array::new(),
-        methods: Map::new(),
+        fields: [],
+        methods: Map([]),
       }
       self.struct_defs.set(struct_def.name, struct_def)
     }
@@ -242,7 +242,7 @@ pub fn Context::collect_struct_or_enum_names(
       self.struct_defs.contains(enum_def.name) {
       raise TypeCheckError("Duplicate enum name: \{enum_def.name}")
     } else {
-      let enum_def = EnumDef::{ name: enum_def.name, enum_fields: Array::new() }
+      let enum_def = EnumDef::{ name: enum_def.name, enum_fields: [], }
       self.enum_defs.set(enum_def.name, enum_def)
     }
   }
@@ -257,7 +257,7 @@ pub fn Context::collect_function_types(
     if self.func_types.contains(ext_func.fname) {
       raise TypeCheckError("Duplicate function name: \{ext_func.fname}")
     } else {
-      let param_types = Array::new()
+      let param_types = []
       for param in ext_func.param_list {
         let { ty, .. } = param
         let ty = self.check_parser_type(ty)
@@ -265,11 +265,11 @@ pub fn Context::collect_function_types(
       }
       let ret_ty = match ext_func.ret_ty {
         Some(ty) => self.check_parser_type(ty)
-        None => Type::{ kind: Unit, mutable: false }
+        None => Type::{ kind: Unit, mutable: false, }
       }
       let fty = Function(param_types, ret_ty.kind)
       self.func_types.set(ext_func.fname, fty)
-      self.type_env.set(ext_func.fname, Type::{ kind: fty, mutable: false })
+      self.type_env.set(ext_func.fname, Type::{ kind: fty, mutable: false, })
     }
   }
   for func in program.top_functions.values() {
@@ -279,7 +279,7 @@ pub fn Context::collect_function_types(
         "Duplicate function name: \{func.typeTag}::\{func.fname}",
       )
     } else {
-      let param_types = Array::new()
+      let param_types = []
       for param in func.param_list {
         let { ty, .. } = param
         let ty = self.check_parser_type(ty)
@@ -288,7 +288,7 @@ pub fn Context::collect_function_types(
       let ret_ty = self.check_parser_type(func.ret_ty)
       let fty = Function(param_types, ret_ty.kind)
       self.func_types.set(func_whole_name, fty)
-      self.type_env.set(func_whole_name, Type::{ kind: fty, mutable: false })
+      self.type_env.set(func_whole_name, Type::{ kind: fty, mutable: false, })
     }
   }
 }
@@ -298,11 +298,23 @@ pub fn Context::find_enum_def_by_variant_name(
   self : Self,
   variant_name : String,
 ) -> Array[EnumDef] {
-  let enum_defs = Array::new()
+  let enum_defs = []
   for _, enum_def in self.enum_defs {
     if enum_def.get_field(variant_name) is Some(_) {
       enum_defs.push(enum_def)
     }
   }
   enum_defs
+}
+
+///|
+pub extend TypeCheckError with Show::{to_string, output}
+
+///|
+pub extend Program with Show::{output}
+
+///|
+pub impl Show for TypeCheckError with fn output(self, logger) {
+  let TypeCheckError(message) = self
+  logger.write_string("TypeCheckError(\{message.escape()})")
 }

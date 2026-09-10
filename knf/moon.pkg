@@ -1,0 +1,9 @@
+import {
+  "Kaida-Amethyst/either",
+  "Kaida-Amethyst/MiniMoonBit/typecheck",
+}
+
+import {
+  "Kaida-Amethyst/MiniMoonBit/lexer",
+  "Kaida-Amethyst/MiniMoonBit/parser",
+} for "test"

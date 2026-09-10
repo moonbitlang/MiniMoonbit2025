@@ -10,7 +10,6 @@ pub fn Context::stmt_codegen(self : Self, stmt : @knf.KnfStmt) -> Unit raise {
     While(cond, body) => self.while_stmt_codegen(cond, body)
     ExprStmt(expr) => {
       let _ = self.expr_codegen(expr)
-
     }
     Return(expr) => {
       guard self.expr_codegen(expr) is Some(ret_value) else {
@@ -19,11 +18,9 @@ pub fn Context::stmt_codegen(self : Self, stmt : @knf.KnfStmt) -> Unit raise {
         )
       }
       let _ = self.builder.createRet(ret_value)
-
     }
     ReturnUnit => {
       let _ = self.builder.createRetVoid()
-
     }
     ClosureDef(closure_def) => self.closure_codegen(closure_def)
   }
@@ -111,7 +108,6 @@ pub fn Context::assign_stmt_codegen(
         )
       }
       let _ = self.builder.createStore(value, v)
-
     }
     None => raise CodegenError("Identifier \{name} not found in codegen")
   }
@@ -138,63 +134,54 @@ pub fn Context::array_put_codegen(
       let _ = self.builder.createCall(array_int_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(Int64) => {
       let array_int64_put = self.get_builtin_function("array_int64_put")
       let _ = self.builder.createCall(array_int64_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(UInt) => {
       let array_uint_put = self.get_builtin_function("array_uint_put")
       let _ = self.builder.createCall(array_uint_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(UInt64) => {
       let array_uint64_put = self.get_builtin_function("array_uint64_put")
       let _ = self.builder.createCall(array_uint64_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(Bool) => {
       let array_bool_put = self.get_builtin_function("array_bool_put")
       let _ = self.builder.createCall(array_bool_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(Double) => {
       let array_double_put = self.get_builtin_function("array_double_put")
       let _ = self.builder.createCall(array_double_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(Float) => {
       let array_float_put = self.get_builtin_function("array_float_put")
       let _ = self.builder.createCall(array_float_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(Char) => {
       let array_char_put = self.get_builtin_function("array_char_put")
       let _ = self.builder.createCall(array_char_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     Array(_) => {
       let array_ptr_put = self.get_builtin_function("array_ptr_put")
       let _ = self.builder.createCall(array_ptr_put, [
         array_value, index_value, elem_value,
       ])
-
     }
     _ => raise CodegenError("Unsupported array element type in codegen")
   }
@@ -213,7 +200,7 @@ fn Context::struct_field_set_codegen(
       "Struct field set: cannot find type of struct in codegen",
     )
   }
-  guard struct_knf_type is Struct(struct_name)
+  guard! struct_knf_type is Struct(struct_name)
   guard self.knf_struct_types.get(struct_name) is Some(knf_struct_def) else {
     raise CodegenError(
       "Struct field set: cannot find struct definition in codegen",
@@ -234,7 +221,6 @@ fn Context::struct_field_set_codegen(
     zero, field_index_val,
   ])
   let _ = self.builder.createStore(field_value, field_ptr)
-
 }
 
 ///|

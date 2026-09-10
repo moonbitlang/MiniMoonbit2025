@@ -5,7 +5,7 @@ pub(all) struct Param {
 } derive(Eq)
 
 ///|
-pub impl Show for Param with output(self, logger) {
+pub impl Show for Param with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -25,7 +25,7 @@ pub(all) struct TopFunction {
 } derive(Eq)
 
 ///|
-pub impl Show for TopFunction with output(self, logger) {
+pub impl Show for TopFunction with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -73,10 +73,7 @@ pub fn TopFunction::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = format_lines(body_lines)
   result = "\{result}\n\{body_formatted}\n"
   result
@@ -102,7 +99,7 @@ pub fn parse_param(
     raise ParseError("Expect a `:`")
   }
   let (ty, tokens) = parse_type(tokens)
-  let param = Param::{ name, ty }
+  let param = Param::{ name, ty, }
   (param, tokens)
 }
 
@@ -110,26 +107,28 @@ pub fn parse_param(
 pub fn parse_param_list(
   tokens : ArrayView[Token],
 ) -> (Array[Param], ArrayView[Token]) raise ParseError {
-  let params : Array[Param] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Lower(_), .. }, ..] as tokens => {
-      let (param, rest) = parse_param(tokens)
-      params.push(param)
-      continue rest
+  let params : Array[Param] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Lower(_), .. }, ..] as tokens => {
+        let (param, rest) = parse_param(tokens)
+        params.push(param)
+        continue rest
+      }
+      [{ kind: Symbol(","), .. }, { kind: Lower(_), .. }, ..] as tokens => {
+        let (param, rest) = parse_param(tokens[1:])
+        params.push(param)
+        continue rest
+      }
+      [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, ..] as tokens =>
+        break tokens[1:]
+      [{ kind: Bracket(')'), .. }, ..] as tokens => break tokens
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tok => raise ParseError("InValid Param List Parsing: \{tok[0]}")
     }
-    [{ kind: Symbol(","), .. }, { kind: Lower(_), .. }, ..] as tokens => {
-      let (param, rest) = parse_param(tokens[1:])
-      params.push(param)
-      continue rest
-    }
-    [{ kind: Symbol(","), .. }, { kind: Bracket(')'), .. }, ..] as tokens =>
-      break tokens[1:]
-    [{ kind: Bracket(')'), .. }, ..] as tokens => break tokens
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tok => raise ParseError("InValid Param List Parsing: \{tok[0]}")
   }
   (params, tokens)
 }
@@ -168,11 +167,11 @@ pub fn parse_top_function(
     let (ret_ty, tokens) = parse_type(tokens)
     (param_list, ret_ty, tokens)
   } else {
-    let ret_type = Type::{ kind: Unit, toks: [] }
-    (Array::new(), ret_type, tokens)
+    let ret_type = Type::{ kind: Unit, toks: [], }
+    ([], ret_type, tokens)
   }
   let (body, tokens) = parse_block_expr(tokens)
-  let top_function = TopFunction::{ typeTag, fname, param_list, ret_ty, body }
+  let top_function = TopFunction::{ typeTag, fname, param_list, ret_ty, body, }
   (top_function, tokens)
 }
 
@@ -253,3 +252,15 @@ test "TopFunction to_string Test - Main" {
     ),
   )
 }
+
+///|
+pub extend Param with Eq::{not_equal, equal}
+
+///|
+pub extend Param with Show::{output}
+
+///|
+pub extend TopFunction with Eq::{not_equal, equal}
+
+///|
+pub extend TopFunction with Show::{output}

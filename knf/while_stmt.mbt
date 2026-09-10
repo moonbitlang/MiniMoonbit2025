@@ -7,7 +7,7 @@ pub fn Context::while_stmt_to_knf(
   let (cond_stmts, cond_knf_expr) = self.expr_to_knf(while_stmt.cond)
   cond_stmts.push(KnfStmt::ExprStmt(cond_knf_expr))
   let cond_ty = self.typekind_to_knf(while_stmt.cond.ty)
-  let cond_block = KnfBlock::{ stmts: cond_stmts, ty: cond_ty }
+  let cond_block = KnfBlock::{ stmts: cond_stmts, ty: cond_ty, }
 
   // Transform body block
   let body_block = self.block_expr_to_knf(while_stmt.body)
@@ -32,7 +32,7 @@ pub fn Context::for_stmt_to_knf(
   //   }
   // }
 
-  let stmts = Array::new()
+  let stmts = []
 
   // 1. Transform init statements
   for init in for_stmt.inits {
@@ -52,10 +52,10 @@ pub fn Context::for_stmt_to_knf(
   let (cond_stmts, cond_knf_expr) = self.expr_to_knf(for_stmt.cond)
   cond_stmts.push(KnfStmt::ExprStmt(cond_knf_expr))
   let cond_ty = self.typekind_to_knf(for_stmt.cond.ty)
-  let cond_block = KnfBlock::{ stmts: cond_stmts, ty: cond_ty }
+  let cond_block = KnfBlock::{ stmts: cond_stmts, ty: cond_ty, }
 
   // 3. Transform body block
-  let body_stmts = Array::new()
+  let body_stmts = []
   // Add original body statements
   for stmt in for_stmt.body.stmts {
     let knf_stmts = self.stmt_to_knf(stmt)
@@ -149,7 +149,7 @@ pub fn Context::for_stmt_to_knf(
     body_stmts.push(KnfStmt::Assign(knf_name, final_expr))
   }
   let body_ty = self.typekind_to_knf(for_stmt.body.ty)
-  let body_block = KnfBlock::{ stmts: body_stmts, ty: body_ty }
+  let body_block = KnfBlock::{ stmts: body_stmts, ty: body_ty, }
 
   // 5. Create while statement
   stmts.push(KnfStmt::While(cond_block, body_block))

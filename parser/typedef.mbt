@@ -15,7 +15,7 @@ pub fn Type::to_string(self : Self, color? : Bool = true) -> String {
 }
 
 ///|
-pub impl Show for Type with output(self, logger) {
+pub impl Show for Type with fn output(self, logger) {
   logger.write_string(self.to_string(color=true))
 }
 
@@ -43,30 +43,30 @@ pub fn parse_type(
 ) -> (Type, ArrayView[Token]) raise ParseError {
   match tokens {
     [{ kind: Upper("Unit"), .. }, .. rest] =>
-      (Type::{ kind: Unit, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Unit, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Bool"), .. }, .. rest] =>
-      (Type::{ kind: Bool, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Bool, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Int"), .. }, .. rest] =>
-      (Type::{ kind: Int, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Int, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Int64"), .. }, .. rest] =>
-      (Type::{ kind: Int64, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Int64, toks: tokens[0:1], }, rest)
     [{ kind: Upper("UInt"), .. }, .. rest] =>
-      (Type::{ kind: UInt, toks: tokens[0:1] }, rest)
+      (Type::{ kind: UInt, toks: tokens[0:1], }, rest)
     [{ kind: Upper("UInt64"), .. }, .. rest] =>
-      (Type::{ kind: UInt64, toks: tokens[0:1] }, rest)
+      (Type::{ kind: UInt64, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Double"), .. }, .. rest] =>
-      (Type::{ kind: Double, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Double, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Float"), .. }, .. rest] =>
-      (Type::{ kind: Float, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Float, toks: tokens[0:1], }, rest)
     [{ kind: Upper("Char"), .. }, .. rest] =>
-      (Type::{ kind: Char, toks: tokens[0:1] }, rest)
+      (Type::{ kind: Char, toks: tokens[0:1], }, rest)
     [{ kind: Upper("String"), .. }, .. rest] =>
-      (Type::{ kind: String, toks: tokens[0:1] }, rest)
+      (Type::{ kind: String, toks: tokens[0:1], }, rest)
     [{ kind: Bracket('('), .. }, ..] as tokens =>
       parse_tuple_or_function_type(tokens)
     [{ kind: Upper("Array"), .. }, ..] as tokens => parse_array_type(tokens)
     [{ kind: Upper(def), .. }, .. rest] =>
-      (Type::{ kind: Defined(def), toks: tokens[0:1] }, rest)
+      (Type::{ kind: Defined(def), toks: tokens[0:1], }, rest)
     [] => {
       println("Compiler ICE: Empty Token ArrayView")
       panic()
@@ -84,34 +84,39 @@ fn parse_tuple_or_function_type(
     println("Compiler ICE: Misuse parse_tuple_or_function_type")
     panic()
   }
-  let tys : Array[TypeKind] = Array::new()
-  let tokens = loop tokens {
-    [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
-      let (ty, rest) = parse_type(tokens)
-      tys.push(ty.kind)
-      continue rest
+  let tys : Array[TypeKind] = []
+  let tokens = for tokens = tokens {
+    match tokens {
+      [{ kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
+        let (ty, rest) = parse_type(tokens)
+        tys.push(ty.kind)
+        continue rest
+      }
+      [{ kind: Symbol(","), .. }, { kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
+        let (ty, rest) = parse_type(tokens[1:])
+        tys.push(ty.kind)
+        continue rest
+      }
+      [{ kind: Bracket(')'), .. }, .. rest] => break rest
+      [] => {
+        println("Compiler ICE: Empty Token ArrayView")
+        panic()
+      }
+      tok =>
+        raise ParseError(
+          "InValid Type Parsing, \{tok.map(t => t.to_string()).join(", ")}",
+        )
     }
-    [{ kind: Symbol(","), .. }, { kind: Upper(_) | Bracket('('), .. }, ..] as tokens => {
-      let (ty, rest) = parse_type(tokens[1:])
-      tys.push(ty.kind)
-      continue rest
-    }
-    [{ kind: Bracket(')'), .. }, .. rest] => break rest
-    [] => {
-      println("Compiler ICE: Empty Token ArrayView")
-      panic()
-    }
-    tok => raise ParseError("InValid Type Parsing, \{tok}")
   }
   if tokens is [{ kind: Symbol("->"), .. }, .. tokens] {
     let (ret_ty, rest) = parse_type(tokens)
     let len = rest.start_offset() - init_tokens.start_offset()
     let toks = init_tokens[0:len]
-    (Type::{ kind: Function(tys, ret_ty.kind), toks }, rest)
+    (Type::{ kind: Function(tys, ret_ty.kind), toks, }, rest)
   } else {
     let len = tokens.start_offset() - init_tokens.start_offset()
     let toks = init_tokens[0:len]
-    (Type::{ kind: Tuple(tys), toks }, tokens)
+    (Type::{ kind: Tuple(tys), toks, }, tokens)
   }
 }
 
@@ -133,5 +138,17 @@ fn parse_array_type(
   }
   let len = rest.start_offset() - init_tokens.start_offset()
   let toks = init_tokens[0:len]
-  (Type::{ kind: Array(elem_ty.kind), toks }, rest)
+  (Type::{ kind: Array(elem_ty.kind), toks, }, rest)
 }
+
+///|
+pub extend Type with Eq::{not_equal, equal}
+
+///|
+pub extend Type with Show::{output}
+
+///|
+pub extend TypeKind with Hash::{hash, hash_combine}
+
+///|
+pub extend TypeKind with Eq::{not_equal, equal}

@@ -5,7 +5,7 @@ pub(all) struct WhileStmt {
 } derive(Eq)
 
 ///|
-pub impl Show for WhileStmt with output(self, logger) {
+pub impl Show for WhileStmt with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -17,10 +17,7 @@ pub fn WhileStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format condition
   let cond_str = self.cond.to_string(color~)
-  let cond_lines = cond_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let cond_lines = cond_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let cond_formatted = format_lines(
     cond_lines,
     head_with="├-cond: ",
@@ -29,10 +26,7 @@ pub fn WhileStmt::to_string(self : Self, color? : Bool = true) -> String {
 
   // Format body
   let body_str = self.body.to_string(color~)
-  let body_lines = body_str
-    .split("\n")
-    .map(fn(sv) { sv.to_string() })
-    .to_array()
+  let body_lines = body_str.split("\n").map(fn(sv) { sv.to_owned() }).to_array()
   let body_formatted = format_lines(
     body_lines,
     head_with="└-body: ",
@@ -51,7 +45,7 @@ pub fn parse_while_stmt(
   }
   let (cond, tokens) = parse_expr(tokens)
   let (body, tokens) = parse_block_expr(tokens)
-  let while_stmt = WhileStmt::{ cond, body }
+  let while_stmt = WhileStmt::{ cond, body, }
   (while_stmt, tokens)
 }
 
@@ -132,3 +126,9 @@ test "WhileStmt to_string Test - Multiple Statements" {
     ),
   )
 }
+
+///|
+pub extend WhileStmt with Eq::{not_equal, equal}
+
+///|
+pub extend WhileStmt with Show::{output}

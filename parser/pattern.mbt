@@ -4,7 +4,7 @@ pub(all) struct Pattern {
 } derive(Eq)
 
 ///|
-pub impl Show for Pattern with output(self, logger) {
+pub impl Show for Pattern with fn output(self, logger) {
   let s = self.to_string(color=true)
   logger.write_string(s)
 }
@@ -47,7 +47,7 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
           let pat_str = patterns[i].to_string(color~)
           let lines = pat_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == patterns.length() - 1
           let formatted = if is_last {
@@ -78,7 +78,7 @@ pub fn Pattern::to_string(self : Self, color? : Bool = true) -> String {
           let pat_str = patterns[i].to_string(color~)
           let lines = pat_str
             .split("\n")
-            .map(fn(sv) { sv.to_string() })
+            .map(fn(sv) { sv.to_owned() })
             .to_array()
           let is_last = i == patterns.length() - 1
           let formatted = if is_last {
@@ -108,7 +108,7 @@ pub(all) enum PatternKind {
 } derive(Eq)
 
 ///|
-pub impl Show for PatternKind with output(self, logger) {
+pub impl Show for PatternKind with fn output(self, logger) {
   let s = match self {
     Wildcard => "_"
     Boolean(v) => "\{v}"
@@ -140,23 +140,23 @@ pub fn parse_pattern(
 ) -> (Pattern, ArrayView[Token]) raise ParseError {
   match tokens {
     [{ kind: Wildcard, .. }, .. tokens] => {
-      let pattern = Pattern::{ kind: Wildcard }
+      let pattern = Pattern::{ kind: Wildcard, }
       (pattern, tokens)
     }
     [{ kind: Lower(ident), .. }, .. tokens] => {
-      let pattern = Pattern::{ kind: Ident(ident) }
+      let pattern = Pattern::{ kind: Ident(ident), }
       (pattern, tokens)
     }
     [{ kind: BinaryOp(Sub), .. }, { kind: Int(v), .. }, .. tokens] => {
-      let pattern = Pattern::{ kind: Integer(-v) }
+      let pattern = Pattern::{ kind: Integer(-v), }
       (pattern, tokens)
     }
     [{ kind: Int(v), .. }, .. tokens] => {
-      let pattern = Pattern::{ kind: Integer(v) }
+      let pattern = Pattern::{ kind: Integer(v), }
       (pattern, tokens)
     }
     [{ kind: Bool(v), .. }, .. tokens] => {
-      let pattern = Pattern::{ kind: Boolean(v) }
+      let pattern = Pattern::{ kind: Boolean(v), }
       (pattern, tokens)
     }
     [{ kind: Upper(name1), .. }, .. tokens] => {
@@ -170,51 +170,55 @@ pub fn parse_pattern(
       } else {
         (None, name1, tokens)
       }
-      let patterns : Array[Pattern] = Array::new()
+      let patterns : Array[Pattern] = []
       guard tokens is [{ kind: Bracket('('), .. } as tok, .. tokens] else {
         let patternkind = EnumVariant(tag, enum_name, patterns)
-        let pattern = Pattern::{ kind: patternkind }
+        let pattern = Pattern::{ kind: patternkind, }
         return (pattern, tokens)
       }
-      let tokens = loop tokens {
-        [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
-        [
-          {
-            kind: Int(_)
-            | BinaryOp(Sub)
-            | Lower(_)
-            | Wildcard
-            | Bracket('(')
-            | Upper(_)
-            | Bool(_),
+      let tokens = for tokens = tokens {
+        match tokens {
+          [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
+          [
+            {
+              kind: Int(_)
+              | BinaryOp(Sub)
+              | Lower(_)
+              | Wildcard
+              | Bracket('(')
+              | Upper(_)
+              | Bool(_),
+              ..
+            },
             ..,
-          },
-          ..,
-        ] as tokens => {
-          let (pat, rest) = parse_pattern(tokens)
-          patterns.push(pat)
-          continue rest
-        }
-        [
-          { kind: Symbol(","), .. },
-          {
-            kind: Int(_)
-            | BinaryOp(Sub)
-            | Lower(_)
-            | Wildcard
-            | Bracket('(')
-            | Bracket(')')
-            | Upper(_)
-            | Bool(_),
+          ] as tokens => {
+            let (pat, rest) = parse_pattern(tokens)
+            patterns.push(pat)
+            continue rest
+          }
+          [
+            { kind: Symbol(","), .. },
+            {
+              kind: Int(_)
+              | BinaryOp(Sub)
+              | Lower(_)
+              | Wildcard
+              | Bracket('(')
+              | Bracket(')')
+              | Upper(_)
+              | Bool(_),
+              ..
+            },
             ..,
-          },
-          ..,
-        ] as tokens => continue tokens[1:]
-        [] => {
-          println("Compiler ICE: Failed Parsing Pattern Empty Token ArrayView")
-          panic()
+          ] as tokens => continue tokens[1:]
+          [] => {
+            println(
+              "Compiler ICE: Failed Parsing Pattern Empty Token ArrayView",
+            )
+            panic()
+          }
+          tokens => raise ParseError("InValid Pattern: \{tokens[0]}")
         }
-        tokens => raise ParseError("InValid Pattern: \{tokens[0]}")
       }
       let kind = if patterns.length() == 0 {
         @lexer.throw_(tok, "Parse Error: InValid Pattern", Error)
@@ -226,46 +230,50 @@ pub fn parse_pattern(
       (pattern, tokens)
     }
     [{ kind: Bracket('('), .. } as tok, .. tokens] => {
-      let patterns : Array[Pattern] = Array::new()
-      let tokens = loop tokens {
-        [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
-        [
-          {
-            kind: Lower(_)
-            | Wildcard
-            | Bracket('(')
-            | Upper(_)
-            | Int(_)
-            | BinaryOp(Sub)
-            | Bool(_),
+      let patterns : Array[Pattern] = []
+      let tokens = for tokens = tokens {
+        match tokens {
+          [{ kind: Bracket(')'), .. }, .. tokens] => break tokens
+          [
+            {
+              kind: Lower(_)
+              | Wildcard
+              | Bracket('(')
+              | Upper(_)
+              | Int(_)
+              | BinaryOp(Sub)
+              | Bool(_),
+              ..
+            },
             ..,
-          },
-          ..,
-        ] as tokens => {
-          let (pat, rest) = parse_pattern(tokens)
-          patterns.push(pat)
-          continue rest
-        }
-        [
-          { kind: Symbol(","), .. },
-          {
-            kind: Lower(_)
-            | Wildcard
-            | Bracket('(')
-            | Bracket(')')
-            | Upper(_)
-            | Int(_)
-            | BinaryOp(Sub)
-            | Bool(_),
+          ] as tokens => {
+            let (pat, rest) = parse_pattern(tokens)
+            patterns.push(pat)
+            continue rest
+          }
+          [
+            { kind: Symbol(","), .. },
+            {
+              kind: Lower(_)
+              | Wildcard
+              | Bracket('(')
+              | Bracket(')')
+              | Upper(_)
+              | Int(_)
+              | BinaryOp(Sub)
+              | Bool(_),
+              ..
+            },
             ..,
-          },
-          ..,
-        ] as tokens => continue tokens[1:]
-        [] => {
-          println("Compiler ICE: Failed Parsing Pattern Empty Token ArrayView")
-          panic()
+          ] as tokens => continue tokens[1:]
+          [] => {
+            println(
+              "Compiler ICE: Failed Parsing Pattern Empty Token ArrayView",
+            )
+            panic()
+          }
+          tokens => raise ParseError("InValid Pattern: \{tokens[0]}")
         }
-        tokens => raise ParseError("InValid Pattern: \{tokens[0]}")
       }
       let kind = if patterns.length() == 0 {
         @lexer.throw_(tok, "Parse Error: InValid Pattern", Error)
@@ -408,3 +416,15 @@ test "Pattern to_string Test - Nested" {
     ),
   )
 }
+
+///|
+pub extend Pattern with Eq::{not_equal, equal}
+
+///|
+pub extend Pattern with Show::{output}
+
+///|
+pub extend PatternKind with Eq::{not_equal, equal}
+
+///|
+pub extend PatternKind with Show::{to_string, output}
